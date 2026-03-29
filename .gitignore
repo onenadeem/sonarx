@@ -1,0 +1,9 @@
+# Ignore everything at /Users/Shaik by default
+*
+
+# Keep only the project path visible in source control
+!.gitignore
+!/Downloads/
+!/Downloads/Mobile/
+!/Downloads/Mobile/sonarx/
+!/Downloads/Mobile/sonarx/**
