@@ -265,7 +265,7 @@ function SettingsScreenInner() {
     <View
       style={[
         styles.screen,
-        { backgroundColor: colors.background, paddingTop: insets.top },
+        { backgroundColor: colors.surfaceMuted, paddingTop: insets.top },
       ]}
     >
       {/* Header */}
@@ -273,8 +273,8 @@ function SettingsScreenInner() {
         style={[
           styles.header,
           {
-            backgroundColor: colors.headerBackground,
-            borderBottomColor: colors.borderMuted,
+            backgroundColor: colors.surfaceMuted,
+            borderBottomColor: 'transparent',
             height: HEADER_HEIGHT,
           },
         ]}
@@ -316,7 +316,7 @@ function SettingsScreenInner() {
                 <View
                   style={[
                     styles.avatarEditBadge,
-                    { backgroundColor: colors.accent },
+                    { backgroundColor: colors.accent, borderColor: colors.surface },
                   ]}
                 >
                   <Ionicons name="camera" size={10} color={colors.accentForeground} />
@@ -479,15 +479,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
   },
   headerTitle: {
     fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
+    letterSpacing: -0.3,
   },
   scrollContent: {
-    paddingTop: spacing.md,
-    gap: spacing.xs,
+    paddingTop: spacing.sm,
+    gap: spacing.xxs,
   },
   section: {
     marginBottom: spacing.xs,
@@ -496,9 +497,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typography.fontSize.xs,
     fontWeight: typography.fontWeight.semiBold,
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
     marginBottom: spacing.xs,
-    marginLeft: spacing.xs,
+    marginLeft: spacing.xxs,
   },
   sectionCard: {
     borderRadius: borderRadius.md,
@@ -516,11 +517,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
   },
   profileInfo: {
     flex: 1,
@@ -534,10 +536,10 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semiBold,
+    letterSpacing: -0.2,
   },
   profilePhone: {
     fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.regular,
   },
   nameEditRow: {
     flexDirection: 'row',
@@ -559,19 +561,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     gap: spacing.sm,
-    minHeight: 52,
+    minHeight: 50,
   },
   iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.sm,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingLabel: {
     flex: 1,
     fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.regular,
   },
   settingRight: {
     flexDirection: 'row',
@@ -580,7 +581,6 @@ const styles = StyleSheet.create({
   },
   settingValue: {
     fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.regular,
   },
   segmentedRow: {
     paddingHorizontal: spacing.md,
@@ -603,7 +603,6 @@ const styles = StyleSheet.create({
   segmentBtnActive: {},
   segmentLabel: {
     fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.regular,
   },
   errorContainer: {
     flex: 1,

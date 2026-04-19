@@ -9,12 +9,6 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native'
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolateColor,
-} from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable } from 'react-native'
 import { useTheme } from '@/src/theme/ThemeProvider'
@@ -44,28 +38,18 @@ export default function Input({
 }: InputProps) {
   const { colors } = useTheme()
   const [focused, setFocused] = useState(false)
-  const focusAnim = useSharedValue(0)
 
   const handleFocus = () => {
     setFocused(true)
-    focusAnim.value = withTiming(1, { duration: 150 })
     textInputProps.onFocus?.(undefined as never)
   }
 
   const handleBlur = () => {
     setFocused(false)
-    focusAnim.value = withTiming(0, { duration: 150 })
     textInputProps.onBlur?.(undefined as never)
   }
 
-  const borderAnimStyle = useAnimatedStyle(() => {
-    const borderColor = interpolateColor(
-      focusAnim.value,
-      [0, 1],
-      [error ? colors.danger : colors.border, error ? colors.danger : colors.accent],
-    )
-    return { borderColor }
-  })
+  const borderColor = error ? colors.danger : focused ? colors.accent : colors.border
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -80,14 +64,14 @@ export default function Input({
         </Text>
       ) : null}
 
-      <Animated.View
+      <View
         style={[
           styles.inputContainer,
           {
             backgroundColor: colors.inputBackground,
             borderRadius: borderRadius.sm,
+            borderColor,
           },
-          borderAnimStyle,
         ]}
       >
         {leftIcon ? (
@@ -126,7 +110,7 @@ export default function Input({
             />
           </Pressable>
         ) : null}
-      </Animated.View>
+      </View>
 
       {error ? (
         <Text

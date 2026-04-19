@@ -27,7 +27,6 @@ import { useContacts } from '@/src/hooks/useContacts'
 import { usePresenceStore } from '@/src/store/presenceStore'
 import Avatar from '@/src/components/ui/Avatar'
 import AnimatedPressable from '@/src/components/ui/Pressable'
-import Divider from '@/src/components/ui/Divider'
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 
@@ -72,7 +71,7 @@ function SectionHeader({ letter }: { letter: string }) {
       <Text
         style={[
           styles.sectionLetter,
-          { color: colors.textSecondary, fontFamily: typography.fontFamily.semiBold },
+          { color: colors.accent, fontFamily: typography.fontFamily.semiBold },
         ]}
       >
         {letter}
@@ -97,7 +96,7 @@ function ContactListItem({ contact, onPress }: ContactListItemProps) {
       onPress={() => onPress(contact)}
       haptic
       hapticType="light"
-      style={[styles.contactRow, { backgroundColor: colors.surface }]}
+      style={[styles.contactRow, { backgroundColor: colors.surface, borderBottomColor: colors.borderMuted }]}
       accessibilityLabel={`Open chat with ${contact.displayName}`}
     >
       <Avatar
@@ -127,7 +126,6 @@ function ContactListItem({ contact, onPress }: ContactListItemProps) {
           {contact.phoneNumber}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
     </AnimatedPressable>
   )
 }
@@ -242,11 +240,6 @@ function ContactsScreenInner() {
 
   const keyExtractor = useCallback((item: ListItem) => item.key, [])
 
-  const ItemSeparator = useCallback(
-    () => <Divider />,
-    [],
-  )
-
   return (
     <View
       style={[
@@ -273,29 +266,43 @@ function ContactsScreenInner() {
         >
           {Strings.contacts.title}
         </Text>
+        <View style={styles.headerRight}>
+          <AnimatedPressable
+            onPress={() => router.push('/modal' as Parameters<typeof router.push>[0])}
+            haptic
+            hapticType="medium"
+            hitSlop={8}
+            accessibilityLabel="Add contact"
+            style={[styles.headerIconBtn, { backgroundColor: colors.surfaceMuted }]}
+          >
+            <Ionicons name="person-add-outline" size={17} color={colors.accent} />
+          </AnimatedPressable>
+        </View>
       </View>
 
       {/* Search */}
       <View
         style={[
-          styles.searchContainer,
-          { backgroundColor: colors.surface, borderBottomColor: colors.borderMuted },
+          styles.searchWrapper,
+          { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
         ]}
       >
-        <Ionicons name="search" size={16} color={colors.textDisabled} />
-        <TextInput
-          style={[
-            styles.searchInput,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-          ]}
-          placeholder={Strings.contacts.searchPlaceholder}
-          placeholderTextColor={colors.textDisabled}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          autoCapitalize="none"
-          clearButtonMode="while-editing"
-        />
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceMuted }]}>
+          <Ionicons name="search" size={15} color={colors.textSecondary} />
+          <TextInput
+            style={[
+              styles.searchInput,
+              { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
+            ]}
+            placeholder={Strings.contacts.searchPlaceholder}
+            placeholderTextColor={colors.textDisabled}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+          />
+        </View>
       </View>
 
       {/* List */}
@@ -315,7 +322,6 @@ function ContactsScreenInner() {
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           stickyHeaderIndices={stickyIndices}
-          ItemSeparatorComponent={ItemSeparator}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + spacing.xxl }}
@@ -344,43 +350,62 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
   },
   headerTitle: {
     fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
+    letterSpacing: -0.3,
   },
-  searchContainer: {
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchWrapper: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    paddingTop: spacing.xxs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
   },
   searchInput: {
     flex: 1,
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.regular,
-    paddingVertical: Platform.OS === 'ios' ? 0 : 2,
+    fontSize: typography.fontSize.sm,
+    paddingVertical: 0,
   },
   sectionHeader: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xxs,
+    paddingVertical: 5,
+    backgroundColor: 'transparent',
   },
   sectionLetter: {
     fontSize: typography.fontSize.xs,
     fontWeight: typography.fontWeight.semiBold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 10,
     gap: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   contactInfo: {
     flex: 1,
@@ -389,36 +414,36 @@ const styles = StyleSheet.create({
   contactName: {
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semiBold,
+    letterSpacing: -0.1,
   },
   contactPhone: {
     fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.regular,
   },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xxl,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
   emptyTitle: {
-    fontSize: typography.fontSize.xl,
+    fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semiBold,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   emptySub: {
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.regular,
+    fontSize: typography.fontSize.sm,
     textAlign: 'center',
-    lineHeight: typography.fontSize.md * 1.5,
+    lineHeight: typography.fontSize.sm * 1.5,
   },
   errorContainer: {
     flex: 1,

@@ -5,11 +5,6 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native'
-import Animated, {
-  useSharedValue,
-  withSpring,
-  useAnimatedStyle,
-} from 'react-native-reanimated'
 import * as Haptics from '@/src/utils/haptics'
 
 interface AnimatedPressableProps {
@@ -36,31 +31,12 @@ export default function AnimatedPressable({
   onLongPress,
   haptic = false,
   hapticType = 'light',
-  scaleOnPress = true,
   style,
   children,
   disabled = false,
   hitSlop,
   accessibilityLabel,
 }: AnimatedPressableProps) {
-  const scale = useSharedValue(1)
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }))
-
-  const handlePressIn = () => {
-    if (scaleOnPress) {
-      scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
-    }
-  }
-
-  const handlePressOut = () => {
-    if (scaleOnPress) {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 })
-    }
-  }
-
   const handlePress = () => {
     if (haptic) {
       if (hapticType === 'selection') {
@@ -83,20 +59,19 @@ export default function AnimatedPressable({
     <Pressable
       onPress={handlePress}
       onLongPress={onLongPress ? handleLongPress : undefined}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       disabled={disabled}
       hitSlop={hitSlop}
       accessibilityLabel={accessibilityLabel}
-      style={styles.pressable}
+      style={({ pressed }) => [styles.pressable, pressed && styles.pressed, style]}
     >
-      <Animated.View style={[animatedStyle, style]}>{children}</Animated.View>
+      {children}
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  pressable: {
-    // Pressable itself carries no visual style; the Animated.View handles layout
+  pressable: {},
+  pressed: {
+    opacity: 0.6,
   },
 })

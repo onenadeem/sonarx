@@ -1,14 +1,9 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import {
   StyleSheet,
   Text,
   View,
 } from 'react-native'
-import Animated, {
-  useSharedValue,
-  withSpring,
-  useAnimatedStyle,
-} from 'react-native-reanimated'
 import type { BottomTabBarProps, BottomTabNavigationOptions } from '@react-navigation/bottom-tabs'
 import type { TabNavigationState, ParamListBase } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -28,16 +23,6 @@ interface TabItemProps {
 
 function TabItem({ isFocused, label, icon, onPress, onLongPress }: TabItemProps) {
   const { colors } = useTheme()
-  const scale = useSharedValue(isFocused ? 1.1 : 1)
-
-  useEffect(() => {
-    scale.value = withSpring(isFocused ? 1.1 : 1, { damping: 14, stiffness: 200 })
-  }, [isFocused])
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }))
-
   const color = isFocused ? colors.tabBarActive : colors.tabBarInactive
 
   return (
@@ -49,7 +34,7 @@ function TabItem({ isFocused, label, icon, onPress, onLongPress }: TabItemProps)
       style={styles.tab}
       accessibilityLabel={label}
     >
-      <Animated.View style={[styles.tabInner, animatedStyle]}>
+      <View style={styles.tabInner}>
         {icon?.({ color, focused: isFocused, size: 22 })}
         <Text
           style={[
@@ -65,7 +50,7 @@ function TabItem({ isFocused, label, icon, onPress, onLongPress }: TabItemProps)
         >
           {label}
         </Text>
-      </Animated.View>
+      </View>
     </AnimatedPressable>
   )
 }
@@ -149,7 +134,6 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.regular,
     includeFontPadding: false,
   },
 })

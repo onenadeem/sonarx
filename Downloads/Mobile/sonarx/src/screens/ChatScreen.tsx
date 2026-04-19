@@ -24,16 +24,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
-import { FlashList, FlashListRef } from '@shopify/flash-list'
-// FlashList is imported for potential non-inverted use; inverted chat list uses FlatList below
 import Ionicons from '@expo/vector-icons/Ionicons'
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import * as Haptics from 'expo-haptics'
@@ -50,12 +41,11 @@ import { useMessages } from '@/lib/hooks/useMessages'
 import { useIdentityStore } from '@/stores/identity.store'
 import { sendGunMessage } from '@/lib/p2p/messaging'
 import { useTheme } from '@/src/theme/ThemeProvider'
-import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens'
+import { borderRadius, spacing, typography } from '@/src/theme/tokens'
 import { Strings } from '@/src/constants/strings'
 import {
   BUBBLE_MAX_WIDTH,
   HEADER_HEIGHT,
-  INPUT_BAR_HEIGHT,
   NEAR_BOTTOM_THRESHOLD,
 } from '@/src/constants/layout'
 import { formatMessageTime } from '@/src/utils/formatTime'
@@ -167,27 +157,6 @@ function ChatBubble({
 }: ChatBubbleProps) {
   const { colors } = useTheme()
 
-  const translateY = useSharedValue(isFromMe ? 20 : 0)
-  const translateX = useSharedValue(isFromMe ? 0 : -20)
-  const opacity = useSharedValue(0)
-
-  useEffect(() => {
-    if (isFromMe) {
-      translateY.value = withSpring(0, { damping: 14, stiffness: 200 })
-    } else {
-      translateX.value = withSpring(0, { damping: 14, stiffness: 200 })
-    }
-    opacity.value = withTiming(1, { duration: 200 })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: isFromMe
-      ? [{ translateY: translateY.value }]
-      : [{ translateX: translateX.value }],
-    opacity: opacity.value,
-  }))
-
   const handleLongPress = useCallback(
     (e: GestureResponderEvent) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -202,15 +171,14 @@ function ChatBubble({
   const textColor = isFromMe
     ? colors.bubble.outgoingText
     : colors.bubble.incomingText
-  const timeColor = isFromMe ? 'rgba(255,255,255,0.6)' : colors.textDisabled
+  const timeColor = isFromMe ? 'rgba(255,255,255,0.65)' : colors.textDisabled
 
   if (message.isDeleted) {
     return (
-      <Animated.View
+      <View
         style={[
           styles.bubbleWrapper,
           isFromMe ? styles.wrapperRight : styles.wrapperLeft,
-          animStyle,
         ]}
       >
         <View
@@ -228,7 +196,7 @@ function ChatBubble({
             🚫 This message was deleted
           </Text>
         </View>
-      </Animated.View>
+      </View>
     )
   }
 
@@ -236,17 +204,16 @@ function ChatBubble({
     message.status === 'failed' ? 'sent' : message.status
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.bubbleWrapper,
         isFromMe ? styles.wrapperRight : styles.wrapperLeft,
-        animStyle,
       ]}
     >
       <RNPressable
         onLongPress={handleLongPress}
         delayLongPress={220}
-        style={[
+        style={({ pressed }) => [
           styles.bubble,
           isFromMe
             ? [
@@ -255,12 +222,9 @@ function ChatBubble({
               ]
             : [
                 styles.bubbleIncoming,
-                {
-                  backgroundColor: colors.bubble.incoming,
-                  borderColor: colors.bubble.incomingBorder,
-                  borderWidth: StyleSheet.hairlineWidth,
-                },
+                { backgroundColor: colors.bubble.incoming },
               ],
+          pressed && { opacity: 0.85 },
         ]}
       >
         {replyToMessage != null && (
@@ -269,7 +233,7 @@ function ChatBubble({
             style={[
               styles.replyPreview,
               {
-                borderLeftColor: colors.accent,
+                borderLeftColor: isFromMe ? 'rgba(255,255,255,0.6)' : colors.accent,
                 backgroundColor: isFromMe
                   ? 'rgba(255,255,255,0.15)'
                   : colors.surfaceMuted,
@@ -320,7 +284,7 @@ function ChatBubble({
           )}
         </View>
       </RNPressable>
-    </Animated.View>
+    </View>
   )
 }
 
@@ -347,30 +311,6 @@ function InputBar({
   const [text, setText] = useState('')
   const hasText = text.trim().length > 0
 
-  const sendScale = useSharedValue(0)
-  const micScale = useSharedValue(1)
-
-  useEffect(() => {
-    sendScale.value = withSpring(hasText ? 1 : 0, {
-      damping: 12,
-      stiffness: 220,
-    })
-    micScale.value = withSpring(hasText ? 0 : 1, {
-      damping: 12,
-      stiffness: 220,
-    })
-  }, [hasText])
-
-  const sendAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: sendScale.value }],
-    opacity: sendScale.value,
-  }))
-
-  const micAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: micScale.value }],
-    opacity: micScale.value,
-  }))
-
   const handleSend = useCallback(() => {
     const trimmed = text.trim()
     if (!trimmed || disabled) return
@@ -382,7 +322,7 @@ function InputBar({
     <View
       style={[
         styles.inputBarOuter,
-        { backgroundColor: colors.surface, borderTopColor: colors.border },
+        { backgroundColor: colors.surface, borderTopColor: colors.borderMuted },
       ]}
     >
       {replyTo != null && (
@@ -414,13 +354,13 @@ function InputBar({
       )}
 
       <View style={styles.inputBarRow}>
-        <AnimatedPressable
+        <RNPressable
           onPress={onAttachmentPress}
           style={styles.inputIconBtn}
           accessibilityLabel="Attach file"
         >
-          <Ionicons name="attach" size={22} color={colors.textSecondary} />
-        </AnimatedPressable>
+          <Ionicons name="add-circle" size={28} color={colors.accent} />
+        </RNPressable>
 
         <TextInput
           value={text}
@@ -433,7 +373,6 @@ function InputBar({
             {
               backgroundColor: colors.inputBackground,
               color: colors.textPrimary,
-              borderColor: colors.border,
               fontFamily: typography.fontFamily.regular,
             },
           ]}
@@ -445,27 +384,23 @@ function InputBar({
           blurOnSubmit={false}
         />
 
-        <View style={styles.rightBtnContainer}>
-          <Animated.View
-            style={[StyleSheet.absoluteFill, styles.iconCenter, micAnimStyle]}
-            pointerEvents={hasText ? 'none' : 'auto'}
+        {hasText ? (
+          <RNPressable
+            onPress={handleSend}
+            disabled={disabled || !hasText}
+            style={[styles.sendBtn, { backgroundColor: colors.accent }]}
+            accessibilityLabel={Strings.common.send}
           >
-            <Ionicons name="mic-outline" size={22} color={colors.textSecondary} />
-          </Animated.View>
-          <Animated.View
-            style={[styles.sendBtn, { backgroundColor: colors.accent }, sendAnimStyle]}
-            pointerEvents={hasText ? 'auto' : 'none'}
+            <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
+          </RNPressable>
+        ) : (
+          <RNPressable
+            style={styles.inputIconBtn}
+            accessibilityLabel="Voice message"
           >
-            <RNPressable
-              onPress={handleSend}
-              disabled={disabled || !hasText}
-              style={styles.sendBtnInner}
-              accessibilityLabel={Strings.common.send}
-            >
-              <Ionicons name="arrow-up" size={18} color="#ffffff" />
-            </RNPressable>
-          </Animated.View>
-        </View>
+            <Ionicons name="mic-outline" size={26} color={colors.textSecondary} />
+          </RNPressable>
+        )}
       </View>
     </View>
   )
@@ -489,19 +424,6 @@ function ContextMenu({
   onDismiss,
 }: ContextMenuProps) {
   const { colors } = useTheme()
-  const scale = useSharedValue(0)
-
-  useEffect(() => {
-    scale.value = withSpring(state.visible ? 1 : 0, {
-      damping: 14,
-      stiffness: 220,
-    })
-  }, [state.visible])
-
-  const menuStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: scale.value,
-  }))
 
   if (!state.visible) return null
 
@@ -531,7 +453,7 @@ function ContextMenu({
   return (
     <Modal
       transparent
-      animationType="none"
+      animationType="fade"
       visible={state.visible}
       onRequestClose={onDismiss}
       statusBarTranslucent
@@ -539,15 +461,13 @@ function ContextMenu({
       <TouchableWithoutFeedback onPress={onDismiss}>
         <View style={[styles.ctxOverlay, { backgroundColor: colors.overlay }]}>
           <TouchableWithoutFeedback>
-            <Animated.View
+            <View
               style={[
                 styles.ctxMenu,
                 {
                   backgroundColor: colors.surfaceElevated,
                   borderColor: colors.border,
                 },
-                shadows.lg,
-                menuStyle,
               ]}
             >
               {actions.map((action, idx) => (
@@ -563,7 +483,7 @@ function ContextMenu({
                       borderBottomWidth: StyleSheet.hairlineWidth,
                       borderBottomColor: colors.border,
                     },
-                    pressed && { opacity: 0.7 },
+                    pressed && { backgroundColor: colors.surfaceMuted },
                   ]}
                 >
                   <Ionicons
@@ -588,7 +508,7 @@ function ContextMenu({
                   </Text>
                 </RNPressable>
               ))}
-            </Animated.View>
+            </View>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -605,24 +525,11 @@ interface NewMessagePillProps {
 
 function NewMessagePill({ visible, onPress }: NewMessagePillProps) {
   const { colors } = useTheme()
-  const translateY = useSharedValue(60)
-  const opacity = useSharedValue(0)
 
-  useEffect(() => {
-    translateY.value = withSpring(visible ? 0 : 60, {
-      damping: 14,
-      stiffness: 200,
-    })
-    opacity.value = withTiming(visible ? 1 : 0, { duration: 200 })
-  }, [visible])
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
-  }))
+  if (!visible) return null
 
   return (
-    <Animated.View style={[styles.newMsgPillWrapper, animStyle]}>
+    <View style={styles.newMsgPillWrapper}>
       <AnimatedPressable
         onPress={onPress}
         haptic
@@ -637,7 +544,7 @@ function NewMessagePill({ visible, onPress }: NewMessagePillProps) {
           {Strings.chat.newMessagePill}
         </Text>
       </AnimatedPressable>
-    </Animated.View>
+    </View>
   )
 }
 
@@ -1004,12 +911,6 @@ export default function ChatScreen() {
     ],
   )
 
-  const presenceColor = isOnline
-    ? colors.online
-    : statusText === Strings.chat.connecting
-      ? colors.textDisabled
-      : colors.textSecondary
-
   const EmptyComponent = useMemo(
     () => (
       <View style={styles.emptyWrapper}>
@@ -1047,14 +948,13 @@ export default function ChatScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {/* Safe area top */}
-      <View style={{ height: insets.top, backgroundColor: colors.surface }} />
+      <View style={{ height: insets.top, backgroundColor: colors.headerBackground }} />
 
       {/* Header */}
       <View
         style={[
           styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-          shadows.sm,
+          { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
         ]}
       >
         <AnimatedPressable
@@ -1065,8 +965,8 @@ export default function ChatScreen() {
         >
           <Ionicons
             name="chevron-back"
-            size={26}
-            color={colors.textPrimary}
+            size={28}
+            color={colors.accent}
           />
         </AnimatedPressable>
 
@@ -1099,7 +999,7 @@ export default function ChatScreen() {
               style={[
                 styles.headerSub,
                 {
-                  color: presenceColor,
+                  color: isOnline ? colors.online : colors.textSecondary,
                   fontFamily: typography.fontFamily.regular,
                 },
               ]}
@@ -1118,8 +1018,8 @@ export default function ChatScreen() {
           >
             <Ionicons
               name="videocam-outline"
-              size={22}
-              color={colors.textPrimary}
+              size={24}
+              color={colors.accent}
             />
           </AnimatedPressable>
           <AnimatedPressable
@@ -1131,7 +1031,7 @@ export default function ChatScreen() {
             <Ionicons
               name="call-outline"
               size={22}
-              color={colors.textPrimary}
+              color={colors.accent}
             />
           </AnimatedPressable>
         </View>
@@ -1144,7 +1044,7 @@ export default function ChatScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {/* Message list */}
-        <View style={styles.flex}>
+        <View style={[styles.flex, { backgroundColor: colors.chatBackground }]}>
           <FlatList
             ref={flashListRef}
             data={listItems}
@@ -1239,12 +1139,12 @@ const styles = StyleSheet.create({
     height: HEADER_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: {
-    padding: spacing.xxs,
-    marginRight: spacing.xxs,
+    paddingHorizontal: spacing.xxs,
+    paddingVertical: spacing.xxs,
   },
   headerCenter: {
     flex: 1,
@@ -1260,9 +1160,11 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semiBold,
+    letterSpacing: -0.1,
   },
   headerSub: {
     fontSize: typography.fontSize.xs,
+    marginTop: 1,
   },
   headerActions: {
     flexDirection: 'row',
@@ -1332,8 +1234,9 @@ const styles = StyleSheet.create({
 
   // Bubble
   bubbleWrapper: {
-    marginVertical: spacing.xxs,
+    marginVertical: 2,
     maxWidth: BUBBLE_MAX_WIDTH,
+    paddingHorizontal: spacing.xs,
   },
   wrapperRight: {
     alignSelf: 'flex-end',
@@ -1345,13 +1248,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.xs,
     paddingBottom: spacing.xxs,
-    borderRadius: borderRadius.lg,
+    borderRadius: 18,
   },
   bubbleOutgoing: {
-    borderBottomRightRadius: borderRadius.sm,
+    borderBottomRightRadius: 4,
   },
   bubbleIncoming: {
-    borderBottomLeftRadius: borderRadius.sm,
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: typography.fontSize.md,
@@ -1393,11 +1296,12 @@ const styles = StyleSheet.create({
   inputBarOuter: {
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
   },
   replyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: spacing.md,
+    marginHorizontal: spacing.xs,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
@@ -1412,49 +1316,29 @@ const styles = StyleSheet.create({
   inputBarRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: spacing.sm,
     gap: spacing.xs,
-    minHeight: INPUT_BAR_HEIGHT - spacing.xs * 2,
   },
   inputIconBtn: {
-    padding: spacing.xs,
     alignSelf: 'flex-end',
-    marginBottom: 2,
+    paddingBottom: Platform.OS === 'ios' ? 5 : 4,
   },
   textInput: {
     flex: 1,
     maxHeight: 120,
-    borderRadius: borderRadius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: spacing.sm,
+    borderRadius: 22,
+    paddingHorizontal: spacing.md,
     paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
     fontSize: typography.fontSize.md,
     lineHeight: typography.fontSize.md * 1.4,
   },
-  rightBtnContainer: {
-    width: 40,
-    height: 40,
+  sendBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-end',
-    marginBottom: 2,
-  },
-  iconCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtnInner: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: Platform.OS === 'ios' ? 3 : 2,
   },
 
   // New message pill

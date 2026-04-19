@@ -1,7 +1,6 @@
 import React, {
   Component,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -18,19 +17,13 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import Animated, {
-  useSharedValue,
-  withSpring,
-  withTiming,
-  useAnimatedStyle,
-} from 'react-native-reanimated'
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
 import { desc } from 'drizzle-orm'
 import { useRouter } from 'expo-router'
 import { useTheme } from '@/src/theme/ThemeProvider'
-import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens'
+import { borderRadius, spacing, typography } from '@/src/theme/tokens'
 import { Strings } from '@/src/constants/strings'
-import { HEADER_HEIGHT, SCREEN_WIDTH, TAB_BAR_HEIGHT } from '@/src/constants/layout'
+import { HEADER_HEIGHT, TAB_BAR_HEIGHT } from '@/src/constants/layout'
 import { db } from '@/db/client'
 import { conversations } from '@/db/schema'
 import type { Conversation, Peer } from '@/db/schema'
@@ -38,7 +31,6 @@ import { useMessagesStore } from '@/src/store/messagesStore'
 import AnimatedPressable from '@/src/components/ui/Pressable'
 import Avatar from '@/src/components/ui/Avatar'
 import Badge from '@/src/components/ui/Badge'
-import Divider from '@/src/components/ui/Divider'
 import { formatMessageTime } from '@/src/utils/formatTime'
 import { usePresenceStore } from '@/src/store/presenceStore'
 
@@ -88,6 +80,7 @@ function ConversationItem({ item, onPress }: ConversationItemProps) {
   )
   const unreadCount = item.unreadCount ?? 0
   const peerName = item.peer?.displayName ?? item.peerId
+  const hasUnread = unreadCount > 0
 
   return (
     <AnimatedPressable
@@ -123,8 +116,10 @@ function ConversationItem({ item, onPress }: ConversationItemProps) {
               style={[
                 styles.timestamp,
                 {
-                  color: colors.textDisabled,
-                  fontFamily: typography.fontFamily.regular,
+                  color: hasUnread ? colors.accent : colors.textSecondary,
+                  fontFamily: hasUnread
+                    ? typography.fontFamily.semiBold
+                    : typography.fontFamily.regular,
                 },
               ]}
             >
@@ -137,18 +132,17 @@ function ConversationItem({ item, onPress }: ConversationItemProps) {
             style={[
               styles.lastMsg,
               {
-                color: unreadCount > 0 ? colors.textPrimary : colors.textSecondary,
-                fontFamily:
-                  unreadCount > 0
-                    ? typography.fontFamily.medium
-                    : typography.fontFamily.regular,
+                color: hasUnread ? colors.textPrimary : colors.textSecondary,
+                fontFamily: hasUnread
+                  ? typography.fontFamily.medium
+                  : typography.fontFamily.regular,
               },
             ]}
             numberOfLines={1}
           >
             {Strings.chat.emptyChat}
           </Text>
-          {unreadCount > 0 && <Badge count={unreadCount} />}
+          {hasUnread && <Badge count={unreadCount} />}
         </View>
       </View>
     </AnimatedPressable>
@@ -160,9 +154,9 @@ function EmptyState({ onNewMessage }: { onNewMessage: () => void }) {
   return (
     <View style={styles.emptyContainer}>
       <View
-        style={[styles.emptyIllustration, { backgroundColor: colors.accentMuted }]}
+        style={[styles.emptyIllustration, { backgroundColor: colors.surfaceMuted }]}
       >
-        <Ionicons name="chatbubbles-outline" size={48} color={colors.accent} />
+        <Ionicons name="chatbubble-ellipses-outline" size={44} color={colors.textSecondary} />
       </View>
       <Text
         style={[
@@ -206,10 +200,7 @@ function ChatListScreenInner() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchVisible, setSearchVisible] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
-  const searchWidth = useSharedValue(0)
-  const fabScale = useSharedValue(1)
 
   const { data: liveConversations } = useLiveQuery(
     db.query.conversations.findMany({
@@ -258,37 +249,6 @@ function ChatListScreenInner() {
     )
   }, [allConversations, searchQuery])
 
-  const openSearch = useCallback(() => {
-    setSearchVisible(true)
-    searchWidth.value = withTiming(SCREEN_WIDTH - spacing.md * 2 - 40, {
-      duration: 250,
-    })
-    setTimeout(() => searchInputRef.current?.focus(), 100)
-  }, [])
-
-  const closeSearch = useCallback(() => {
-    setSearchQuery('')
-    setSearchVisible(false)
-    searchWidth.value = withTiming(0, { duration: 200 })
-    searchInputRef.current?.blur()
-  }, [])
-
-  useEffect(() => {
-    fabScale.value = withSpring(
-      filteredConversations.length > 0 ? 1 : 0,
-      { damping: 14, stiffness: 200 },
-    )
-  }, [filteredConversations.length])
-
-  const searchStyle = useAnimatedStyle(() => ({
-    width: searchWidth.value,
-    opacity: searchWidth.value > 0 ? 1 : 0,
-  }))
-
-  const fabStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: fabScale.value }],
-  }))
-
   const navigateToChat = useCallback(
     (peerId: string) => {
       router.push(`/chat/${peerId}`)
@@ -311,11 +271,6 @@ function ChatListScreenInner() {
     [],
   )
 
-  const ItemSeparator = useCallback(
-    () => <Divider />,
-    [],
-  )
-
   return (
     <View
       style={[
@@ -334,59 +289,60 @@ function ChatListScreenInner() {
           },
         ]}
       >
-        {searchVisible ? (
-          <Animated.View style={[styles.searchBar, searchStyle]}>
-            <Ionicons name="search" size={16} color={colors.textSecondary} />
-            <TextInput
-              ref={searchInputRef}
-              style={[
-                styles.searchInput,
-                { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-              ]}
-              placeholder={Strings.chatList.searchPlaceholder}
-              placeholderTextColor={colors.textDisabled}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-              autoCapitalize="none"
-            />
-            <AnimatedPressable onPress={closeSearch} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={colors.textDisabled} />
-            </AnimatedPressable>
-          </Animated.View>
-        ) : (
-          <Text
-            style={[
-              styles.headerTitle,
-              { color: colors.textPrimary, fontFamily: typography.fontFamily.bold },
-            ]}
+        <Text
+          style={[
+            styles.headerTitle,
+            { color: colors.textPrimary, fontFamily: typography.fontFamily.bold },
+          ]}
+        >
+          {Strings.app.name}
+        </Text>
+        <View style={styles.headerRight}>
+          <AnimatedPressable
+            onPress={() => router.push('/(tabs)/contacts' as Parameters<typeof router.push>[0])}
+            haptic
+            hapticType="medium"
+            hitSlop={8}
+            accessibilityLabel="New message"
+            style={[styles.headerIconBtn, { backgroundColor: colors.surfaceMuted }]}
           >
-            {Strings.app.name}
-          </Text>
-        )}
+            <Ionicons name="create-outline" size={18} color={colors.accent} />
+          </AnimatedPressable>
+        </View>
+      </View>
 
-        {!searchVisible && (
-          <View style={styles.headerRight}>
-            <AnimatedPressable onPress={openSearch} haptic hitSlop={8} accessibilityLabel="Search">
-              <Ionicons name="search-outline" size={22} color={colors.textPrimary} />
-            </AnimatedPressable>
-            <AnimatedPressable
-              onPress={() => router.push('/chat/new' as Parameters<typeof router.push>[0])}
-              haptic
-              hitSlop={8}
-              accessibilityLabel="New message"
-            >
-              <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
-            </AnimatedPressable>
-          </View>
-        )}
+      {/* Search bar — always visible, WhatsApp-style */}
+      <View
+        style={[
+          styles.searchWrapper,
+          { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
+        ]}
+      >
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceMuted }]}>
+          <Ionicons name="search" size={15} color={colors.textSecondary} />
+          <TextInput
+            ref={searchInputRef}
+            style={[
+              styles.searchInput,
+              { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
+            ]}
+            placeholder={Strings.chatList.searchPlaceholder}
+            placeholderTextColor={colors.textDisabled}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+          />
+        </View>
       </View>
 
       {/* List */}
       {filteredConversations.length === 0 ? (
         searchQuery.trim() ? (
           <View style={styles.emptyContainer}>
-            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+            <Ionicons name="search-outline" size={40} color={colors.textDisabled} style={{ marginBottom: spacing.sm }} />
+            <Text style={[styles.emptySub, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
               {Strings.chatList.noResults(searchQuery)}
             </Text>
           </View>
@@ -398,43 +354,12 @@ function ChatListScreenInner() {
           data={filteredConversations}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          ItemSeparatorComponent={ItemSeparator}
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + spacing.xxl }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         />
-      )}
-
-      {/* FAB */}
-      {filteredConversations.length > 0 && (
-        <Animated.View
-          style={[
-            styles.fab,
-            { bottom: insets.bottom + TAB_BAR_HEIGHT + spacing.md },
-            shadows.lg,
-            fabStyle,
-          ]}
-        >
-          <AnimatedPressable
-            onPress={() => router.push('/(tabs)/contacts' as Parameters<typeof router.push>[0])}
-            haptic
-            hapticType="medium"
-            style={[styles.fabInner, { backgroundColor: colors.accent }]}
-            accessibilityLabel={Strings.chatList.newMessage}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.accentForeground} />
-            <Text
-              style={[
-                styles.fabLabel,
-                { color: colors.accentForeground, fontFamily: typography.fontFamily.semiBold },
-              ]}
-            >
-              {Strings.chatList.newMessage}
-            </Text>
-          </AnimatedPressable>
-        </Animated.View>
       )}
     </View>
   )
@@ -459,40 +384,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
   },
   headerTitle: {
     fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
+    letterSpacing: -0.3,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.xs,
+  },
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchWrapper: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    paddingTop: spacing.xxs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   searchBar: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    overflow: 'hidden',
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
   },
   searchInput: {
     flex: 1,
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.regular,
-    paddingVertical: Platform.OS === 'ios' ? spacing.xxs : 0,
+    fontSize: typography.fontSize.sm,
+    paddingVertical: 0,
   },
   conversationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 11,
     gap: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   rowContent: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
   rowTop: {
     flexDirection: 'row',
@@ -504,10 +444,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semiBold,
+    letterSpacing: -0.1,
   },
   timestamp: {
     fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.regular,
   },
   rowBottom: {
     flexDirection: 'row',
@@ -518,33 +458,32 @@ const styles = StyleSheet.create({
   lastMsg: {
     flex: 1,
     fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.regular,
   },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xxl,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   emptyIllustration: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
   emptyTitle: {
-    fontSize: typography.fontSize.xl,
+    fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semiBold,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   emptySub: {
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.regular,
+    fontSize: typography.fontSize.sm,
     textAlign: 'center',
-    lineHeight: typography.fontSize.md * 1.5,
+    lineHeight: typography.fontSize.sm * 1.5,
   },
   emptyBtn: {
     marginTop: spacing.xs,
@@ -553,22 +492,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.pill,
   },
   emptyBtnText: {
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semiBold,
-  },
-  fab: {
-    position: 'absolute',
-    alignSelf: 'center',
-  },
-  fabInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.pill,
-  },
-  fabLabel: {
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semiBold,
   },
@@ -581,3 +504,4 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
   },
 })
+
