@@ -1,39 +1,79 @@
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { LoadingScreen } from "@/components/common/LoadingScreen";
-import { ThemeProvider as AppThemeProvider } from "@/components/ThemeProvider";
-import { useColorScheme } from "@/components/useColorScheme";
 import { MigrationsProvider } from "@/db/migrations";
 import { DatabaseProvider } from "@/lib/hooks/useDb";
 import { loadIdentity } from "@/lib/identity";
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider as NavigationThemeProvider,
+  DefaultTheme,
+  DarkTheme,
+  ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { createMMKV } from "react-native-mmkv";
 import "react-native-reanimated";
 import "../global.css";
 import { useIdentityStore } from "@/stores/identity.store";
 import { StatusBar } from "expo-status-bar";
-import Colors from "@/constants/Colors";
 import "react-native-get-random-values";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  ThemeProvider,
+  useTheme,
+  THEME_STORAGE_KEY,
+} from "@/src/theme/ThemeProvider";
+import { borderRadius, shadows, spacing, typography } from "@/src/theme/tokens";
+import Avatar from "@/src/components/ui/Avatar";
+import type { Theme as ThemeMode } from "@react-navigation/native";
 
-// Polyfill crypto.randomUUID for React Native (getRandomValues is provided by react-native-get-random-values)
+// ─── Polyfill crypto.randomUUID ───────────────────────────────────────────────
+
 if (!("randomUUID" in crypto)) {
-  (crypto as any).randomUUID = (): string => {
+  (crypto as unknown as { randomUUID: () => string }).randomUUID = (): string => {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
-    bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant RFC 4122
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
     const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
     return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
   };
 }
-import { THEME_STORAGE_KEY, type Theme } from "@/components/ThemeProvider";
+
+// ─── Notification handler (module level) ─────────────────────────────────────
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+// ─── Expo Router exports ──────────────────────────────────────────────────────
 
 export { ErrorBoundary } from "expo-router";
 
@@ -43,35 +83,207 @@ export const unstable_settings = {
 
 SplashScreen.preventAutoHideAsync();
 
-const getNavigationTheme = (scheme: "light" | "dark") => {
-  if (scheme === "dark") {
-    return {
-      ...DarkTheme,
-      colors: {
-        ...DarkTheme.colors,
-        primary: Colors.dark.tint,
-        background: Colors.dark.background,
-        card: Colors.dark.card,
-        text: Colors.dark.text,
-        border: Colors.dark.border,
-        notification: Colors.dark.tint,
-      },
-    };
-  }
+// ─── Navigation theme builder ─────────────────────────────────────────────────
 
+function buildNavigationTheme(isDark: boolean): ThemeMode {
+  const base = isDark ? DarkTheme : DefaultTheme;
   return {
-    ...DefaultTheme,
+    ...base,
+    dark: isDark,
     colors: {
-      ...DefaultTheme.colors,
-      primary: Colors.light.tint,
-      background: Colors.light.background,
-      card: Colors.light.card,
-      text: Colors.light.text,
-      border: Colors.light.border,
-      notification: Colors.light.tint,
+      primary: isDark ? "#58a6ff" : "#0969da",
+      background: isDark ? "#0d1117" : "#f6f8fa",
+      card: isDark ? "#161b22" : "#ffffff",
+      text: isDark ? "#c9d1d9" : "#24292f",
+      border: isDark ? "#30363d" : "#d0d7de",
+      notification: isDark ? "#f85149" : "#cf222e",
     },
   };
-};
+}
+
+// ─── Toast system ─────────────────────────────────────────────────────────────
+
+interface ToastData {
+  id: string;
+  senderName: string;
+  messagePreview: string;
+  senderAvatar?: string;
+  chatPeerId: string;
+}
+
+interface ToastContextValue {
+  showToast: (data: Omit<ToastData, "id">) => void;
+}
+
+const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
+
+export function useToast() {
+  return useContext(ToastContext);
+}
+
+function Toast({
+  data,
+  onDismiss,
+  onTap,
+}: {
+  data: ToastData;
+  onDismiss: () => void;
+  onTap: () => void;
+}) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const translateY = useSharedValue(-120);
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    translateY.value = withTiming(insets.top + spacing.xs, { duration: 350 });
+
+    timerRef.current = setTimeout(() => {
+      translateY.value = withTiming(-120, { duration: 300 }, (finished) => {
+        if (finished) runOnJS(onDismiss)();
+      });
+    }, 4000);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const handleTap = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    translateY.value = withTiming(-120, { duration: 250 }, (finished) => {
+      if (finished) runOnJS(onDismiss)();
+    });
+    onTap();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        toastStyles.container,
+        {
+          backgroundColor: colors.surfaceElevated,
+          borderColor: colors.border,
+        },
+        shadows.lg,
+        animStyle,
+      ]}
+    >
+      <Pressable onPress={handleTap} style={toastStyles.pressable}>
+        <Avatar
+          name={data.senderName}
+          uri={data.senderAvatar}
+          size="sm"
+        />
+        <View style={toastStyles.content}>
+          <Text
+            style={[
+              toastStyles.name,
+              {
+                color: colors.textPrimary,
+                fontFamily: typography.fontFamily.semiBold,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {data.senderName}
+          </Text>
+          <Text
+            style={[
+              toastStyles.preview,
+              {
+                color: colors.textSecondary,
+                fontFamily: typography.fontFamily.regular,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {data.messagePreview.substring(0, 60)}
+          </Text>
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function ToastLayer() {
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const router = useRouter();
+
+  const showToast = useCallback((data: Omit<ToastData, "id">) => {
+    const id = crypto.randomUUID();
+    setToasts((prev) => [...prev, { ...data, id }]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      <View
+        style={toastStyles.layer}
+        pointerEvents="box-none"
+      >
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            data={toast}
+            onDismiss={() => dismissToast(toast.id)}
+            onTap={() => {
+              dismissToast(toast.id);
+              router.push(`/chat/${toast.chatPeerId}` as never);
+            }}
+          />
+        ))}
+      </View>
+    </ToastContext.Provider>
+  );
+}
+
+const toastStyles = StyleSheet.create({
+  layer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+  },
+  container: {
+    position: "absolute",
+    left: spacing.md,
+    right: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  pressable: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.sm,
+    gap: spacing.sm,
+  },
+  content: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  name: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: "600",
+  },
+  preview: {
+    fontSize: typography.fontSize.sm,
+    marginTop: 1,
+  },
+});
+
+// ─── Root layout ──────────────────────────────────────────────────────────────
 
 export default function RootLayout() {
   return (
@@ -82,42 +294,45 @@ export default function RootLayout() {
 }
 
 function RootLayoutContent() {
-  const [loaded, error] = useFonts({
+  // Fonts — Geist fonts will load automatically when added to assets/fonts/
+  // Only SpaceMono is currently available; Geist falls back to system font.
+  const [fontsLoaded, fontError] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    // Uncomment when Geist font files are added to assets/fonts/:
+    // "Geist-Regular": require("../assets/fonts/Geist-Regular.ttf"),
+    // "Geist-Medium": require("../assets/fonts/Geist-Medium.ttf"),
+    // "Geist-SemiBold": require("../assets/fonts/Geist-SemiBold.ttf"),
+    // "Geist-Bold": require("../assets/fonts/Geist-Bold.ttf"),
   });
+
   const [isIdentityChecked, setIsIdentityChecked] = useState(false);
-  const [isThemeChecked, setIsThemeChecked] = useState(false);
-  const [initialTheme, setInitialTheme] = useState<Theme>("system");
   const isOnboarded = useIdentityStore((state) => state.isOnboarded);
   const router = useRouter();
   const segments = useSegments();
 
-  useEffect(() => {
-    async function checkIdentity() {
-      await loadIdentity();
-      setIsIdentityChecked(true);
-    }
-    checkIdentity();
-  }, []);
-
-  useEffect(() => {
-    async function checkTheme() {
-      const storedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
-        setInitialTheme(storedTheme as Theme);
-      } else {
-        setInitialTheme("system");
+  const initialThemeMode = (() => {
+    try {
+      const storage = createMMKV({ id: "theme-storage" });
+      const saved = storage.getString(THEME_STORAGE_KEY);
+      if (saved === "light" || saved === "dark" || saved === "system") {
+        return saved;
       }
-      setIsThemeChecked(true);
+    } catch {
+      // MMKV not ready yet — ThemeProvider will read it itself
     }
-    checkTheme();
+    return "system" as const;
+  })();
+
+  useEffect(() => {
+    loadIdentity()
+      .then(() => setIsIdentityChecked(true))
+      .catch(() => setIsIdentityChecked(true));
   }, []);
 
+  // Handle navigation based on onboarding state
   useEffect(() => {
     if (!isIdentityChecked) return;
-
     const inOnboarding = segments[0] === "(onboarding)";
-
     if (!isOnboarded && !inOnboarding) {
       router.replace("/(onboarding)/welcome");
     } else if (isOnboarded && inOnboarding) {
@@ -125,31 +340,41 @@ function RootLayoutContent() {
     }
   }, [isIdentityChecked, isOnboarded, segments]);
 
+  // Register for push notifications and set up deep-link handler
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    Notifications.requestPermissionsAsync().catch(console.error);
 
+    const sub = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const url = response.notification.request.content.data
+          ?.url as string | undefined;
+        if (url) {
+          router.push(url as never);
+        }
+      },
+    );
+
+    return () => sub.remove();
+  }, []);
+
+  // Hide splash once fonts are ready (font errors are graceful — use system font)
   useEffect(() => {
-    if (loaded && isIdentityChecked) {
-      SplashScreen.hideAsync();
+    if ((fontsLoaded || fontError) && isIdentityChecked) {
+      SplashScreen.hideAsync().catch(console.error);
     }
-  }, [loaded, isIdentityChecked]);
+  }, [fontsLoaded, fontError, isIdentityChecked]);
 
-  if (!loaded || !isIdentityChecked || !isThemeChecked) {
+  if ((!fontsLoaded && !fontError) || !isIdentityChecked) {
     return <LoadingScreen message="Loading..." />;
   }
 
-  return <RootLayoutNav initialTheme={initialTheme} />;
-}
-
-function RootLayoutNav({ initialTheme }: { initialTheme: Theme }) {
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={rootStyles.fill}>
         <DatabaseProvider>
-          <AppThemeProvider initialTheme={initialTheme}>
+          <ThemeProvider initialMode={initialThemeMode}>
             <RootLayoutThemedNav />
-          </AppThemeProvider>
+          </ThemeProvider>
         </DatabaseProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
@@ -157,15 +382,16 @@ function RootLayoutNav({ initialTheme }: { initialTheme: Theme }) {
 }
 
 function RootLayoutThemedNav() {
-  const colorScheme = useColorScheme();
+  const { isDark, colors } = useTheme();
+  const navTheme = buildNavigationTheme(isDark);
 
   return (
     <>
       <StatusBar
-        style={colorScheme === "dark" ? "light" : "dark"}
-        backgroundColor={Colors[colorScheme].background}
+        style={isDark ? "light" : "dark"}
+        backgroundColor={colors.headerBackground}
       />
-      <NavigationThemeProvider value={getNavigationTheme(colorScheme)}>
+      <NavigationThemeProvider value={navTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
@@ -174,6 +400,13 @@ function RootLayoutThemedNav() {
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         </Stack>
       </NavigationThemeProvider>
+
+      {/* In-app toast overlay — rendered above the navigation stack */}
+      <ToastLayer />
     </>
   );
 }
+
+const rootStyles = StyleSheet.create({
+  fill: { flex: 1 },
+});
