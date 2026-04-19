@@ -7,7 +7,7 @@ import React, {
   type ReactNode,
 } from 'react'
 import { useColorScheme } from 'react-native'
-import { createMMKV } from 'react-native-mmkv'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { lightColors, darkColors, type ColorTokens } from './tokens'
 
 export const THEME_STORAGE_KEY = 'sonarx-theme-mode'
@@ -21,8 +21,6 @@ interface ThemeContextValue {
   setMode: (mode: ThemeMode) => void
 }
 
-const storage = createMMKV({ id: 'theme-storage' })
-
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 export function ThemeProvider({
@@ -34,17 +32,19 @@ export function ThemeProvider({
 }) {
   const systemScheme = useColorScheme()
 
-  const [mode, setModeState] = useState<ThemeMode>(() => {
-    if (initialMode) return initialMode
-    const stored = storage.getString(THEME_STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
-      return stored
-    }
-    return 'system'
-  })
+  const [mode, setModeState] = useState<ThemeMode>(initialMode ?? 'system')
+
+  // Load persisted preference async on mount
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
+      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+        setModeState(saved)
+      }
+    }).catch(() => {/* ignore */})
+  }, [])
 
   const setMode = (newMode: ThemeMode) => {
-    storage.set(THEME_STORAGE_KEY, newMode)
+    AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(console.error)
     setModeState(newMode)
   }
 

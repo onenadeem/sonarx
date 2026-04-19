@@ -25,7 +25,7 @@ import {
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -33,7 +33,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { createMMKV } from "react-native-mmkv";
 import "react-native-reanimated";
 import "../global.css";
 import { useIdentityStore } from "@/stores/identity.store";
@@ -43,7 +42,6 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import {
   ThemeProvider,
   useTheme,
-  THEME_STORAGE_KEY,
 } from "@/src/theme/ThemeProvider";
 import { borderRadius, shadows, spacing, typography } from "@/src/theme/tokens";
 import Avatar from "@/src/components/ui/Avatar";
@@ -63,15 +61,23 @@ if (!("randomUUID" in crypto)) {
 
 // ─── Notification handler (module level) ─────────────────────────────────────
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// expo-notifications remote push is removed from Expo Go SDK 53+.
+// Guard with executionEnvironment before require() to avoid the native crash.
+const _isExpoGo = Constants.executionEnvironment === "storeClient";
+
+if (!_isExpoGo) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Notifications = require("expo-notifications") as typeof import("expo-notifications");
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 // ─── Expo Router exports ──────────────────────────────────────────────────────
 
@@ -310,19 +316,6 @@ function RootLayoutContent() {
   const router = useRouter();
   const segments = useSegments();
 
-  const initialThemeMode = (() => {
-    try {
-      const storage = createMMKV({ id: "theme-storage" });
-      const saved = storage.getString(THEME_STORAGE_KEY);
-      if (saved === "light" || saved === "dark" || saved === "system") {
-        return saved;
-      }
-    } catch {
-      // MMKV not ready yet — ThemeProvider will read it itself
-    }
-    return "system" as const;
-  })();
-
   useEffect(() => {
     loadIdentity()
       .then(() => setIsIdentityChecked(true))
@@ -342,6 +335,10 @@ function RootLayoutContent() {
 
   // Register for push notifications and set up deep-link handler
   useEffect(() => {
+    if (_isExpoGo) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Notifications = require("expo-notifications") as typeof import("expo-notifications");
     Notifications.requestPermissionsAsync().catch(console.error);
 
     const sub = Notifications.addNotificationResponseReceivedListener(
@@ -372,7 +369,7 @@ function RootLayoutContent() {
     <SafeAreaProvider>
       <GestureHandlerRootView style={rootStyles.fill}>
         <DatabaseProvider>
-          <ThemeProvider initialMode={initialThemeMode}>
+          <ThemeProvider>
             <RootLayoutThemedNav />
           </ThemeProvider>
         </DatabaseProvider>

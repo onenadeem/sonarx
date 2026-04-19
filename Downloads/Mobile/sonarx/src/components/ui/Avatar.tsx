@@ -15,14 +15,11 @@ interface AvatarProps {
 }
 
 const FALLBACK_COLORS = [
-  '#007AFF',
-  '#34C759',
-  '#FF9500',
-  '#FF3B30',
-  '#AF52DE',
-  '#5856D6',
-  '#32ADE6',
-  '#FF2D55',
+  '#3f3f46', // zinc-700
+  '#52525b', // zinc-600
+  '#71717a', // zinc-500
+  '#18181b', // zinc-900
+  '#27272a', // zinc-800
 ]
 
 function getColorFromName(name: string): string {

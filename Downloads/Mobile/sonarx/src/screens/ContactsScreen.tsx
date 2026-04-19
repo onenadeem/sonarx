@@ -96,7 +96,7 @@ function ContactListItem({ contact, onPress }: ContactListItemProps) {
       onPress={() => onPress(contact)}
       haptic
       hapticType="light"
-      style={[styles.contactRow, { backgroundColor: colors.surface, borderBottomColor: colors.borderMuted }]}
+      style={[styles.contactRow, { backgroundColor: colors.background, borderBottomColor: colors.border, flexDirection: 'row' }]}
       accessibilityLabel={`Open chat with ${contact.displayName}`}
     >
       <Avatar
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: 10,
+    paddingVertical: 12,
     gap: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

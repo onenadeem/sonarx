@@ -322,7 +322,7 @@ function InputBar({
     <View
       style={[
         styles.inputBarOuter,
-        { backgroundColor: colors.surface, borderTopColor: colors.borderMuted },
+        { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border },
       ]}
     >
       {replyTo != null && (
@@ -371,9 +371,11 @@ function InputBar({
           style={[
             styles.textInput,
             {
-              backgroundColor: colors.inputBackground,
+              backgroundColor: colors.surfaceElevated,
               color: colors.textPrimary,
               fontFamily: typography.fontFamily.regular,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
             },
           ]}
           placeholder={Strings.chat.placeholder}
@@ -1091,7 +1093,7 @@ export default function ChatScreen() {
 
         {/* Bottom safe area */}
         {insets.bottom > 0 && (
-          <View style={{ height: insets.bottom, backgroundColor: colors.surface }} />
+          <View style={{ height: insets.bottom, backgroundColor: colors.background }} />
         )}
       </KeyboardAvoidingView>
 
@@ -1176,16 +1178,15 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xs,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
   },
 
-  // Empty state (inverted list, so we rotate it)
+  // Empty state
   emptyWrapper: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xxl,
-    transform: [{ scaleY: -1 }],
     paddingTop: spacing.xxl,
   },
   emptyTitle: {
@@ -1234,7 +1235,7 @@ const styles = StyleSheet.create({
   bubbleWrapper: {
     marginVertical: 2,
     maxWidth: BUBBLE_MAX_WIDTH,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.xxs,
   },
   wrapperRight: {
     alignSelf: 'flex-end',
@@ -1243,16 +1244,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   bubble: {
-    paddingHorizontal: spacing.sm,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.xxs,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
     borderRadius: 18,
   },
   bubbleOutgoing: {
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
   bubbleIncoming: {
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
   },
   messageText: {
     fontSize: typography.fontSize.md,
@@ -1292,7 +1293,7 @@ const styles = StyleSheet.create({
 
   // Input bar
   inputBarOuter: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 0,
     paddingTop: spacing.xs,
     paddingBottom: 4,
     paddingHorizontal: spacing.xs,
@@ -1324,7 +1325,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     maxHeight: 120,
-    borderRadius: 22,
+    borderRadius: 20,
     paddingHorizontal: spacing.md,
     paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
     fontSize: typography.fontSize.md,

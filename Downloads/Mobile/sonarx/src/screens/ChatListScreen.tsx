@@ -87,7 +87,7 @@ function ConversationItem({ item, onPress }: ConversationItemProps) {
       onPress={onPress}
       haptic
       hapticType="light"
-      style={[styles.conversationRow, { backgroundColor: colors.surface, borderBottomColor: colors.borderMuted }]}
+      style={[styles.conversationRow, { backgroundColor: colors.background, borderBottomColor: colors.border, flexDirection: 'row' }]}
       accessibilityLabel={`Open chat with ${peerName}`}
     >
       <Avatar
@@ -318,7 +318,7 @@ function ChatListScreenInner() {
           { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
         ]}
       >
-        <View style={[styles.searchBar, { backgroundColor: colors.surfaceMuted }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated }]}>
           <Ionicons name="search" size={15} color={colors.textSecondary} />
           <TextInput
             ref={searchInputRef}

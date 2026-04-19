@@ -375,31 +375,6 @@ function SettingsScreenInner() {
           </View>
         </SectionGroup>
 
-        {/* Appearance Section */}
-        <SectionGroup title={Strings.settings.appearance}>
-          <View style={[styles.settingRow, { backgroundColor: colors.surface }]}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.accentMuted }]}>
-              <Ionicons name="contrast-outline" size={18} color={colors.accent} />
-            </View>
-            <Text
-              style={[
-                styles.settingLabel,
-                { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-              ]}
-            >
-              {Strings.settings.appearance}
-            </Text>
-          </View>
-          <Divider />
-          <View style={[styles.segmentedRow, { backgroundColor: colors.surface }]}>
-            <SegmentedControl
-              options={themeOptions}
-              selected={mode}
-              onSelect={setMode}
-            />
-          </View>
-        </SectionGroup>
-
         {/* Notifications Section */}
         <SectionGroup title={Strings.settings.notifications}>
           <SettingRow

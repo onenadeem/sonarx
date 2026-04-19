@@ -1,49 +1,108 @@
-import { LoadingScreen } from "@/components/common/LoadingScreen";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { db } from "@/db/client";
-import { type Peer } from "@/db/schema";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { db } from '@/db/client'
+import type { Peer } from '@/db/schema'
+import { useTheme } from '@/src/theme/ThemeProvider'
+import { typography, spacing } from '@/src/theme/tokens'
+import Avatar from '@/src/components/ui/Avatar'
 
 export default function CallScreen() {
-  const { peerId } = useLocalSearchParams<{ peerId: string }>();
-  const router = useRouter();
-  const [peer, setPeer] = useState<Peer | null>(null);
+  const { peerId, video } = useLocalSearchParams<{ peerId: string; video?: string }>()
+  const router = useRouter()
+  const insets = useSafeAreaInsets()
+  const { isDark } = useTheme()
+  const [peer, setPeer] = useState<Peer | null>(null)
+  const isVideo = video === 'true'
 
   useEffect(() => {
-    async function loadPeer() {
-      const peerData = await db.query.peers.findFirst({
-        where: (peers, { eq }) => eq(peers.id, peerId),
-      });
-      if (peerData) {
-        setPeer(peerData);
-      }
-    }
-    loadPeer();
-  }, [peerId]);
+    db.query.peers.findFirst({ where: (p, { eq }) => eq(p.id, peerId) })
+      .then((p) => p && setPeer(p))
+      .catch(console.error)
+  }, [peerId])
 
-  if (!peer) {
-    return <LoadingScreen message="Loading..." />;
-  }
+  const displayName = peer?.displayName ?? peerId ?? 'Unknown'
 
   return (
-    <SafeAreaView className="flex-1 bg-background items-center justify-center px-6">
-      <Avatar uri={peer.avatarUri} name={peer.displayName} size="lg" />
-      <Text className="text-foreground text-xl mt-4">{peer.displayName}</Text>
-      <Text
-        className="text-muted-foreground mt-4 text-center"
-        style={{ lineHeight: 22 }}
-      >
-        Video calls require a development build.{"\n"}
-        Run: npx expo run:android
-      </Text>
-      <View className="mt-8">
-        <Button onPress={() => router.back()}>Go Back</Button>
+    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <StatusBar style="light" />
+
+      <View style={styles.topSection}>
+        <Avatar name={displayName} uri={peer?.avatarUri} size="xl" />
+        <Text style={[styles.name, { fontFamily: typography.fontFamily.semiBold }]}>
+          {displayName}
+        </Text>
+        <Text style={[styles.status, { fontFamily: typography.fontFamily.regular }]}>
+          {isVideo ? 'Video call' : 'Voice call'} · Not available in Expo Go
+        </Text>
+        <View style={styles.noticeBox}>
+          <Text style={[styles.noticeText, { fontFamily: typography.fontFamily.regular }]}>
+            Calls require a development build.{'\n'}Run: npx expo run:android
+          </Text>
+        </View>
       </View>
-    </SafeAreaView>
-  );
+
+      <View style={styles.controls}>
+        <Pressable
+          style={[styles.ctrlBtn, { backgroundColor: '#ef4444' }]}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="call" size={28} color="#ffffff" style={{ transform: [{ rotate: '135deg' }] }} />
+        </Pressable>
+      </View>
+    </View>
+  )
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xxxl,
+    backgroundColor: '#09090b',
+  },
+  topSection: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
+  },
+  name: {
+    fontSize: 28,
+    color: '#fafafa',
+    letterSpacing: -0.5,
+    marginTop: spacing.md,
+  },
+  status: {
+    fontSize: 15,
+    color: '#a1a1aa',
+  },
+  noticeBox: {
+    marginTop: spacing.lg,
+    backgroundColor: '#18181b',
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  noticeText: {
+    fontSize: 13,
+    color: '#71717a',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.xl,
+  },
+  ctrlBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})
