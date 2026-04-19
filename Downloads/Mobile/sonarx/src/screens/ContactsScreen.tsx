@@ -67,11 +67,11 @@ type ListItem =
 function SectionHeader({ letter }: { letter: string }) {
   const { colors } = useTheme()
   return (
-    <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+    <View style={[styles.sectionHeader, { backgroundColor: colors.background, borderBottomColor: colors.borderMuted }]}>
       <Text
         style={[
           styles.sectionLetter,
-          { color: colors.accent, fontFamily: typography.fontFamily.semiBold },
+          { color: colors.accent, fontFamily: typography.fontFamily.bold },
         ]}
       >
         {letter}
@@ -391,13 +391,15 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 5,
-    backgroundColor: 'transparent',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   sectionLetter: {
     fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.semiBold,
-    letterSpacing: 0.5,
+    fontWeight: typography.fontWeight.bold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   contactRow: {
     flexDirection: 'row',

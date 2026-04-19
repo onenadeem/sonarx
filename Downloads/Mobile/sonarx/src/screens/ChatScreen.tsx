@@ -222,7 +222,11 @@ function ChatBubble({
               ]
             : [
                 styles.bubbleIncoming,
-                { backgroundColor: colors.bubble.incoming },
+                {
+                  backgroundColor: colors.bubble.incoming,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.bubble.incomingBorder,
+                },
               ],
           pressed && { opacity: 0.85 },
         ]}

@@ -1,16 +1,17 @@
 import React from "react";
+import { StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
-
-// Hook to broadcast user online status
 import { usePresenceBroadcaster } from "@/lib/hooks/usePresenceBroadcaster";
 import { useGunMessaging } from "@/lib/hooks/useGunMessaging";
+import { useTheme } from "@/src/theme/ThemeProvider";
+import { typography } from "@/src/theme/tokens";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   // Start broadcasting presence to Gun network
   usePresenceBroadcaster();
@@ -21,38 +22,37 @@ export default function TabLayout() {
     <Tabs
       backBehavior="initialRoute"
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        tabBarInactiveTintColor: Colors[colorScheme].mutedForeground,
+        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarInactiveTintColor: colors.tabBarInactive,
         tabBarStyle: {
-          display: "none",
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.borderMuted,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom + 6,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: typography.fontSize.xs,
+          marginTop: 2,
         },
         headerShown: false,
       }}
       initialRouteName="chats"
     >
       {/* Hide template screens from tabs */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="two" options={{ href: null }} />
 
       {/* Actual app tabs */}
       <Tabs.Screen
         name="chats"
         options={{
-          title: "Chats",
+          title: "Messages",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "chatbubble" : "chatbubble-outline"}
-              size={20}
+              size={22}
               color={color}
             />
           ),
@@ -65,7 +65,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "people" : "people-outline"}
-              size={20}
+              size={22}
               color={color}
             />
           ),
@@ -78,7 +78,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "settings" : "settings-outline"}
-              size={20}
+              size={22}
               color={color}
             />
           ),

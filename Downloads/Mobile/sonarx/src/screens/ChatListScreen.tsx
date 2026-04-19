@@ -299,6 +299,16 @@ function ChatListScreenInner() {
         </Text>
         <View style={styles.headerRight}>
           <AnimatedPressable
+            onPress={() => router.push('/(tabs)/settings' as Parameters<typeof router.push>[0])}
+            haptic
+            hapticType="medium"
+            hitSlop={8}
+            accessibilityLabel="Settings"
+            style={[styles.headerIconBtn, { backgroundColor: colors.surfaceMuted }]}
+          >
+            <Ionicons name="settings-outline" size={18} color={colors.accent} />
+          </AnimatedPressable>
+          <AnimatedPressable
             onPress={() => router.push('/(tabs)/contacts' as Parameters<typeof router.push>[0])}
             haptic
             hapticType="medium"
