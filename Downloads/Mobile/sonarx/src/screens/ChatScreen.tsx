@@ -41,7 +41,7 @@ import { useMessages } from '@/lib/hooks/useMessages'
 import { useIdentityStore } from '@/stores/identity.store'
 import { sendGunMessage } from '@/lib/p2p/messaging'
 import { useTheme } from '@/src/theme/ThemeProvider'
-import { borderRadius, spacing, typography } from '@/src/theme/tokens'
+import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens'
 import { Strings } from '@/src/constants/strings'
 import {
   BUBBLE_MAX_WIDTH,
