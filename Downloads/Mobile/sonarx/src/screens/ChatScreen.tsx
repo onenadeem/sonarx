@@ -637,7 +637,7 @@ export default function ChatScreen() {
   useEffect(() => {
     if (messages.length > 0 && conversationId) {
       setTimeout(() => {
-        flashListRef.current?.scrollToIndex({ index: 0, animated: false })
+        flashListRef.current?.scrollToOffset({ offset: 0, animated: false })
       }, 100)
     }
   }, [conversationId])
@@ -681,7 +681,7 @@ export default function ChatScreen() {
   // ── Handlers ─────────────────────────────────────────────────────────────
 
   const scrollToBottom = useCallback(() => {
-    flashListRef.current?.scrollToIndex({ index: 0, animated: true })
+    flashListRef.current?.scrollToOffset({ offset: 0, animated: true })
     setShowNewMessagePill(false)
     setLastSeenTimestamp(null)
   }, [])
@@ -741,7 +741,7 @@ export default function ChatScreen() {
         setReplyToMessage(null)
         if (pendingAttachments.length > 0) setPendingAttachments([])
         setTimeout(
-          () => flashListRef.current?.scrollToIndex({ index: 0, animated: true }),
+          () => flashListRef.current?.scrollToOffset({ offset: 0, animated: true }),
           50,
         )
       } catch (e) {
@@ -1041,7 +1041,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + HEADER_HEIGHT : 0}
       >
         {/* Message list */}
         <View style={[styles.flex, { backgroundColor: colors.chatBackground }]}>
@@ -1090,12 +1090,9 @@ export default function ChatScreen() {
         />
 
         {/* Bottom safe area */}
-        <View
-          style={{
-            height: insets.bottom,
-            backgroundColor: colors.surface,
-          }}
-        />
+        {insets.bottom > 0 && (
+          <View style={{ height: insets.bottom, backgroundColor: colors.surface }} />
+        )}
       </KeyboardAvoidingView>
 
       {/* Reaction bar */}
@@ -1178,7 +1175,8 @@ const styles = StyleSheet.create({
   // Message list
   listContent: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
   },
 
   // Empty state (inverted list, so we rotate it)
@@ -1295,7 +1293,8 @@ const styles = StyleSheet.create({
   // Input bar
   inputBarOuter: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    paddingVertical: spacing.xs,
+    paddingTop: spacing.xs,
+    paddingBottom: 4,
     paddingHorizontal: spacing.xs,
   },
   replyBanner: {

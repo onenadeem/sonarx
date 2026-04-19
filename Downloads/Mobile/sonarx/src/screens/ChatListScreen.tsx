@@ -87,7 +87,7 @@ function ConversationItem({ item, onPress }: ConversationItemProps) {
       onPress={onPress}
       haptic
       hapticType="light"
-      style={[styles.conversationRow, { backgroundColor: colors.surface }]}
+      style={[styles.conversationRow, { backgroundColor: colors.surface, borderBottomColor: colors.borderMuted }]}
       accessibilityLabel={`Open chat with ${peerName}`}
     >
       <Avatar
@@ -378,6 +378,7 @@ export default function ChatListScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    direction: 'ltr',
   },
   header: {
     flexDirection: 'row',
