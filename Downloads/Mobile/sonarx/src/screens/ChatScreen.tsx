@@ -1094,12 +1094,12 @@ export default function ChatScreen() {
           replyTo={replyToMessage}
           onCancelReply={() => setReplyToMessage(null)}
         />
-
-        {/* Bottom safe area */}
-        {insets.bottom > 0 && (
-          <View style={{ height: insets.bottom, backgroundColor: colors.background }} />
-        )}
       </KeyboardAvoidingView>
+
+      {/* Bottom safe area — outside KAV so it doesn't cause extra spacing when keyboard is visible */}
+      {insets.bottom > 0 && (
+        <View style={{ height: insets.bottom, backgroundColor: colors.background }} />
+      )}
 
       {/* Reaction bar */}
       <ReactionBar
@@ -1146,15 +1146,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: {
-    paddingHorizontal: spacing.xxs,
+    paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xxs,
   },
   headerCenter: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
     overflow: 'hidden',
+    marginLeft: spacing.xs,
   },
   headerTitles: {
     flex: 1,
@@ -1172,7 +1173,8 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xxs,
+    gap: spacing.xs,
+    paddingRight: spacing.xs,
   },
   headerActionBtn: {
     padding: spacing.xs,
@@ -1299,8 +1301,8 @@ const styles = StyleSheet.create({
   inputBarOuter: {
     borderTopWidth: 0,
     paddingTop: spacing.xs,
-    paddingBottom: 4,
-    paddingHorizontal: spacing.xs,
+    paddingBottom: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   replyBanner: {
     flexDirection: 'row',
@@ -1319,30 +1321,31 @@ const styles = StyleSheet.create({
   },
   inputBarRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: spacing.xs,
   },
   inputIconBtn: {
-    alignSelf: 'flex-end',
-    paddingBottom: Platform.OS === 'ios' ? 5 : 4,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   textInput: {
     flex: 1,
     maxHeight: 120,
-    borderRadius: 20,
+    minHeight: 36,
+    borderRadius: 18,
     paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
+    paddingVertical: spacing.xs,
     fontSize: typography.fontSize.md,
     lineHeight: typography.fontSize.md * 1.4,
   },
   sendBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-end',
-    marginBottom: Platform.OS === 'ios' ? 3 : 2,
   },
 
   // New message pill

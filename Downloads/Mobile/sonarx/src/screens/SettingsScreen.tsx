@@ -156,56 +156,10 @@ function SectionGroup({ title, children }: SectionGroupProps) {
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
-interface SegmentedControlProps {
-  options: { label: string; value: ThemeMode }[]
-  selected: ThemeMode
-  onSelect: (v: ThemeMode) => void
-}
-
-function SegmentedControl({ options, selected, onSelect }: SegmentedControlProps) {
-  const { colors } = useTheme()
-  return (
-    <View
-      style={[styles.segmented, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}
-    >
-      {options.map(({ label, value }) => {
-        const active = selected === value
-        return (
-          <AnimatedPressable
-            key={value}
-            onPress={() => onSelect(value)}
-            haptic
-            hapticType="selection"
-            style={[
-              styles.segmentBtn,
-              active && { backgroundColor: colors.surface },
-              active && styles.segmentBtnActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentLabel,
-                {
-                  color: active ? colors.textPrimary : colors.textSecondary,
-                  fontFamily: active
-                    ? typography.fontFamily.semiBold
-                    : typography.fontFamily.regular,
-                },
-              ]}
-            >
-              {label}
-            </Text>
-          </AnimatedPressable>
-        )
-      })}
-    </View>
-  )
-}
-
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 function SettingsScreenInner() {
-  const { colors, mode, setMode } = useTheme()
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const identity = useIdentityStore((state) => state.identity)
   const updateProfile = useIdentityStore((state) => state.updateProfile)
@@ -255,17 +209,13 @@ function SettingsScreenInner() {
     )
   }, [])
 
-  const themeOptions: { label: string; value: ThemeMode }[] = [
-    { label: Strings.settings.light, value: 'light' },
-    { label: Strings.settings.dark, value: 'dark' },
-    { label: Strings.settings.system, value: 'system' },
-  ]
+  const themeOptions = undefined // unused — theme follows system setting
 
   return (
     <View
       style={[
         styles.screen,
-        { backgroundColor: colors.surfaceMuted, paddingTop: insets.top },
+        { backgroundColor: colors.background, paddingTop: insets.top },
       ]}
     >
       {/* Header */}
@@ -273,7 +223,7 @@ function SettingsScreenInner() {
         style={[
           styles.header,
           {
-            backgroundColor: colors.surfaceMuted,
+            backgroundColor: colors.background,
             borderBottomColor: 'transparent',
             height: HEADER_HEIGHT,
           },
@@ -467,7 +417,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing.xs,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
   },
   sectionTitle: {
     fontSize: typography.fontSize.xs,

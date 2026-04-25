@@ -8,7 +8,6 @@ import React, {
 } from 'react'
 import {
   FlatList,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -96,7 +95,7 @@ function ContactListItem({ contact, onPress }: ContactListItemProps) {
       onPress={() => onPress(contact)}
       haptic
       hapticType="light"
-      style={[styles.contactRow, { backgroundColor: colors.background, borderBottomColor: colors.border, flexDirection: 'row' }]}
+      style={[styles.contactRow, { backgroundColor: colors.background, borderBottomColor: colors.border }]}
       accessibilityLabel={`Open chat with ${contact.displayName}`}
     >
       <Avatar
@@ -125,6 +124,9 @@ function ContactListItem({ contact, onPress }: ContactListItemProps) {
         >
           {contact.phoneNumber}
         </Text>
+      </View>
+      <View style={[styles.chatIconBtn, { backgroundColor: colors.surfaceMuted }]}>
+        <Ionicons name="chatbubble-outline" size={16} color={colors.accent} />
       </View>
     </AnimatedPressable>
   )
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.sm,
-    paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
+    height: 44,
   },
   searchInput: {
     flex: 1,
@@ -420,6 +422,13 @@ const styles = StyleSheet.create({
   },
   contactPhone: {
     fontSize: typography.fontSize.sm,
+  },
+  chatIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
