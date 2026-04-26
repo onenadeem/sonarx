@@ -12,10 +12,8 @@ import {
   Modal,
   Platform,
   Pressable as RNPressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableWithoutFeedback,
   View,
   type GestureResponderEvent,
@@ -40,17 +38,19 @@ import { getOrCreateConversation } from '@/db/queries'
 import { useMessages } from '@/lib/hooks/useMessages'
 import { useIdentityStore } from '@/stores/identity.store'
 import { sendGunMessage } from '@/lib/p2p/messaging'
+import Header from '@/src/components/ui/Header'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens'
 import { Strings } from '@/src/constants/strings'
 import {
-  BUBBLE_MAX_WIDTH,
   HEADER_HEIGHT,
   NEAR_BOTTOM_THRESHOLD,
 } from '@/src/constants/layout'
 import { formatMessageTime } from '@/src/utils/formatTime'
 import { groupMessagesByDate } from '@/src/utils/groupMessages'
 import Avatar from '@/src/components/ui/Avatar'
+import AppChatBubble from '@/src/components/ui/ChatBubble'
+import AppMessageInput from '@/src/components/ui/MessageInput'
 import AnimatedPressable from '@/src/components/ui/Pressable'
 import MessageStatus from '@/src/components/chat/MessageStatus'
 import TypingIndicator from '@/src/components/chat/TypingIndicator'
@@ -59,6 +59,7 @@ import AttachmentPreview, {
   type AttachmentItem,
 } from '@/src/components/chat/AttachmentPreview'
 import { usePresence } from '@/src/hooks/usePresence'
+import { useResponsive } from '@/src/hooks/useResponsive'
 import {
   useSendTypingIndicator,
   useTypingIndicator,
@@ -84,6 +85,8 @@ interface ChatBubbleProps {
   ) => void
   replyToMessage?: Message | null
   onReplyTap?: (messageId: string) => void
+  groupedWithPrevious?: boolean
+  groupedWithNext?: boolean
 }
 
 interface ContextMenuState {
@@ -154,9 +157,9 @@ function ChatBubble({
   onLongPress,
   replyToMessage,
   onReplyTap,
+  groupedWithPrevious = false,
+  groupedWithNext = false,
 }: ChatBubbleProps) {
-  const { colors } = useTheme()
-
   const handleLongPress = useCallback(
     (e: GestureResponderEvent) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -168,35 +171,16 @@ function ChatBubble({
     [message.id, onLongPress],
   )
 
-  const textColor = isFromMe
-    ? colors.bubble.outgoingText
-    : colors.bubble.incomingText
-  const timeColor = isFromMe ? 'rgba(255,255,255,0.65)' : colors.textDisabled
-
   if (message.isDeleted) {
     return (
-      <View
-        style={[
-          styles.bubbleWrapper,
-          isFromMe ? styles.wrapperRight : styles.wrapperLeft,
-        ]}
-      >
-        <View
-          style={[styles.deletedBubble, { borderColor: colors.border }]}
-        >
-          <Text
-            style={[
-              styles.deletedText,
-              {
-                color: colors.textDisabled,
-                fontFamily: typography.fontFamily.regular,
-              },
-            ]}
-          >
-            🚫 This message was deleted
-          </Text>
-        </View>
-      </View>
+      <AppChatBubble
+        fromMe={isFromMe}
+        text="This message was deleted"
+        deleted
+        onLongPress={handleLongPress}
+        groupedWithPrevious={groupedWithPrevious}
+        groupedWithNext={groupedWithNext}
+      />
     )
   }
 
@@ -204,91 +188,23 @@ function ChatBubble({
     message.status === 'failed' ? 'sent' : message.status
 
   return (
-    <View
-      style={[
-        styles.bubbleWrapper,
-        isFromMe ? styles.wrapperRight : styles.wrapperLeft,
-      ]}
-    >
-      <RNPressable
-        onLongPress={handleLongPress}
-        delayLongPress={220}
-        style={({ pressed }) => [
-          styles.bubble,
-          isFromMe
-            ? [
-                styles.bubbleOutgoing,
-                { backgroundColor: colors.bubble.outgoing },
-              ]
-            : [
-                styles.bubbleIncoming,
-                {
-                  backgroundColor: colors.bubble.incoming,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.bubble.incomingBorder,
-                },
-              ],
-          pressed && { opacity: 0.85 },
-        ]}
-      >
-        {replyToMessage != null && (
-          <RNPressable
-            onPress={() => onReplyTap?.(replyToMessage.id)}
-            style={[
-              styles.replyPreview,
-              {
-                borderLeftColor: isFromMe ? 'rgba(255,255,255,0.6)' : colors.accent,
-                backgroundColor: isFromMe
-                  ? 'rgba(255,255,255,0.15)'
-                  : colors.surfaceMuted,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.replyText,
-                {
-                  color: isFromMe
-                    ? 'rgba(255,255,255,0.8)'
-                    : colors.textSecondary,
-                  fontFamily: typography.fontFamily.regular,
-                },
-              ]}
-              numberOfLines={2}
-            >
-              {replyToMessage.body ?? ''}
-            </Text>
-          </RNPressable>
-        )}
-
-        <Text
-          style={[
-            styles.messageText,
-            {
-              color: textColor,
-              fontFamily: typography.fontFamily.regular,
-            },
-          ]}
-          selectable
-        >
-          {message.body ?? ''}
-        </Text>
-
-        <View style={styles.bubbleFooter}>
-          <Text
-            style={[
-              styles.timeText,
-              { color: timeColor, fontFamily: typography.fontFamily.regular },
-            ]}
-          >
-            {formatMessageTime(message.sentAt)}
-          </Text>
-          {isFromMe && (
-            <MessageStatus status={displayStatus} size={12} />
-          )}
-        </View>
-      </RNPressable>
-    </View>
+    <AppChatBubble
+      fromMe={isFromMe}
+      text={message.body ?? ''}
+      timestamp={formatMessageTime(message.sentAt)}
+      onLongPress={handleLongPress}
+      groupedWithPrevious={groupedWithPrevious}
+      groupedWithNext={groupedWithNext}
+      replyPreview={
+        replyToMessage != null
+          ? {
+              text: replyToMessage.body ?? '',
+              onPress: () => onReplyTap?.(replyToMessage.id),
+            }
+          : undefined
+      }
+      footer={isFromMe ? <MessageStatus status={displayStatus} size={12} /> : null}
+    />
   )
 }
 
@@ -311,9 +227,7 @@ function InputBar({
   replyTo,
   onCancelReply,
 }: InputBarProps) {
-  const { colors } = useTheme()
   const [text, setText] = useState('')
-  const hasText = text.trim().length > 0
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim()
@@ -323,92 +237,19 @@ function InputBar({
   }, [text, disabled, onSend])
 
   return (
-    <View
-      style={[
-        styles.inputBarOuter,
-        { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border },
-      ]}
-    >
-      {replyTo != null && (
-        <View
-          style={[
-            styles.replyBanner,
-            {
-              backgroundColor: colors.surfaceMuted,
-              borderLeftColor: colors.accent,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.replyBannerText,
-              {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.regular,
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {replyTo.body ?? ''}
-          </Text>
-          <RNPressable onPress={onCancelReply} hitSlop={8}>
-            <Ionicons name="close" size={16} color={colors.textSecondary} />
-          </RNPressable>
-        </View>
-      )}
-
-      <View style={styles.inputBarRow}>
-        <RNPressable
-          onPress={onAttachmentPress}
-          style={styles.inputIconBtn}
-          accessibilityLabel="Attach file"
-        >
-          <Ionicons name="add-circle" size={28} color={colors.accent} />
-        </RNPressable>
-
-        <TextInput
-          value={text}
-          onChangeText={(t) => {
-            setText(t)
-            onTypingChange()
-          }}
-          style={[
-            styles.textInput,
-            {
-              backgroundColor: colors.surfaceElevated,
-              color: colors.textPrimary,
-              fontFamily: typography.fontFamily.regular,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-            },
-          ]}
-          placeholder={Strings.chat.placeholder}
-          placeholderTextColor={colors.textDisabled}
-          multiline
-          numberOfLines={1}
-          onSubmitEditing={handleSend}
-          blurOnSubmit={false}
-        />
-
-        {hasText ? (
-          <RNPressable
-            onPress={handleSend}
-            disabled={disabled || !hasText}
-            style={[styles.sendBtn, { backgroundColor: colors.accent }]}
-            accessibilityLabel={Strings.common.send}
-          >
-            <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
-          </RNPressable>
-        ) : (
-          <RNPressable
-            style={styles.inputIconBtn}
-            accessibilityLabel="Voice message"
-          >
-            <Ionicons name="mic-outline" size={26} color={colors.textSecondary} />
-          </RNPressable>
-        )}
-      </View>
-    </View>
+    <AppMessageInput
+      value={text}
+      onChangeText={(value) => {
+        setText(value)
+        onTypingChange()
+      }}
+      onSend={handleSend}
+      onAttachmentPress={onAttachmentPress}
+      disabled={disabled}
+      placeholder={Strings.chat.placeholder}
+      replyText={replyTo?.body ?? null}
+      onCancelReply={onCancelReply}
+    />
   )
 }
 
@@ -561,6 +402,7 @@ export default function ChatScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const { isDesktop, isTablet } = useResponsive()
   const identity = useIdentityStore((state) => state.identity)
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -887,7 +729,7 @@ export default function ChatScreen() {
   const keyExtractor = useCallback((item: ListItem) => item.id, [])
 
   const renderItem = useCallback(
-    ({ item }: { item: ListItem }) => {
+    ({ item, index }: { item: ListItem; index: number }) => {
       if (item.kind === 'separator') {
         return <DateSeparator label={item.label} />
       }
@@ -899,6 +741,12 @@ export default function ChatScreen() {
       const replyTo = msg.replyToId
         ? (messagesById.get(msg.replyToId) ?? null)
         : null
+      const previousItem = listItems[index - 1]
+      const nextItem = listItems[index + 1]
+      const previousMessage =
+        previousItem?.kind === 'message' ? previousItem.message : null
+      const nextMessage = nextItem?.kind === 'message' ? nextItem.message : null
+
       return (
         <ChatBubble
           message={msg}
@@ -906,11 +754,14 @@ export default function ChatScreen() {
           onLongPress={handleBubbleLongPress}
           replyToMessage={replyTo}
           onReplyTap={handleReplyTap}
+          groupedWithPrevious={previousMessage?.peerId === msg.peerId}
+          groupedWithNext={nextMessage?.peerId === msg.peerId}
         />
       )
     },
     [
       identity?.phoneNumber,
+      listItems,
       messagesById,
       handleBubbleLongPress,
       handleReplyTap,
@@ -947,159 +798,103 @@ export default function ChatScreen() {
     [colors],
   )
 
+  const contentMaxWidth = isDesktop ? 960 : isTablet ? 680 : undefined
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <View
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
-      {/* Safe area top */}
-      <View style={{ height: insets.top, backgroundColor: colors.headerBackground }} />
-
-      {/* Header */}
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <View
         style={[
-          styles.header,
-          { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
+          styles.contentShell,
+          contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
         ]}
       >
-        <AnimatedPressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={styles.backBtn}
-          accessibilityLabel="Go back"
-        >
-          <Ionicons
-            name="chevron-back"
-            size={28}
-            color={colors.accent}
-          />
-        </AnimatedPressable>
+        <View style={{ height: insets.top, backgroundColor: colors.headerBackground }} />
 
-        <RNPressable
-          onPress={() => {}}
-          style={styles.headerCenter}
-          accessibilityLabel="Peer profile"
-        >
-          <Avatar
-            name={peer?.displayName ?? peerId ?? '?'}
-            uri={peer?.avatarUri}
-            size="sm"
-            showOnlineBadge
-            isOnline={isOnline}
-          />
-          <View style={styles.headerTitles}>
-            <Text
-              style={[
-                styles.headerName,
-                {
-                  color: colors.textPrimary,
-                  fontFamily: typography.fontFamily.semiBold,
-                },
-              ]}
-              numberOfLines={1}
-            >
-              {peer?.displayName ?? peerId ?? 'Chat'}
-            </Text>
-            <Text
-              style={[
-                styles.headerSub,
-                {
-                  color: isOnline ? colors.online : colors.textSecondary,
-                  fontFamily: typography.fontFamily.regular,
-                },
-              ]}
-            >
-              {statusText}
-            </Text>
-          </View>
-        </RNPressable>
-
-        <View style={styles.headerActions}>
-          <AnimatedPressable
-            onPress={() => router.push(`/call/${peerId}?video=true`)}
-            hitSlop={8}
-            style={styles.headerActionBtn}
-            accessibilityLabel="Video call"
-          >
-            <Ionicons
-              name="videocam-outline"
-              size={24}
-              color={colors.accent}
-            />
-          </AnimatedPressable>
-          <AnimatedPressable
-            onPress={() => router.push(`/call/${peerId}`)}
-            hitSlop={8}
-            style={styles.headerActionBtn}
-            accessibilityLabel="Voice call"
-          >
-            <Ionicons
-              name="call-outline"
-              size={22}
-              color={colors.accent}
-            />
-          </AnimatedPressable>
-        </View>
-      </View>
-
-      {/* Main content with keyboard avoidance */}
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + HEADER_HEIGHT : 0}
-      >
-        {/* Message list */}
-        <View style={[styles.flex, { backgroundColor: colors.chatBackground }]}>
-          <FlatList
-            ref={flashListRef}
-            data={listItems}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            inverted
-            overScrollMode="never"
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={EmptyComponent}
-            ListFooterComponent={
-              <TypingIndicator visible={isTyping} />
-            }
-            removeClippedSubviews={Platform.OS === 'android'}
-            maxToRenderPerBatch={20}
-            windowSize={10}
-          />
-
-          {/* New message pill */}
-          <NewMessagePill
-            visible={showNewMessagePill}
-            onPress={scrollToBottom}
-          />
-        </View>
-
-        {/* Attachment preview */}
-        <AttachmentPreview
-          attachments={pendingAttachments}
-          onRemove={(id) =>
-            setPendingAttachments((prev) => prev.filter((a) => a.id !== id))
+        <Header
+          title={peer?.displayName ?? peerId ?? 'Chat'}
+          subtitle={statusText}
+          leftAccessory={
+            <View style={styles.headerLead}>
+              <AnimatedPressable
+                onPress={() => router.back()}
+                style={styles.backButton}
+                accessibilityLabel="Go back"
+              >
+                <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+              </AnimatedPressable>
+              <Avatar
+                name={peer?.displayName ?? peerId ?? '?'}
+                uri={peer?.avatarUri}
+                size="xs"
+                showOnlineBadge
+                isOnline={isOnline}
+              />
+            </View>
           }
+          rightActions={[
+            {
+              icon: 'videocam-outline',
+              onPress: () => router.push(`/call/${peerId}?video=true`),
+              accessibilityLabel: 'Video call',
+            },
+            {
+              icon: 'call-outline',
+              onPress: () => router.push(`/call/${peerId}`),
+              accessibilityLabel: 'Voice call',
+            },
+          ]}
         />
 
-        {/* Input bar */}
-        <InputBar
-          onSend={handleSend}
-          onAttachmentPress={handleAttachmentPress}
-          disabled={isSending || !conversationId}
-          onTypingChange={onTypingStart}
-          replyTo={replyToMessage}
-          onCancelReply={() => setReplyToMessage(null)}
-        />
-      </KeyboardAvoidingView>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + HEADER_HEIGHT : 0}
+        >
+          <View style={[styles.flex, { backgroundColor: colors.chatBackground }]}>
+            <FlatList
+              ref={flashListRef}
+              data={listItems}
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+              inverted
+              overScrollMode="never"
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={EmptyComponent}
+              ListFooterComponent={<TypingIndicator visible={isTyping} />}
+              removeClippedSubviews={Platform.OS === 'android'}
+              maxToRenderPerBatch={20}
+              windowSize={10}
+            />
 
-      {/* Bottom safe area — outside KAV so it doesn't cause extra spacing when keyboard is visible */}
-      {insets.bottom > 0 && (
-        <View style={{ height: insets.bottom, backgroundColor: colors.background }} />
-      )}
+            <NewMessagePill
+              visible={showNewMessagePill}
+              onPress={scrollToBottom}
+            />
+          </View>
+
+          <AttachmentPreview
+            attachments={pendingAttachments}
+            onRemove={(id) =>
+              setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== id))
+            }
+          />
+
+          <View style={{ paddingBottom: insets.bottom }}>
+            <InputBar
+              onSend={handleSend}
+              onAttachmentPress={handleAttachmentPress}
+              disabled={isSending || !conversationId}
+              onTypingChange={onTypingStart}
+              replyTo={replyToMessage}
+              onCancelReply={() => setReplyToMessage(null)}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </View>
 
       {/* Reaction bar */}
       <ReactionBar
@@ -1133,8 +928,24 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  contentShell: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'center',
+  },
   flex: {
     flex: 1,
+  },
+  headerLead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Header
@@ -1240,7 +1051,7 @@ const styles = StyleSheet.create({
   // Bubble
   bubbleWrapper: {
     marginVertical: 2,
-    maxWidth: BUBBLE_MAX_WIDTH,
+    maxWidth: '85%',
     paddingHorizontal: spacing.xxs,
   },
   wrapperRight: {

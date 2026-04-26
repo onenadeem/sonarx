@@ -16,25 +16,28 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface ButtonProps {
-  label: string
-  onPress: () => void
+  text?: string
+  label?: string
+  onPress?: () => void
   variant?: ButtonVariant
   size?: ButtonSize
-  icon?: string
+  icon?: string | React.ReactNode
   iconPosition?: 'left' | 'right'
   loading?: boolean
   disabled?: boolean
   fullWidth?: boolean
+  rounded?: boolean
   style?: StyleProp<ViewStyle>
 }
 
 const SIZE_CONFIG = {
-  sm: { height: 32, paddingH: spacing.sm, fontSize: typography.fontSize.sm, iconSize: 14 },
-  md: { height: 40, paddingH: spacing.md, fontSize: typography.fontSize.md, iconSize: 16 },
-  lg: { height: 48, paddingH: spacing.xl, fontSize: typography.fontSize.lg, iconSize: 18 },
+  sm: { minHeight: 40, paddingH: 12, paddingV: 9, fontSize: 12, iconSize: 16 },
+  md: { minHeight: 44, paddingH: 12, paddingV: 10, fontSize: 14, iconSize: 18 },
+  lg: { minHeight: 48, paddingH: 16, paddingV: 12, fontSize: 16, iconSize: 20 },
 }
 
 export default function Button({
+  text,
   label,
   onPress,
   variant = 'primary',
@@ -44,11 +47,13 @@ export default function Button({
   loading = false,
   disabled = false,
   fullWidth = false,
+  rounded = false,
   style,
 }: ButtonProps) {
   const { colors } = useTheme()
   const config = SIZE_CONFIG[size]
   const isDisabled = disabled || loading
+  const buttonText = text ?? label ?? ''
 
   const variantStyles = {
     primary: {
@@ -78,6 +83,18 @@ export default function Button({
   }
 
   const vs = variantStyles[variant]
+  const resolvedRadius = rounded ? borderRadius.full : size === 'lg' ? 12 : 8
+
+  const renderIcon = () => {
+    if (!icon || React.isValidElement(icon)) return icon ?? null
+    return (
+      <Ionicons
+        name={icon as never}
+        size={config.iconSize}
+        color={vs.iconColor}
+      />
+    )
+  }
 
   return (
     <AnimatedPressable
@@ -88,12 +105,13 @@ export default function Button({
       style={[
         styles.base,
         {
-          height: config.height,
+          minHeight: config.minHeight,
           paddingHorizontal: config.paddingH,
+          paddingVertical: config.paddingV,
           backgroundColor: vs.backgroundColor,
           borderColor: vs.borderColor,
-          borderRadius: borderRadius.sm,
-          opacity: isDisabled ? 0.5 : 1,
+          borderRadius: resolvedRadius,
+          opacity: isDisabled ? 0.6 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
         style,
@@ -109,12 +127,7 @@ export default function Button({
         ) : (
           <>
             {icon && iconPosition === 'left' && (
-              <Ionicons
-                name={icon as never}
-                size={config.iconSize}
-                color={vs.iconColor}
-                style={styles.iconLeft}
-              />
+              <View style={styles.iconLeft}>{renderIcon()}</View>
             )}
             <Text
               style={[
@@ -123,19 +136,14 @@ export default function Button({
                   fontSize: config.fontSize,
                   color: vs.textColor,
                   fontFamily: typography.fontFamily.semiBold,
-                  fontWeight: typography.fontWeight.semiBold,
+                  fontWeight: '600',
                 },
               ]}
             >
-              {label}
+              {buttonText}
             </Text>
             {icon && iconPosition === 'right' && (
-              <Ionicons
-                name={icon as never}
-                size={config.iconSize}
-                color={vs.iconColor}
-                style={styles.iconRight}
-              />
+              <View style={styles.iconRight}>{renderIcon()}</View>
             )}
           </>
         )}
@@ -159,12 +167,12 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   iconLeft: {
-    marginRight: spacing.xxs,
+    marginRight: spacing.xs,
   },
   iconRight: {
-    marginLeft: spacing.xxs,
+    marginLeft: spacing.xs,
   },
   spinner: {
-    marginHorizontal: spacing.xs,
+    marginHorizontal: spacing.sm,
   },
 })

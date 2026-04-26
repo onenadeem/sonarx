@@ -7,27 +7,28 @@ import React, {
   type ReactNode,
 } from 'react'
 import {
-  FlatList,
+  SectionList,
   StyleSheet,
   Text,
-  TextInput,
   View,
+  type StyleProp,
+  type TextStyle,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
+import { getOrCreateConversation } from '@/db/queries'
+import type { Contact } from '@/src/db/schema'
+import Header from '@/src/components/ui/Header'
+import ListItem from '@/src/components/ui/ListItem'
+import TextInput from '@/src/components/ui/TextInput'
+import Avatar from '@/src/components/ui/Avatar'
+import { useContacts } from '@/src/hooks/useContacts'
+import { useResponsive } from '@/src/hooks/useResponsive'
+import { usePresenceStore } from '@/src/store/presenceStore'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { borderRadius, spacing, typography } from '@/src/theme/tokens'
 import { Strings } from '@/src/constants/strings'
-import { HEADER_HEIGHT, TAB_BAR_HEIGHT } from '@/src/constants/layout'
-import { getOrCreateConversation } from '@/db/queries'
-import type { Contact } from '@/src/db/schema'
-import { useContacts } from '@/src/hooks/useContacts'
-import { usePresenceStore } from '@/src/store/presenceStore'
-import Avatar from '@/src/components/ui/Avatar'
-import AnimatedPressable from '@/src/components/ui/Pressable'
-
-// ─── Error Boundary ───────────────────────────────────────────────────────────
 
 class ContactsErrorBoundary extends Component<
   { children: ReactNode },
@@ -51,286 +52,348 @@ class ContactsErrorBoundary extends Component<
         </View>
       )
     }
+
     return this.props.children
   }
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+interface ContactSection {
+  title: string
+  data: Contact[]
+}
 
-type ListItem =
-  | { kind: 'header'; letter: string; key: string }
-  | { kind: 'contact'; contact: Contact; key: string }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function SectionHeader({ letter }: { letter: string }) {
+function SearchBar({
+  value,
+  onChangeText,
+  onClear,
+}: {
+  value: string
+  onChangeText: (value: string) => void
+  onClear: () => void
+}) {
   const { colors } = useTheme()
+
   return (
-    <View style={[styles.sectionHeader, { backgroundColor: colors.background, borderBottomColor: colors.borderMuted }]}>
-      <Text
-        style={[
-          styles.sectionLetter,
-          { color: colors.accent, fontFamily: typography.fontFamily.bold },
+    <View style={styles.searchContainer}>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        leftIcon="search-outline"
+        rightIcon={value ? 'close-outline' : undefined}
+        onRightIconPress={onClear}
+        placeholder="Search contacts..."
+        containerStyle={styles.searchInputContainer}
+        inputWrapperStyle={[
+          styles.searchInputWrapper,
+          {
+            backgroundColor: colors.surface,
+            borderRadius: 24,
+            borderWidth: 1,
+            borderColor: colors.border,
+          },
         ]}
-      >
-        {letter}
-      </Text>
+        inputStyle={styles.searchInput}
+      />
     </View>
   )
 }
 
-interface ContactListItemProps {
-  contact: Contact
-  onPress: (contact: Contact) => void
+function maskPhoneNumber(phoneNumber: string) {
+  const lastFour = phoneNumber.slice(-4)
+  return `•••• ${lastFour}`
 }
 
-function ContactListItem({ contact, onPress }: ContactListItemProps) {
+function HighlightedText({
+  text,
+  query,
+  baseStyle,
+  highlightStyle,
+}: {
+  text: string
+  query: string
+  baseStyle: StyleProp<TextStyle>
+  highlightStyle: StyleProp<TextStyle>
+}) {
+  if (!query.trim()) {
+    return <Text style={baseStyle}>{text}</Text>
+  }
+
+  const normalizedText = text.toLowerCase()
+  const normalizedQuery = query.toLowerCase()
+  const matchIndex = normalizedText.indexOf(normalizedQuery)
+
+  if (matchIndex === -1) {
+    return <Text style={baseStyle}>{text}</Text>
+  }
+
+  const start = text.slice(0, matchIndex)
+  const match = text.slice(matchIndex, matchIndex + query.length)
+  const end = text.slice(matchIndex + query.length)
+
+  return (
+    <Text style={baseStyle} numberOfLines={1}>
+      {start}
+      <Text style={highlightStyle}>{match}</Text>
+      {end}
+    </Text>
+  )
+}
+
+function ContactRow({
+  contact,
+  query,
+  onPress,
+}: {
+  contact: Contact
+  query: string
+  onPress: (contact: Contact) => void
+}) {
   const { colors } = useTheme()
   const isOnline = usePresenceStore(
     (state) => state.onlineStatus[contact.id]?.isOnline ?? false,
   )
 
   return (
-    <AnimatedPressable
-      onPress={() => onPress(contact)}
-      haptic
-      hapticType="light"
-      style={[styles.contactRow, { backgroundColor: colors.background, borderBottomColor: colors.border }]}
-      accessibilityLabel={`Open chat with ${contact.displayName}`}
-    >
-      <Avatar
-        uri={contact.avatarUri}
-        name={contact.displayName}
-        size="md"
-        showOnlineBadge
-        isOnline={isOnline}
-      />
-      <View style={styles.contactInfo}>
-        <Text
-          style={[
+    <ListItem
+      title={
+        <HighlightedText
+          text={contact.displayName}
+          query={query}
+          baseStyle={[
             styles.contactName,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold },
+            {
+              color: colors.textPrimary,
+              fontFamily: typography.fontFamily.semiBold,
+            },
           ]}
-          numberOfLines={1}
-        >
-          {contact.displayName}
-        </Text>
-        <Text
-          style={[
-            styles.contactPhone,
-            { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
-          ]}
-          numberOfLines={1}
-        >
-          {contact.phoneNumber}
-        </Text>
-      </View>
-      <View style={[styles.chatIconBtn, { backgroundColor: colors.surfaceMuted }]}>
-        <Ionicons name="chatbubble-outline" size={16} color={colors.accent} />
-      </View>
-    </AnimatedPressable>
+          highlightStyle={{ color: colors.accent }}
+        />
+      }
+      subtitle={
+        <View style={styles.subtitleRow}>
+          <HighlightedText
+            text={maskPhoneNumber(contact.phoneNumber)}
+            query={query.slice(-4)}
+            baseStyle={[
+              styles.contactPhone,
+              {
+                color: colors.textSecondary,
+                fontFamily: typography.fontFamily.regular,
+              },
+            ]}
+            highlightStyle={{ color: colors.accent }}
+          />
+        </View>
+      }
+      onPress={() => onPress(contact)}
+      height={64}
+      divider
+      dividerInset={80}
+      accessibilityLabel={`Open chat with ${contact.displayName}`}
+      leading={
+        <Avatar
+          uri={contact.avatarUri}
+          name={contact.displayName}
+          size="sm"
+          showOnlineBadge
+          isOnline={isOnline}
+        />
+      }
+      trailing={
+        <View style={styles.trailingRow}>
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: isOnline ? colors.online : colors.textDisabled },
+            ]}
+          />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={colors.textDisabled}
+          />
+        </View>
+      }
+    />
   )
 }
 
 function EmptyState() {
   const { colors } = useTheme()
+
   return (
-    <View style={styles.emptyContainer}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.accentMuted }]}>
-        <Ionicons name="people-outline" size={48} color={colors.accent} />
+    <View style={styles.emptyState}>
+      <View
+        style={[
+          styles.emptyIcon,
+          {
+            backgroundColor: colors.surfaceMuted,
+          },
+        ]}
+      >
+        <Ionicons name="people-outline" size={40} color={colors.textSecondary} />
       </View>
       <Text
         style={[
           styles.emptyTitle,
-          { color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold },
+          {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.semiBold,
+          },
         ]}
       >
-        {Strings.contacts.emptyTitle}
+        No contacts
       </Text>
       <Text
         style={[
-          styles.emptySub,
-          { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
+          styles.emptySubtitle,
+          {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+          },
         ]}
       >
-        {Strings.contacts.emptySub}
+        Add contacts with a phone number to start chatting.
       </Text>
     </View>
   )
 }
 
-// ─── Build Section Data ───────────────────────────────────────────────────────
-
-function buildSectionData(contacts: Contact[]): {
-  items: ListItem[]
-  stickyIndices: number[]
-} {
-  const sorted = [...contacts].sort((a, b) =>
-    a.displayName.localeCompare(b.displayName),
-  )
-
-  const items: ListItem[] = []
-  const stickyIndices: number[] = []
-  let currentLetter = ''
-
-  sorted.forEach((contact) => {
-    const letter = contact.displayName.charAt(0).toUpperCase() || '#'
-    if (letter !== currentLetter) {
-      currentLetter = letter
-      stickyIndices.push(items.length)
-      items.push({ kind: 'header', letter, key: `header-${letter}` })
-    }
-    items.push({ kind: 'contact', contact, key: contact.id })
-  })
-
-  return { items, stickyIndices }
-}
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
 function ContactsScreenInner() {
   const { colors } = useTheme()
-  const router = useRouter()
   const insets = useSafeAreaInsets()
+  const router = useRouter()
+  const { isDesktop, isTablet } = useResponsive()
   const [searchQuery, setSearchQuery] = useState('')
   const [isNavigating, setIsNavigating] = useState(false)
-
   const { contacts } = useContacts()
 
   const filteredContacts = useMemo(() => {
-    if (!searchQuery.trim()) return contacts
-    const lower = searchQuery.toLowerCase()
+    if (!searchQuery.trim()) {
+      return contacts
+    }
+
+    const normalizedQuery = searchQuery.toLowerCase()
     return contacts.filter(
-      (c) =>
-        c.displayName.toLowerCase().includes(lower) ||
-        c.phoneNumber.toLowerCase().includes(lower),
+      (contact) =>
+        contact.displayName.toLowerCase().includes(normalizedQuery) ||
+        contact.phoneNumber.toLowerCase().includes(normalizedQuery),
     )
   }, [contacts, searchQuery])
 
-  const { items, stickyIndices } = useMemo(
-    () => buildSectionData(filteredContacts),
-    [filteredContacts],
-  )
+  const sections = useMemo<ContactSection[]>(() => {
+    const grouped = new Map<string, Contact[]>()
+
+    filteredContacts
+      .slice()
+      .sort((left, right) => left.displayName.localeCompare(right.displayName))
+      .forEach((contact) => {
+        const letter = contact.displayName.charAt(0).toUpperCase() || '#'
+        const bucket = grouped.get(letter) ?? []
+        bucket.push(contact)
+        grouped.set(letter, bucket)
+      })
+
+    return Array.from(grouped.entries()).map(([title, data]) => ({ title, data }))
+  }, [filteredContacts])
+
+  const contentMaxWidth = isDesktop ? 960 : isTablet ? 700 : undefined
 
   const handleContactPress = useCallback(
     async (contact: Contact) => {
-      if (isNavigating) return
+      if (isNavigating) {
+        return
+      }
+
       setIsNavigating(true)
       try {
         await getOrCreateConversation(contact.id)
         router.push(`/chat/${contact.id}`)
-      } catch (err) {
-        console.error('[ContactsScreen] Failed to open conversation', err)
+      } catch (error) {
+        console.error('[ContactsScreen] Failed to open conversation', error)
       } finally {
         setIsNavigating(false)
       }
     },
-    [router, isNavigating],
+    [isNavigating, router],
   )
-
-  const renderItem = useCallback(
-    ({ item }: { item: ListItem }) => {
-      if (item.kind === 'header') {
-        return <SectionHeader letter={item.letter} />
-      }
-      return (
-        <ContactListItem contact={item.contact} onPress={handleContactPress} />
-      )
-    },
-    [handleContactPress],
-  )
-
-  const keyExtractor = useCallback((item: ListItem) => item.key, [])
 
   return (
     <View
       style={[
         styles.screen,
-        { backgroundColor: colors.background, paddingTop: insets.top },
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+        },
       ]}
     >
-      {/* Header */}
       <View
         style={[
-          styles.header,
-          {
-            backgroundColor: colors.headerBackground,
-            borderBottomColor: colors.borderMuted,
-            height: HEADER_HEIGHT,
-          },
+          styles.contentShell,
+          contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
         ]}
       >
-        <Text
-          style={[
-            styles.headerTitle,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.bold },
+        <Header
+          title="Contacts"
+          rightActions={[
+            {
+              icon: 'person-add-outline',
+              onPress: () => router.push('/modal' as Parameters<typeof router.push>[0]),
+              accessibilityLabel: 'Add contact',
+            },
           ]}
-        >
-          {Strings.contacts.title}
-        </Text>
-        <View style={styles.headerRight}>
-          <AnimatedPressable
-            onPress={() => router.push('/modal' as Parameters<typeof router.push>[0])}
-            haptic
-            hapticType="medium"
-            hitSlop={8}
-            accessibilityLabel="Add contact"
-            style={[styles.headerIconBtn, { backgroundColor: colors.surfaceMuted }]}
-          >
-            <Ionicons name="person-add-outline" size={17} color={colors.accent} />
-          </AnimatedPressable>
-        </View>
-      </View>
-
-      {/* Search */}
-      <View
-        style={[
-          styles.searchWrapper,
-          { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
-        ]}
-      >
-        <View style={[styles.searchBar, { backgroundColor: colors.surfaceMuted }]}>
-          <Ionicons name="search" size={15} color={colors.textSecondary} />
-          <TextInput
-            style={[
-              styles.searchInput,
-              { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-            ]}
-            placeholder={Strings.contacts.searchPlaceholder}
-            placeholderTextColor={colors.textDisabled}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
-          />
-        </View>
-      </View>
-
-      {/* List */}
-      {filteredContacts.length === 0 ? (
-        searchQuery.trim() ? (
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-              {Strings.contacts.noResults}
-            </Text>
-          </View>
-        ) : (
-          <EmptyState />
-        )
-      ) : (
-        <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          stickyHeaderIndices={stickyIndices}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + spacing.xxl }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
         />
-      )}
+
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onClear={() => setSearchQuery('')}
+        />
+
+        {sections.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            stickySectionHeadersEnabled
+            renderSectionHeader={({ section }) => (
+              <View
+                style={[
+                  styles.sectionHeader,
+                  {
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sectionHeaderText,
+                    {
+                      color: colors.textSecondary,
+                      fontFamily: typography.fontFamily.semiBold,
+                    },
+                  ]}
+                >
+                  {section.title}
+                </Text>
+              </View>
+            )}
+            renderItem={({ item }) => (
+              <ContactRow
+                contact={item}
+                query={searchQuery}
+                onPress={handleContactPress}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + spacing.xl,
+            }}
+          />
+        )}
+      </View>
     </View>
   )
 }
@@ -343,99 +406,66 @@ export default function ContactsScreen() {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 0,
+  contentShell: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'center',
   },
-  headerTitle: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.bold,
-    letterSpacing: -0.3,
+  searchContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchInputContainer: {
+    marginBottom: 0,
   },
-  headerIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchWrapper: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    paddingTop: spacing.xxs,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.sm,
-    height: 44,
+  searchInputWrapper: {
+    minHeight: 44,
   },
   searchInput: {
-    flex: 1,
-    fontSize: typography.fontSize.sm,
-    paddingVertical: 0,
+    fontSize: 14,
   },
   sectionHeader: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xxs,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    minHeight: 28,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
   },
-  sectionLetter: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.bold,
-    letterSpacing: 1.2,
+  sectionHeaderText: {
+    ...typography.label,
     textTransform: 'uppercase',
   },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  contactInfo: {
-    flex: 1,
-    gap: 2,
-  },
   contactName: {
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semiBold,
-    letterSpacing: -0.1,
+    fontSize: 15,
+    lineHeight: 20,
   },
   contactPhone: {
-    fontSize: typography.fontSize.sm,
+    ...typography.caption,
   },
-  chatIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  subtitleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 2,
   },
-  emptyContainer: {
+  trailingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxl,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.xxxl,
+    gap: spacing.md,
   },
   emptyIcon: {
     width: 88,
@@ -443,18 +473,14 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs,
   },
   emptyTitle: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.semiBold,
+    ...typography.h3,
     textAlign: 'center',
-    letterSpacing: -0.2,
   },
-  emptySub: {
-    fontSize: typography.fontSize.sm,
+  emptySubtitle: {
+    ...typography.body,
     textAlign: 'center',
-    lineHeight: typography.fontSize.sm * 1.5,
   },
   errorContainer: {
     flex: 1,
@@ -462,6 +488,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    fontSize: typography.fontSize.md,
+    ...typography.body,
   },
 })

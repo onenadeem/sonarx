@@ -2,38 +2,32 @@ import React, {
   Component,
   useCallback,
   useMemo,
-  useRef,
   useState,
   type ErrorInfo,
   type ReactNode,
 } from 'react'
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { FlatList, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
 import { desc } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
 import { useRouter } from 'expo-router'
-import { useTheme } from '@/src/theme/ThemeProvider'
-import { borderRadius, spacing, typography } from '@/src/theme/tokens'
-import { Strings } from '@/src/constants/strings'
-import { HEADER_HEIGHT, TAB_BAR_HEIGHT } from '@/src/constants/layout'
 import { db } from '@/db/client'
 import { conversations } from '@/db/schema'
 import type { Conversation, Peer } from '@/db/schema'
-import { useMessagesStore } from '@/src/store/messagesStore'
-import AnimatedPressable from '@/src/components/ui/Pressable'
+import Button from '@/src/components/ui/Button'
+import Header from '@/src/components/ui/Header'
+import ListItem from '@/src/components/ui/ListItem'
+import TextInput from '@/src/components/ui/TextInput'
 import Avatar from '@/src/components/ui/Avatar'
 import Badge from '@/src/components/ui/Badge'
-import { formatMessageTime } from '@/src/utils/formatTime'
+import { useResponsive } from '@/src/hooks/useResponsive'
+import { useMessagesStore } from '@/src/store/messagesStore'
 import { usePresenceStore } from '@/src/store/presenceStore'
-
-// ─── Error Boundary ───────────────────────────────────────────────────────────
+import { useTheme } from '@/src/theme/ThemeProvider'
+import { borderRadius, spacing, typography } from '@/src/theme/tokens'
+import { Strings } from '@/src/constants/strings'
+import { formatMessageTime } from '@/src/utils/formatTime'
 
 class ChatListErrorBoundary extends Component<
   { children: ReactNode },
@@ -57,149 +51,176 @@ class ChatListErrorBoundary extends Component<
         </View>
       )
     }
+
     return this.props.children
   }
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type ConversationWithPeer = Conversation & { peer: Peer | null }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+function SearchBar({
+  value,
+  onChangeText,
+  onClear,
+}: {
+  value: string
+  onChangeText: (value: string) => void
+  onClear: () => void
+}) {
+  const { colors } = useTheme()
 
-interface ConversationItemProps {
-  item: ConversationWithPeer
-  onPress: () => void
+  return (
+    <View style={styles.searchContainer}>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        leftIcon="search-outline"
+        rightIcon={value ? 'close-outline' : undefined}
+        onRightIconPress={onClear}
+        placeholder="Search chats, contacts..."
+        containerStyle={styles.searchInputContainer}
+        inputWrapperStyle={[
+          styles.searchInputWrapper,
+          {
+            backgroundColor: colors.surface,
+            borderRadius: 24,
+            borderWidth: 1,
+            borderColor: colors.border,
+          },
+        ]}
+        inputStyle={styles.searchInput}
+      />
+    </View>
+  )
 }
 
-function ConversationItem({ item, onPress }: ConversationItemProps) {
+function ConversationRow({
+  item,
+  onPress,
+}: {
+  item: ConversationWithPeer
+  onPress: () => void
+}) {
   const { colors } = useTheme()
   const isOnline = usePresenceStore(
     (state) => state.onlineStatus[item.peerId]?.isOnline ?? false,
   )
   const unreadCount = item.unreadCount ?? 0
-  const peerName = item.peer?.displayName ?? item.peerId
   const hasUnread = unreadCount > 0
+  const peerName = item.peer?.displayName ?? item.peerId
 
   return (
-    <AnimatedPressable
+    <ListItem
+      title={peerName}
+      subtitle={Strings.chat.emptyChat}
       onPress={onPress}
-      haptic
-      hapticType="light"
-      style={[styles.conversationRow, { backgroundColor: colors.background, borderBottomColor: colors.border, flexDirection: 'row' }]}
+      height={72}
+      divider
+      dividerInset={80}
       accessibilityLabel={`Open chat with ${peerName}`}
-    >
-      <Avatar
-        uri={item.peer?.avatarUri}
-        name={peerName}
-        size="md"
-        showOnlineBadge
-        isOnline={isOnline}
-      />
-      <View style={styles.rowContent}>
-        <View style={styles.rowTop}>
-          <Text
-            style={[
-              styles.peerName,
-              {
-                color: colors.textPrimary,
-                fontFamily: typography.fontFamily.semiBold,
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {peerName}
-          </Text>
-          {item.lastMessageAt !== null && item.lastMessageAt !== undefined && (
-            <Text
-              style={[
-                styles.timestamp,
-                {
-                  color: hasUnread ? colors.accent : colors.textSecondary,
-                  fontFamily: hasUnread
-                    ? typography.fontFamily.semiBold
-                    : typography.fontFamily.regular,
-                },
-              ]}
-            >
-              {formatMessageTime(item.lastMessageAt)}
-            </Text>
-          )}
+      leading={
+        <View>
+          <Avatar
+            uri={item.peer?.avatarUri}
+            name={peerName}
+            size="md"
+            showOnlineBadge
+            isOnline={isOnline}
+          />
+          {hasUnread ? (
+            <Badge count={unreadCount} style={styles.floatingBadge} />
+          ) : null}
         </View>
-        <View style={styles.rowBottom}>
+      }
+      meta={
+        item.lastMessageAt ? (
           <Text
             style={[
-              styles.lastMsg,
+              styles.timestamp,
               {
-                color: hasUnread ? colors.textPrimary : colors.textSecondary,
+                color: hasUnread ? colors.accent : colors.textSecondary,
                 fontFamily: hasUnread
-                  ? typography.fontFamily.medium
+                  ? typography.fontFamily.semiBold
                   : typography.fontFamily.regular,
               },
             ]}
-            numberOfLines={1}
           >
-            {Strings.chat.emptyChat}
+            {formatMessageTime(item.lastMessageAt)}
           </Text>
-          {hasUnread && <Badge count={unreadCount} />}
-        </View>
-      </View>
-    </AnimatedPressable>
+        ) : null
+      }
+      titleStyle={styles.conversationTitle}
+      subtitleStyle={[
+        styles.conversationSubtitle,
+        {
+          color: hasUnread ? colors.textPrimary : colors.textSecondary,
+          fontFamily: hasUnread
+            ? typography.fontFamily.medium
+            : typography.fontFamily.regular,
+        },
+      ]}
+    />
   )
 }
 
-function EmptyState({ onNewMessage }: { onNewMessage: () => void }) {
+function EmptyState({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme()
+
   return (
-    <View style={styles.emptyContainer}>
+    <View style={styles.emptyState}>
       <View
-        style={[styles.emptyIllustration, { backgroundColor: colors.surfaceMuted }]}
+        style={[
+          styles.emptyIcon,
+          {
+            backgroundColor: colors.surfaceMuted,
+          },
+        ]}
       >
-        <Ionicons name="chatbubble-ellipses-outline" size={44} color={colors.textSecondary} />
+        <Ionicons
+          name="chatbubble-ellipses-outline"
+          size={40}
+          color={colors.textSecondary}
+        />
       </View>
       <Text
         style={[
           styles.emptyTitle,
-          { color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold },
+          {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.semiBold,
+          },
         ]}
       >
-        {Strings.chatList.emptyTitle}
+        No chats yet
       </Text>
       <Text
         style={[
-          styles.emptySub,
-          { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
+          styles.emptySubtitle,
+          {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+          },
         ]}
       >
-        {Strings.chatList.emptySub}
+        Add a contact to start a secure conversation.
       </Text>
-      <AnimatedPressable
-        onPress={onNewMessage}
-        haptic
-        style={[styles.emptyBtn, { backgroundColor: colors.accent }]}
-        accessibilityLabel={Strings.chatList.newMessage}
-      >
-        <Text
-          style={[
-            styles.emptyBtnText,
-            { color: colors.accentForeground, fontFamily: typography.fontFamily.semiBold },
-          ]}
-        >
-          {Strings.chatList.newMessage}
-        </Text>
-      </AnimatedPressable>
+      <Button
+        text="Add chat"
+        onPress={onPress}
+        variant="primary"
+        size="md"
+        icon="add-outline"
+      />
     </View>
   )
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
 function ChatListScreenInner() {
   const { colors } = useTheme()
-  const router = useRouter()
   const insets = useSafeAreaInsets()
+  const router = useRouter()
+  const { isDesktop, isTablet } = useResponsive()
   const [searchQuery, setSearchQuery] = useState('')
-  const searchInputRef = useRef<TextInput>(null)
 
   const { data: liveConversations } = useLiveQuery(
     db.query.conversations.findMany({
@@ -211,12 +232,14 @@ function ChatListScreenInner() {
   const storeChats = useMessagesStore((state) => state.chats)
 
   const allConversations = useMemo<ConversationWithPeer[]>(() => {
-    const base: ConversationWithPeer[] = (liveConversations ?? []) as ConversationWithPeer[]
-    if (storeChats.length === 0) return base
+    const base = (liveConversations ?? []) as ConversationWithPeer[]
+    if (storeChats.length === 0) {
+      return base
+    }
 
     const merged = [...base]
     storeChats.forEach((chat) => {
-      const exists = merged.some((c) => c.id === chat.id)
+      const exists = merged.some((conversation) => conversation.id === chat.id)
       if (!exists) {
         merged.push({
           id: chat.id,
@@ -231,135 +254,91 @@ function ChatListScreenInner() {
         })
       }
     })
+
     return merged.sort((a, b) => {
-      const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0
-      const tb = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0
-      return tb - ta
+      const left = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0
+      const right = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0
+      return right - left
     })
   }, [liveConversations, storeChats])
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) return allConversations
-    const lower = searchQuery.toLowerCase()
+    if (!searchQuery.trim()) {
+      return allConversations
+    }
+
+    const normalizedQuery = searchQuery.toLowerCase()
     return allConversations.filter(
-      (c) =>
-        c.peer?.displayName?.toLowerCase().includes(lower) ||
-        c.peerId.toLowerCase().includes(lower),
+      (conversation) =>
+        conversation.peer?.displayName?.toLowerCase().includes(normalizedQuery) ||
+        conversation.peerId.toLowerCase().includes(normalizedQuery),
     )
   }, [allConversations, searchQuery])
 
-  const navigateToChat = useCallback(
-    (peerId: string) => {
-      router.push(`/chat/${peerId}`)
-    },
-    [router],
-  )
+  const contentMaxWidth = isDesktop ? 920 : isTablet ? 600 : undefined
+
+  const navigateToContacts = useCallback(() => {
+    router.push('/(tabs)/contacts' as Parameters<typeof router.push>[0])
+  }, [router])
 
   const renderItem = useCallback(
     ({ item }: { item: ConversationWithPeer }) => (
-      <ConversationItem
+      <ConversationRow
         item={item}
-        onPress={() => navigateToChat(item.peerId)}
+        onPress={() => router.push(`/chat/${item.peerId}`)}
       />
     ),
-    [navigateToChat],
-  )
-
-  const keyExtractor = useCallback(
-    (item: ConversationWithPeer) => item.id,
-    [],
+    [router],
   )
 
   return (
     <View
       style={[
         styles.screen,
-        { backgroundColor: colors.background, paddingTop: insets.top },
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+        },
       ]}
     >
-      {/* Header */}
       <View
         style={[
-          styles.header,
-          {
-            backgroundColor: colors.headerBackground,
-            borderBottomColor: colors.borderMuted,
-            height: HEADER_HEIGHT,
-          },
+          styles.contentShell,
+          contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
         ]}
       >
-        <Text
-          style={[
-            styles.headerTitle,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.bold },
+        <Header
+          title="Shaik"
+          rightActions={[
+            {
+              icon: 'add-outline',
+              onPress: navigateToContacts,
+              accessibilityLabel: 'Add chat',
+            },
           ]}
-        >
-          {Strings.app.name}
-        </Text>
-        <View style={styles.headerRight}>
-          <AnimatedPressable
-            onPress={() => router.push('/(tabs)/contacts' as Parameters<typeof router.push>[0])}
-            haptic
-            hapticType="medium"
-            hitSlop={8}
-            accessibilityLabel="New message"
-            style={[styles.headerIconBtn, { backgroundColor: colors.surfaceMuted }]}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.accent} />
-          </AnimatedPressable>
-        </View>
-      </View>
-
-      {/* Search bar — always visible, WhatsApp-style */}
-      <View
-        style={[
-          styles.searchWrapper,
-          { backgroundColor: colors.headerBackground, borderBottomColor: colors.borderMuted },
-        ]}
-      >
-        <View style={[styles.searchBar, { backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons name="search" size={15} color={colors.textSecondary} />
-          <TextInput
-            ref={searchInputRef}
-            style={[
-              styles.searchInput,
-              { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-            ]}
-            placeholder={Strings.chatList.searchPlaceholder}
-            placeholderTextColor={colors.textDisabled}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
-          />
-        </View>
-      </View>
-
-      {/* List */}
-      {filteredConversations.length === 0 ? (
-        searchQuery.trim() ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={40} color={colors.textDisabled} style={{ marginBottom: spacing.sm }} />
-            <Text style={[styles.emptySub, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
-              {Strings.chatList.noResults(searchQuery)}
-            </Text>
-          </View>
-        ) : (
-          <EmptyState onNewMessage={() => router.push('/(tabs)/contacts' as Parameters<typeof router.push>[0])} />
-        )
-      ) : (
-        <FlatList
-          data={filteredConversations}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + spacing.xxl }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
         />
-      )}
+
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onClear={() => setSearchQuery('')}
+        />
+
+        {filteredConversations.length === 0 ? (
+          <EmptyState onPress={navigateToContacts} />
+        ) : (
+          <FlatList
+            data={filteredConversations}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + spacing.xl,
+            }}
+          />
+        )}
+      </View>
     </View>
   )
 }
@@ -372,128 +351,66 @@ export default function ChatListScreen() {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    direction: 'ltr',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 0,
+  contentShell: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'center',
   },
-  headerTitle: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.bold,
-    letterSpacing: -0.3,
+  searchContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+  searchInputContainer: {
+    marginBottom: 0,
   },
-  headerIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchWrapper: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    paddingTop: spacing.xxs,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.sm,
-    height: 44,
+  searchInputWrapper: {
+    minHeight: 44,
   },
   searchInput: {
-    flex: 1,
-    fontSize: typography.fontSize.sm,
-    paddingVertical: 0,
+    fontSize: 14,
   },
-  conversationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-    gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  conversationTitle: {
+    fontSize: 16,
+    lineHeight: 20,
   },
-  rowContent: {
-    flex: 1,
-    gap: 3,
-  },
-  rowTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-  },
-  peerName: {
-    flex: 1,
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semiBold,
-    letterSpacing: -0.1,
+  conversationSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   timestamp: {
-    fontSize: typography.fontSize.xs,
+    ...typography.caption,
   },
-  rowBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
+  floatingBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
   },
-  lastMsg: {
-    flex: 1,
-    fontSize: typography.fontSize.sm,
-  },
-  emptyContainer: {
+  emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxl,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.xxxl,
+    gap: spacing.md,
   },
-  emptyIllustration: {
+  emptyIcon: {
     width: 88,
     height: 88,
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs,
   },
   emptyTitle: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.semiBold,
+    ...typography.h3,
     textAlign: 'center',
-    letterSpacing: -0.2,
   },
-  emptySub: {
-    fontSize: typography.fontSize.sm,
+  emptySubtitle: {
+    ...typography.body,
     textAlign: 'center',
-    lineHeight: typography.fontSize.sm * 1.5,
-  },
-  emptyBtn: {
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.pill,
-  },
-  emptyBtnText: {
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semiBold,
   },
   errorContainer: {
     flex: 1,
@@ -501,7 +418,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    fontSize: typography.fontSize.md,
+    ...typography.body,
   },
 })
-
