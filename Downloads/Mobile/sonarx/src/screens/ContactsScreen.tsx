@@ -186,33 +186,26 @@ function ContactRow({
         </View>
       }
       onPress={() => onPress(contact)}
-      height={64}
+      height={72}
       divider
       dividerInset={80}
+      style={{ backgroundColor: 'transparent' }}
       accessibilityLabel={`Open chat with ${contact.displayName}`}
       leading={
         <Avatar
           uri={contact.avatarUri}
           name={contact.displayName}
-          size="sm"
-          showOnlineBadge
+          size="md"
+          showOnlineBadge={isOnline}
           isOnline={isOnline}
         />
       }
       trailing={
-        <View style={styles.trailingRow}>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: isOnline ? colors.online : colors.textDisabled },
-            ]}
-          />
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={colors.textDisabled}
-          />
-        </View>
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={colors.textDisabled}
+        />
       }
     />
   )
@@ -449,16 +442,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 2,
-  },
-  trailingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
   emptyState: {
     flex: 1,

@@ -6,7 +6,7 @@ import React, {
   type ErrorInfo,
   type ReactNode,
 } from 'react'
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as ImagePicker from 'expo-image-picker'
@@ -90,49 +90,108 @@ function Section({
   )
 }
 
-function ThemeSegment({
-  mode,
+function ThemePicker({
   currentMode,
-  onPress,
+  onSelect,
 }: {
-  mode: 'light' | 'dark' | 'system'
   currentMode: 'light' | 'dark' | 'system'
-  onPress: () => void
+  onSelect: (mode: 'light' | 'dark' | 'system') => void
 }) {
   const { colors } = useTheme()
-  const active = mode === currentMode
-  const iconName =
-    mode === 'light' ? 'sunny' : mode === 'dark' ? 'moon' : 'phone-portrait-outline'
-  const label = mode[0].toUpperCase() + mode.slice(1)
+  const [visible, setVisible] = useState(false)
+
+  const options: { mode: 'light' | 'dark' | 'system'; icon: string; label: string }[] = [
+    { mode: 'light', icon: 'sunny-outline', label: 'Light' },
+    { mode: 'dark', icon: 'moon-outline', label: 'Dark' },
+    { mode: 'system', icon: 'phone-portrait-outline', label: 'System' },
+  ]
+
+  const currentLabel = options.find((o) => o.mode === currentMode)?.label ?? 'System'
 
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      accessibilityLabel={`Set ${mode} theme`}
-      style={[
-        styles.themeTab,
-        active && { backgroundColor: colors.primary },
-      ]}
-    >
-      <Ionicons
-        name={iconName as never}
-        size={16}
-        color={active ? colors.background : colors.textSecondary}
+    <>
+      <ListItem
+        title="Appearance"
+        subtitle={`${currentLabel} mode`}
+        trailing={
+          <View style={[styles.appearanceBadge, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
+            <Text style={[styles.appearanceBadgeText, { color: colors.accent, fontFamily: typography.fontFamily.medium }]}>
+              {currentLabel}
+            </Text>
+          </View>
+        }
+        onPress={() => setVisible(true)}
+        divider={false}
       />
-      <Text
-        style={[
-          styles.themeTabLabel,
-          {
-            color: active ? colors.background : colors.textSecondary,
-            fontFamily: active
-              ? typography.fontFamily.semiBold
-              : typography.fontFamily.regular,
-          },
-        ]}
+
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVisible(false)}
       >
-        {label}
-      </Text>
-    </AnimatedPressable>
+        <Pressable style={styles.modalBackdrop} onPress={() => setVisible(false)}>
+          <Pressable style={[styles.modalSheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.modalHandle} />
+            <Text style={[styles.modalTitle, { color: colors.textPrimary, fontFamily: typography.fontFamily.bold }]}>
+              Appearance
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
+              Choose how sonarx looks to you
+            </Text>
+
+            <View style={styles.pillRow}>
+              {options.map(({ mode, icon, label }) => {
+                const active = mode === currentMode
+                return (
+                  <AnimatedPressable
+                    key={mode}
+                    onPress={() => {
+                      onSelect(mode)
+                      setVisible(false)
+                    }}
+                    accessibilityLabel={`Set ${mode} theme`}
+                    style={[
+                      styles.pill,
+                      active
+                        ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                        : { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
+                    ]}
+                  >
+                    <Ionicons
+                      name={icon as never}
+                      size={20}
+                      color={active ? colors.background : colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.pillLabel,
+                        {
+                          color: active ? colors.background : colors.textPrimary,
+                          fontFamily: active
+                            ? typography.fontFamily.semiBold
+                            : typography.fontFamily.regular,
+                        },
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                    {active && (
+                      <Ionicons
+                        name="checkmark"
+                        size={16}
+                        color={colors.background}
+                        style={styles.pillCheck}
+                      />
+                    )}
+                  </AnimatedPressable>
+                )
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   )
 }
 
@@ -219,7 +278,7 @@ function SettingsScreenInner() {
           contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
         ]}
       >
-        <Header title="Settings" />
+        <Header title="Settings" subtitle="Manage your account and preferences" />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -374,11 +433,7 @@ function SettingsScreenInner() {
           </Section>
 
           <Section title="App">
-            <View style={[styles.themeTabContainer, { backgroundColor: colors.surfaceMuted }]}>
-              <ThemeSegment mode="light" currentMode={mode} onPress={() => setMode('light')} />
-              <ThemeSegment mode="dark" currentMode={mode} onPress={() => setMode('dark')} />
-              <ThemeSegment mode="system" currentMode={mode} onPress={() => setMode('system')} />
-            </View>
+            <ThemePicker currentMode={mode} onSelect={setMode} />
             <ListItem
               title="Language"
               subtitle="English — tap to change"
@@ -500,24 +555,68 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
   },
-  themeTabContainer: {
-    flexDirection: 'row',
-    borderRadius: borderRadius.md,
-    padding: 3,
-    margin: spacing.md,
+  appearanceBadge: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: borderRadius.full ?? 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
   },
-  themeTab: {
+  appearanceBadgeText: {
+    fontSize: typography.fontSize.sm,
+  },
+  modalBackdrop: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: borderRadius.xl ?? 24,
+    borderTopRightRadius: borderRadius.xl ?? 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(128,128,128,0.35)',
+    alignSelf: 'center',
+    marginBottom: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: spacing.xs,
+  },
+  modalSubtitle: {
+    fontSize: typography.fontSize.sm,
+    marginBottom: spacing.xl,
+  },
+  pillRow: {
     flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  pill: {
+    flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    borderRadius: borderRadius.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    position: 'relative',
   },
-  themeTabLabel: {
+  pillLabel: {
     fontSize: typography.fontSize.sm,
+  },
+  pillCheck: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
   },
   logoutButton: {
     marginTop: spacing.sm,

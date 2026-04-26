@@ -28,6 +28,7 @@ import { useTheme } from '@/src/theme/ThemeProvider'
 import { borderRadius, spacing, typography } from '@/src/theme/tokens'
 import { Strings } from '@/src/constants/strings'
 import { formatMessageTime } from '@/src/utils/formatTime'
+import SonarXLogo from '@/components/SonarXLogo'
 
 class ChatListErrorBoundary extends Component<
   { children: ReactNode },
@@ -310,6 +311,9 @@ function ChatListScreenInner() {
       >
         <Header
           title="sonarx"
+          leftAccessory={
+            <SonarXLogo size={33} />
+          }
           rightActions={[
             {
               icon: showSearch ? 'close-outline' : 'search-outline',

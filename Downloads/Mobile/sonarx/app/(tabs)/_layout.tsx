@@ -1,13 +1,12 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Feather from "@expo/vector-icons/Feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { usePresenceBroadcaster } from "@/lib/hooks/usePresenceBroadcaster";
 import { useGunMessaging } from "@/lib/hooks/useGunMessaging";
 import { useTheme } from "@/src/theme/ThemeProvider";
-import { typography } from "@/src/theme/tokens";
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -24,17 +23,13 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.tabBarActive,
         tabBarInactiveTintColor: colors.tabBarInactive,
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: colors.tabBar,
           borderTopWidth: 0,
-          height: 65 + insets.bottom,
-          paddingBottom: insets.bottom + 11,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: {
-          fontSize: typography.fontSize.xs,
-          fontFamily: typography.fontFamily.medium,
-          marginTop: 2,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 8,
+          paddingTop: 8,
         },
         headerShown: false,
       }}
@@ -50,9 +45,9 @@ export default function TabLayout() {
         options={{
           title: "Chats",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "chatbubble" : "chatbubble-outline"}
-              size={22}
+            <Feather
+              name="message-circle"
+              size={focused ? 22 : 20}
               color={color}
             />
           ),
@@ -63,9 +58,9 @@ export default function TabLayout() {
         options={{
           title: "Community",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "globe" : "globe-outline"}
-              size={22}
+            <Feather
+              name="globe"
+              size={focused ? 22 : 20}
               color={color}
             />
           ),
@@ -76,9 +71,9 @@ export default function TabLayout() {
         options={{
           title: "Find",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "compass" : "compass-outline"}
-              size={22}
+            <Feather
+              name="compass"
+              size={focused ? 22 : 20}
               color={color}
             />
           ),
@@ -89,9 +84,9 @@ export default function TabLayout() {
         options={{
           title: "Contacts",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "people" : "people-outline"}
-              size={22}
+            <Feather
+              name="users"
+              size={focused ? 22 : 20}
               color={color}
             />
           ),
@@ -102,9 +97,9 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "settings" : "settings-outline"}
-              size={22}
+            <Feather
+              name="settings"
+              size={focused ? 22 : 20}
               color={color}
             />
           ),

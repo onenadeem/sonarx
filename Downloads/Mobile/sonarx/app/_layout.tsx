@@ -13,10 +13,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { MigrationsProvider } from "@/db/migrations";
 import { DatabaseProvider } from "@/lib/hooks/useDb";
 import { loadIdentity } from "@/lib/identity";
+import SonarXLogo from "@/components/SonarXLogo";
 import {
   DefaultTheme,
   DarkTheme,
@@ -401,14 +401,26 @@ function RootLayoutThemedNav({ isReady }: { isReady: boolean }) {
           <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
           <Stack.Screen name="chat/[peerId]" options={{ headerShown: false }} />
           <Stack.Screen name="call/[peerId]" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen
+            name="modal"
+            options={{
+              presentation: "transparentModal",
+              animation: "slide_from_bottom",
+              contentStyle: { backgroundColor: "transparent" },
+            }}
+          />
         </Stack>
       </NavigationThemeProvider>
 
-      {/* Loading overlay — shown until fonts & identity are ready */}
+      {/* Branded splash overlay — shown until fonts & identity are ready */}
       {!isReady && (
-        <View style={rootStyles.loadingOverlay}>
-          <LoadingScreen message="Loading..." />
+        <View
+          style={[
+            rootStyles.loadingOverlay,
+            { backgroundColor: colors.background },
+          ]}
+        >
+          <SonarXLogo size={88} />
         </View>
       )}
 
