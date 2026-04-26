@@ -1,6 +1,6 @@
 export const Strings = {
   app: {
-    name: 'SonarX',
+    name: 'Shaik',
     tagline: 'Encrypted P2P Chat',
   },
   chat: {

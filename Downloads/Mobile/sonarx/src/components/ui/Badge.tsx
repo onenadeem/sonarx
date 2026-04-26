@@ -13,6 +13,7 @@ import { typography, spacing, borderRadius } from '@/src/theme/tokens'
 interface BadgeProps {
   count: number
   max?: number
+  tone?: 'accent' | 'error'
   style?: StyleProp<ViewStyle>
   textStyle?: StyleProp<TextStyle>
   animate?: boolean
@@ -21,6 +22,7 @@ interface BadgeProps {
 export default function Badge({
   count,
   max = 99,
+  tone = 'accent',
   style,
   textStyle,
 }: BadgeProps) {
@@ -34,7 +36,7 @@ export default function Badge({
     <View
       style={[
         styles.badge,
-        { backgroundColor: colors.accent },
+        { backgroundColor: tone === 'error' ? colors.danger : colors.accent },
         style,
       ]}
     >
@@ -47,17 +49,17 @@ export default function Badge({
 
 const styles = StyleSheet.create({
   badge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: borderRadius.pill,
-    paddingHorizontal: spacing.xxs,
+    minWidth: 20,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    fontSize: typography.fontSize.xs,
+    fontSize: 10,
     fontFamily: typography.fontFamily.semiBold,
     fontWeight: typography.fontWeight.semiBold,
-    lineHeight: 14,
+    lineHeight: 12,
   },
 })

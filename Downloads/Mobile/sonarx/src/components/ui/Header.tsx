@@ -56,7 +56,6 @@ export default function Header({
         {
           height,
           backgroundColor: colors.headerBackground,
-          borderBottomColor: colors.border,
         },
         style,
       ]}
@@ -121,7 +120,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   leftSection: {
     flexDirection: 'row',

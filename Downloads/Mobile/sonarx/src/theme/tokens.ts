@@ -1,156 +1,23 @@
+import { borderRadius } from '@/constants/borderRadius'
+import { elevation } from '@/constants/elevation'
+import { spacing } from '@/constants/spacing'
+import { typography } from '@/constants/typography'
+import { darkTheme, lightTheme } from './palette'
+
 export const lightColors = {
-  background: '#ffffff',
-  surface: '#fafafa',
-  surfaceElevated: '#f4f4f5',
-  surfaceMuted: '#f4f4f5',
-  chatBackground: '#f7f7f8',
-  textPrimary: '#09090b',
-  textSecondary: '#71717a',
-  textDisabled: '#a1a1aa',
-  accent: '#18181b',
-  accentMuted: '#f4f4f5',
-  accentForeground: '#fafafa',
-  border: '#e4e4e7',
-  borderMuted: '#f4f4f5',
-  danger: '#ef4444',
-  dangerMuted: '#fef2f2',
-  success: '#22c55e',
-  successMuted: '#f0fdf4',
-  warning: '#f59e0b',
-  warningMuted: '#fffbeb',
-  bubble: {
-    outgoing: '#18181b',
-    outgoingText: '#fafafa',
-    incoming: '#f0f0f2',
-    incomingText: '#09090b',
-    incomingBorder: '#e4e4e7',
-  },
-  online: '#22c55e',
-  typing: '#71717a',
-  overlay: 'rgba(0,0,0,0.4)',
-  inputBackground: '#f4f4f5',
-  tabBar: '#ffffff',
-  tabBarActive: '#09090b',
-  tabBarInactive: '#a1a1aa',
-  headerBackground: '#ffffff',
-  statusBarStyle: 'dark' as 'light' | 'dark',
+  ...lightTheme,
+  textDisabled: lightTheme.disabled,
+  accentMuted: lightTheme.secondary,
 }
 
 export const darkColors = {
-  background: '#09090b',
-  surface: '#18181b',
-  surfaceElevated: '#27272a',
-  surfaceMuted: '#18181b',
-  chatBackground: '#0d0d0f',
-  textPrimary: '#fafafa',
-  textSecondary: '#a1a1aa',
-  textDisabled: '#71717a',
-  accent: '#fafafa',
-  accentMuted: '#1f1f23',
-  accentForeground: '#09090b',
-  border: '#27272a',
-  borderMuted: '#1f1f23',
-  danger: '#f87171',
-  dangerMuted: '#1f0f0f',
-  success: '#4ade80',
-  successMuted: '#052e16',
-  warning: '#fbbf24',
-  warningMuted: '#1c1400',
-  bubble: {
-    outgoing: '#2563eb',
-    outgoingText: '#ffffff',
-    incoming: '#2a2a2f',
-    incomingText: '#f4f4f5',
-    incomingBorder: '#3f3f46',
-  },
-  online: '#4ade80',
-  typing: '#a1a1aa',
-  overlay: 'rgba(0,0,0,0.7)',
-  inputBackground: '#18181b',
-  tabBar: '#0d0d10',
-  tabBarActive: '#fafafa',
-  tabBarInactive: '#71717a',
-  headerBackground: '#09090b',
-  statusBarStyle: 'light' as 'light' | 'dark',
+  ...darkTheme,
+  textDisabled: darkTheme.disabled,
+  accentMuted: darkTheme.secondary,
 }
 
-export type ColorTokens = typeof lightColors
+export type ColorTokens = typeof lightColors | typeof darkColors
 
-export const typography = {
-  fontFamily: {
-    regular: 'Geist-Regular',
-    medium: 'Geist-Medium',
-    semiBold: 'Geist-SemiBold',
-    bold: 'Geist-Bold',
-  },
-  fontSize: {
-    xs: 12,
-    sm: 14,
-    md: 16,
-    lg: 17,
-    xl: 20,
-    xxl: 24,
-    xxxl: 30,
-  },
-  fontWeight: {
-    regular: '400' as const,
-    medium: '500' as const,
-    semiBold: '600' as const,
-    bold: '700' as const,
-  },
-  lineHeight: {
-    tight: 1.25,
-    normal: 1.5,
-    relaxed: 1.75,
-  },
-}
-
-export const spacing = {
-  xxs: 4,
-  xs: 8,
-  sm: 12,
-  md: 16,
-  lg: 20,
-  xl: 24,
-  xxl: 32,
-  xxxl: 40,
-  huge: 48,
-}
-
-export const borderRadius = {
-  sm: 6,
-  md: 12,
-  lg: 20,
-  pill: 999,
-}
-
-export const shadows = {
-  sm: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  md: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  lg: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  xl: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-}
+export { spacing, typography, borderRadius }
+export const shadows = elevation
+export const elevationTokens = elevation

@@ -117,6 +117,7 @@ function ConversationRow({
       height={72}
       divider
       dividerInset={80}
+      style={{ backgroundColor: 'transparent' }}
       accessibilityLabel={`Open chat with ${peerName}`}
       leading={
         <View>
@@ -124,8 +125,7 @@ function ConversationRow({
             uri={item.peer?.avatarUri}
             name={peerName}
             size="md"
-            showOnlineBadge
-            isOnline={isOnline}
+            showOnlineBadge={false}
           />
           {hasUnread ? (
             <Badge count={unreadCount} style={styles.floatingBadge} />
@@ -221,6 +221,7 @@ function ChatListScreenInner() {
   const router = useRouter()
   const { isDesktop, isTablet } = useResponsive()
   const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
 
   const { data: liveConversations } = useLiveQuery(
     db.query.conversations.findMany({
@@ -308,21 +309,28 @@ function ChatListScreenInner() {
         ]}
       >
         <Header
-          title="Shaik"
+          title="sonarx"
           rightActions={[
             {
-              icon: 'add-outline',
-              onPress: navigateToContacts,
-              accessibilityLabel: 'Add chat',
+              icon: showSearch ? 'close-outline' : 'search-outline',
+              onPress: () => {
+                if (showSearch) {
+                  setSearchQuery('')
+                }
+                setShowSearch((prev) => !prev)
+              },
+              accessibilityLabel: showSearch ? 'Close search' : 'Search chats',
             },
           ]}
         />
 
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onClear={() => setSearchQuery('')}
-        />
+        {showSearch ? (
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery('')}
+          />
+        ) : null}
 
         {filteredConversations.length === 0 ? (
           <EmptyState onPress={navigateToContacts} />

@@ -303,12 +303,10 @@ function RootLayoutContent() {
   // Fonts — Geist fonts will load automatically when added to assets/fonts/
   // Only SpaceMono is currently available; Geist falls back to system font.
   const [fontsLoaded, fontError] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    // Uncomment when Geist font files are added to assets/fonts/:
-    // "Geist-Regular": require("../assets/fonts/Geist-Regular.ttf"),
-    // "Geist-Medium": require("../assets/fonts/Geist-Medium.ttf"),
-    // "Geist-SemiBold": require("../assets/fonts/Geist-SemiBold.ttf"),
-    // "Geist-Bold": require("../assets/fonts/Geist-Bold.ttf"),
+    "Geist-Regular": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
+    "Geist-Medium": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
+    "Geist-SemiBold": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
+    "Geist-Bold": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
   });
 
   const [isIdentityChecked, setIsIdentityChecked] = useState(false);

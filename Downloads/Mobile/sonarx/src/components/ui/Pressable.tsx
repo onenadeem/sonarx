@@ -62,7 +62,11 @@ export default function AnimatedPressable({
       disabled={disabled}
       hitSlop={hitSlop}
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [styles.pressable, pressed && styles.pressed, style]}
+      style={({ pressed }) => [
+        styles.pressable,
+        pressed && !disabled && styles.pressed,
+        style,
+      ]}
     >
       {children}
     </Pressable>
@@ -72,6 +76,7 @@ export default function AnimatedPressable({
 const styles = StyleSheet.create({
   pressable: {},
   pressed: {
-    opacity: 0.6,
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
   },
 })
