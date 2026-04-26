@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ScrollView,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -58,92 +59,185 @@ export default function AddContactModal() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={styles.root}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} style={styles.cancelBtn} hitSlop={8}>
-          <Text style={[styles.cancelText, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
-            Cancel
-          </Text>
-        </Pressable>
-        <Text style={[styles.title, { color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold }]}>
-          New Contact
-        </Text>
-        <Pressable
-          onPress={handleSave}
-          disabled={!canSave || saving}
-          style={styles.saveBtn}
-          hitSlop={8}
+      {/* Backdrop — tap to dismiss */}
+      <Pressable
+        style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+        onPress={() => router.back()}
+      />
+
+      {/* Sheet */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}
+      >
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.background,
+              paddingBottom: Math.max(insets.bottom, spacing.xl),
+            },
+          ]}
         >
-          <Text style={[
-            styles.saveText,
-            { fontFamily: typography.fontFamily.semiBold },
-            canSave ? { color: colors.accent } : { color: colors.textDisabled },
-          ]}>
-            {saving ? 'Saving…' : 'Save'}
-          </Text>
-        </Pressable>
-      </View>
+          {/* Handle */}
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-      <View style={[styles.form, { paddingBottom: insets.bottom + spacing.xl }]}>
-        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceMuted }]}>
-          <Ionicons name="person" size={40} color={colors.textDisabled} />
-        </View>
+          {/* Sheet header */}
+          <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.headerBtn}
+              hitSlop={10}
+              accessibilityLabel="Cancel"
+            >
+              <Text
+                style={[
+                  styles.headerBtnText,
+                  { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
+                ]}
+              >
+                Cancel
+              </Text>
+            </Pressable>
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={[styles.field, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
-              Name
+            <Text
+              style={[
+                styles.sheetTitle,
+                { color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold },
+              ]}
+            >
+              New Contact
             </Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Full name"
-              placeholderTextColor={colors.textDisabled}
-              style={[styles.fieldInput, { color: colors.textPrimary, fontFamily: typography.fontFamily.regular }]}
-              autoFocus
-              returnKeyType="next"
-            />
+
+            <Pressable
+              onPress={handleSave}
+              disabled={!canSave || saving}
+              style={styles.headerBtn}
+              hitSlop={10}
+              accessibilityLabel="Save contact"
+            >
+              <Text
+                style={[
+                  styles.headerBtnText,
+                  {
+                    fontFamily: typography.fontFamily.semiBold,
+                    color: canSave ? colors.accent : colors.textDisabled,
+                  },
+                ]}
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </Text>
+            </Pressable>
           </View>
-          <View style={styles.field}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
-              Phone
+
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.body}
+          >
+            {/* Avatar placeholder */}
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceMuted }]}>
+              <Ionicons name="person" size={36} color={colors.textDisabled} />
+            </View>
+
+            {/* Form fields */}
+            <View
+              style={[
+                styles.fieldGroup,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <View style={[styles.field, { borderBottomColor: colors.border }]}>
+                <Text
+                  style={[
+                    styles.fieldLabel,
+                    { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
+                  ]}
+                >
+                  Name
+                </Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Full name"
+                  placeholderTextColor={colors.textDisabled}
+                  style={[
+                    styles.fieldInput,
+                    { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
+                  ]}
+                  autoFocus
+                  returnKeyType="next"
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text
+                  style={[
+                    styles.fieldLabel,
+                    { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
+                  ]}
+                >
+                  Phone
+                </Text>
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="+1 (555) 000-0000"
+                  placeholderTextColor={colors.textDisabled}
+                  style={[
+                    styles.fieldInput,
+                    { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
+                  ]}
+                  keyboardType="phone-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSave}
+                />
+              </View>
+            </View>
+
+            <Text
+              style={[
+                styles.hint,
+                { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
+              ]}
+            >
+              The contact will be saved locally on your device.
             </Text>
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="+1 (555) 000-0000"
-              placeholderTextColor={colors.textDisabled}
-              style={[styles.fieldInput, { color: colors.textPrimary, fontFamily: typography.fontFamily.regular }]}
-              keyboardType="phone-pad"
-              returnKeyType="done"
-              onSubmitEditing={handleSave}
-            />
-          </View>
+          </ScrollView>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  keyboardView: {
+    // Sits above the backdrop
+  },
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
   },
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
-  header: {
+  sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -151,22 +245,28 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  cancelBtn: { minWidth: 60 },
-  saveBtn: { minWidth: 60, alignItems: 'flex-end' },
-  cancelText: { fontSize: 16 },
-  title: { fontSize: 17 },
-  saveText: { fontSize: 16 },
-  form: {
+  headerBtn: {
+    minWidth: 64,
+  },
+  headerBtnText: {
+    fontSize: 16,
+  },
+  sheetTitle: {
+    fontSize: 17,
+    textAlign: 'center',
     flex: 1,
-    paddingHorizontal: spacing.md,
+  },
+  body: {
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
     gap: spacing.xl,
     alignItems: 'stretch',
   },
   avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
@@ -183,15 +283,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: spacing.sm,
-    minHeight: 48,
+    minHeight: 50,
   },
   fieldLabel: {
-    width: 60,
+    width: 56,
     fontSize: 15,
   },
   fieldInput: {
     flex: 1,
     fontSize: 15,
     paddingVertical: 0,
+  },
+  hint: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 })
