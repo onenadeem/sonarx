@@ -1,42 +1,47 @@
-// ─── Claude-inspired warm design palette ──────────────────────────────────────
+// ─── SonarX palette ───────────────────────────────────────────────────────────
 
 export const extractedLightPalette = {
-  // Warm near-black (deep charcoal with hint of brown)
-  primary: '#1A1917',
-  // Warm secondary surface (light cream)
-  secondary: '#F0ECE6',
-  // Signature warm orange / terra-cotta (Claude's brand accent)
-  accent: '#D4722A',
-  // Warm cream background
-  background: '#FAF9F7',
-  // Pure white surface for cards and inputs
+  // Near-black warm brown — primary text / icon color
+  primary: '#25211E',
+  // Soft warm cream — secondary surface
+  secondary: '#EDE8DF',
+  // SonarX signature blue accent
+  accent: '#B4CEE7',
+  // Off-white warm base background
+  background: '#FAF9F4',
+  // Pure white card / input surface
   surface: '#FFFFFF',
-  textPrimary: '#1A1917',
-  // Warm medium gray
-  textSecondary: '#857E75',
-  // Warm light border
-  border: '#E5E1DB',
+  textPrimary: '#25211E',
+  // Muted warm mid-tone
+  textSecondary: '#7A736A',
+  // Subtle warm border
+  border: '#E0DAD1',
   success: '#22c55e',
   error: '#ef4444',
   warning: '#f59e0b',
-  disabled: '#C4BFB9',
+  disabled: '#BCB6AE',
 } as const
 
 export const extractedDarkPalette = {
-  primary: '#F5F2EC',
-  secondary: '#2E2B27',
-  // Slightly brighter orange for dark mode
-  accent: '#E0834A',
-  // Very dark warm brown-black
-  background: '#1A1917',
-  surface: '#252220',
-  textPrimary: '#F5F2EC',
-  textSecondary: '#9E9891',
-  border: '#3A3733',
+  // Warm off-white — primary text / icon color
+  primary: '#FAF9F4',
+  // Dark warm surface
+  secondary: '#302C29',
+  // Slightly brighter blue for dark mode
+  accent: '#C8DDF0',
+  // Deep warm brown-black base background
+  background: '#25211E',
+  // One step lighter than background for cards / inputs
+  surface: '#302C29',
+  textPrimary: '#FAF9F4',
+  // Muted warm gray
+  textSecondary: '#9E9790',
+  // Subtle dark border
+  border: '#3D3835',
   success: '#4ade80',
   error: '#f87171',
   warning: '#fbbf24',
-  disabled: '#6E6A64',
+  disabled: '#6A6560',
 } as const
 
 export const extractedPalette = {
@@ -47,65 +52,62 @@ export const extractedPalette = {
 export const lightTheme = {
   ...extractedLightPalette,
   primaryForeground: '#FFFFFF',
-  secondaryForeground: '#1A1917',
-  accentForeground: '#FFFFFF',
+  secondaryForeground: '#25211E',
+  accentForeground: '#25211E',
   surfaceElevated: '#FFFFFF',
-  surfaceMuted: '#F0ECE6',
-  // Slightly darker warm cream for the chat messages area
-  chatBackground: '#EDE9E2',
-  borderMuted: '#EDE9E4',
+  surfaceMuted: '#EDE8DF',
+  chatBackground: '#E7E1D7',
+  borderMuted: '#E8E2D9',
   danger: extractedLightPalette.error,
   dangerMuted: '#FEF2F2',
   successMuted: '#F0FDF4',
   warningMuted: '#FFFBEB',
   bubble: {
-    outgoing: '#D4722A',
-    outgoingText: '#FFFFFF',
+    outgoing: '#B4CEE7',
+    outgoingText: '#25211E',
     incoming: '#FFFFFF',
-    incomingText: '#1A1917',
-    incomingBorder: '#E5E1DB',
+    incomingText: '#25211E',
+    incomingBorder: '#E0DAD1',
   },
   online: extractedLightPalette.success,
   typing: extractedLightPalette.textSecondary,
-  overlay: 'rgba(26, 25, 23, 0.28)',
+  overlay: 'rgba(37, 33, 30, 0.28)',
   inputBackground: '#FFFFFF',
-  tabBar: '#FFFFFF',
-  tabBarActive: '#D4722A',
-  tabBarInactive: '#C4BFB9',
-  // Light header — warm cream, blends with body
-  headerBackground: '#FAF9F7',
-  // Dark status-bar icons (light header needs dark icons)
+  tabBar: '#FAF9F4',
+  tabBarActive: '#7AAEC8',
+  tabBarInactive: '#BCB6AE',
+  headerBackground: '#FAF9F4',
   statusBarStyle: 'dark' as const,
 } as const
 
 export const darkTheme = {
   ...extractedDarkPalette,
-  primaryForeground: '#1A1917',
-  secondaryForeground: '#F5F2EC',
-  accentForeground: '#FFFFFF',
-  surfaceElevated: '#2E2B27',
-  surfaceMuted: '#2E2B27',
-  chatBackground: '#141210',
-  borderMuted: '#302D2A',
+  primaryForeground: '#25211E',
+  secondaryForeground: '#FAF9F4',
+  accentForeground: '#25211E',
+  surfaceElevated: '#3A3633',
+  surfaceMuted: '#302C29',
+  chatBackground: '#1C1917',
+  borderMuted: '#312D2A',
   danger: extractedDarkPalette.error,
   dangerMuted: '#2F1517',
   successMuted: '#052E16',
   warningMuted: '#2A2209',
   bubble: {
-    outgoing: '#E0834A',
-    outgoingText: '#FFFFFF',
-    incoming: '#2E2B27',
-    incomingText: '#F5F2EC',
-    incomingBorder: '#3A3733',
+    outgoing: '#C8DDF0',
+    outgoingText: '#25211E',
+    incoming: '#302C29',
+    incomingText: '#FAF9F4',
+    incomingBorder: '#3D3835',
   },
   online: extractedDarkPalette.success,
   typing: extractedDarkPalette.textSecondary,
   overlay: 'rgba(0, 0, 0, 0.56)',
-  inputBackground: '#252220',
-  tabBar: '#1A1917',
-  tabBarActive: '#E0834A',
-  tabBarInactive: '#6E6A64',
-  headerBackground: '#1A1917',
+  inputBackground: '#302C29',
+  tabBar: '#25211E',
+  tabBarActive: '#B4CEE7',
+  tabBarInactive: '#6A6560',
+  headerBackground: '#25211E',
   statusBarStyle: 'light' as const,
 } as const
 

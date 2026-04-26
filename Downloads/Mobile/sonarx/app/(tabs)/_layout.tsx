@@ -33,6 +33,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: typography.fontSize.xs,
+          fontFamily: typography.fontFamily.medium,
           marginTop: 2,
         },
         headerShown: false,
@@ -51,6 +52,19 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "chatbubble" : "chatbubble-outline"}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: "Community",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "globe" : "globe-outline"}
               size={22}
               color={color}
             />

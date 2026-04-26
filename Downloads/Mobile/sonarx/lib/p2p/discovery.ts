@@ -62,11 +62,8 @@ export async function announcePresence(
 ): Promise<void> {
   const payload = await createPresencePayload(identity, signingSecretKey);
   const path = `${PRESENCE_PATH}/${identity.phoneNumber}`;
-  console.log("[announcePresence] Writing to path:", path);
-
   const presenceData = payload as unknown as Record<string, unknown>;
   await writeToGun(path, presenceData, 60 * 2);
-  console.log("[announcePresence] Successfully announced to:", path);
 }
 
 export function subscribeToPeerPresence(

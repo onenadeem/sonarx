@@ -79,7 +79,7 @@ export default function ListItem({
         </View>
 
         {subtitle ? (
-          typeof subtitle === 'string' ? (
+          typeof subtitle === 'string' || typeof subtitle === 'number' ? (
             <Text
               style={[
                 styles.subtitle,
@@ -91,7 +91,7 @@ export default function ListItem({
               ]}
               numberOfLines={1}
             >
-              {subtitle}
+              {String(subtitle)}
             </Text>
           ) : (
             <View>{subtitle}</View>

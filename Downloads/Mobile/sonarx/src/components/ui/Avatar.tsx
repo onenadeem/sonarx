@@ -28,7 +28,7 @@ const SIZE_MAP = {
   xl: 64,
 } as const
 
-const FALLBACK_COLORS = ['#D4722A', '#C06020', '#B85030', '#A84820', '#E09050']
+const FALLBACK_COLORS = ['#7AAEC8', '#5B9AB8', '#4A8BAA', '#3D7A9A', '#6BA0BC']
 
 function getColorFromName(name: string): string {
   let hash = 0

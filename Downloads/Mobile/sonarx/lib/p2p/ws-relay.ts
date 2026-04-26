@@ -59,13 +59,11 @@ class WsRelayClient {
     if (!this.url || !this.myId) return;
     this._clearReconnect();
 
-    console.log("[WsRelay] Connecting to", this.url);
     const ws = new WebSocket(this.url);
     this.ws = ws;
 
     ws.onopen = () => {
       this.connected = true;
-      console.log("[WsRelay] ✅ Connected");
       // Subscribe to our inbox
       this._send({ type: "subscribe", inbox: this.myId });
     };
@@ -89,13 +87,12 @@ class WsRelayClient {
       }
     };
 
-    ws.onerror = (e) => {
-      console.warn("[WsRelay] Error:", (e as any)?.message ?? "unknown");
+    ws.onerror = (_e) => {
+      // connection errors are expected when local relay is not running
     };
 
     ws.onclose = () => {
       this.connected = false;
-      console.log("[WsRelay] Disconnected — reconnecting in 4s");
       this._scheduleReconnect();
     };
   }
@@ -130,18 +127,15 @@ class WsRelayClient {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         this.ackListeners.delete(id);
-        console.warn("[WsRelay] Send timeout for:", id);
         resolve(); // resolve anyway — retry is future work
       }, 6000);
 
       this.ackListeners.set(id, () => {
         clearTimeout(timer);
-        console.log("[WsRelay] ✅ Acked:", id);
         resolve();
       });
 
       if (!this.connected) {
-        console.warn("[WsRelay] Not connected — message will be lost:", id);
         // Don't queue here; the server queues for the recipient, not the sender
         clearTimeout(timer);
         this.ackListeners.delete(id);

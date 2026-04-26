@@ -26,8 +26,6 @@ function buildPeers(): string[] {
       const ip = debuggerHost.split(":")[0];
       const localRelay = `http://${ip}:8765/gun`;
       peers.push(localRelay);
-      console.log("[Gun] Dev relay:", localRelay);
-      console.log("[Gun] Run 'npm run relay' on your dev machine if not already running.");
     }
   }
 
@@ -47,20 +45,13 @@ let gunInstance: ReturnType<typeof Gun> | null = null;
 export function getGun(): ReturnType<typeof Gun> {
   if (!gunInstance) {
     const peers = buildPeers();
-    console.log("[Gun] Initializing with peers:", peers);
     gunInstance = Gun({
       peers,
       localStorage: false,
       radisk: false,
     });
 
-    // Log which peers actually connect
-    (gunInstance as any).on("hi", (peer: any) => {
-      console.log("[Gun] ✅ Connected to peer:", peer?.url ?? peer?.id ?? "unknown");
-    });
-    (gunInstance as any).on("bye", (peer: any) => {
-      console.log("[Gun] ❌ Disconnected from peer:", peer?.url ?? peer?.id ?? "unknown");
-    });
+
   }
   return gunInstance;
 }
@@ -76,8 +67,6 @@ export async function writeToGun(
 ): Promise<void> {
   const gun = getGun();
   const node = gun.get(path);
-  console.log("[writeToGun] Writing to:", path);
-
   const dataWithExpiry = {
     ...data,
     expiresAt: Date.now() + ttlSeconds * 1000,
@@ -86,17 +75,14 @@ export async function writeToGun(
   return new Promise((resolve, reject) => {
     // Without relay file-storage, ack can arrive late — cap the wait at 6s
     const timer = setTimeout(() => {
-      console.warn("[writeToGun] Ack timeout, assuming success at:", path);
       resolve();
     }, 6000);
 
     node.put(dataWithExpiry, (ack: any) => {
       clearTimeout(timer);
       if (ack.err) {
-        console.error("[writeToGun] Error:", ack.err);
         reject(ack.err);
       } else {
-        console.log("[writeToGun] ✅ Acked at:", path);
         resolve();
       }
     });

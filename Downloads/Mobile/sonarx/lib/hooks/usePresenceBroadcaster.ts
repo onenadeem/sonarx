@@ -22,24 +22,11 @@ export function usePresenceBroadcaster() {
         const signingKeyStr = await SecureStore.getItemAsync(
           SIGNING_KEY_STORE_KEY,
         );
-        if (!signingKeyStr) {
-          console.log("[PresenceBroadcaster] No signing key found");
-          return;
-        }
+        if (!signingKeyStr) return;
 
         const signingSecretKey = decodeBase64(signingKeyStr);
-        console.log(
-          "[PresenceBroadcaster] Announcing presence for:",
-          identity.phoneNumber,
-        );
-        // Cast identity to the required type
         await announcePresence(identity as any, signingSecretKey);
-        console.log("[PresenceBroadcaster] Presence announced successfully");
-      } catch (err) {
-        console.error(
-          "[PresenceBroadcaster] Failed to announce presence:",
-          err,
-        );
+      } catch (_err) {
       }
     };
 

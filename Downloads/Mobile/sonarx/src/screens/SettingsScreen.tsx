@@ -13,7 +13,6 @@ import * as ImagePicker from 'expo-image-picker'
 import Constants from 'expo-constants'
 import Avatar from '@/src/components/ui/Avatar'
 import Button from '@/src/components/ui/Button'
-import Card from '@/src/components/ui/Card'
 import Header from '@/src/components/ui/Header'
 import ListItem from '@/src/components/ui/ListItem'
 import TextInput from '@/src/components/ui/TextInput'
@@ -75,7 +74,18 @@ function Section({
       >
         {title.toUpperCase()}
       </Text>
-      <Card padding={0}>{children}</Card>
+      <View
+        style={[
+          styles.sectionBody,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderRadius: borderRadius.lg,
+          },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   )
 }
@@ -91,21 +101,38 @@ function ThemeSegment({
 }) {
   const { colors } = useTheme()
   const active = mode === currentMode
+  const iconName =
+    mode === 'light' ? 'sunny' : mode === 'dark' ? 'moon' : 'phone-portrait-outline'
+  const label = mode[0].toUpperCase() + mode.slice(1)
 
   return (
-    <Button
-      text={mode[0].toUpperCase() + mode.slice(1)}
+    <AnimatedPressable
       onPress={onPress}
-      variant={active ? 'primary' : 'secondary'}
-      size="sm"
+      accessibilityLabel={`Set ${mode} theme`}
       style={[
-        styles.themeButton,
-        {
-          backgroundColor: active ? colors.accent : colors.surfaceElevated,
-        },
+        styles.themeTab,
+        active && { backgroundColor: colors.primary },
       ]}
-      fullWidth
-    />
+    >
+      <Ionicons
+        name={iconName as never}
+        size={16}
+        color={active ? colors.background : colors.textSecondary}
+      />
+      <Text
+        style={[
+          styles.themeTabLabel,
+          {
+            color: active ? colors.background : colors.textSecondary,
+            fontFamily: active
+              ? typography.fontFamily.semiBold
+              : typography.fontFamily.regular,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </AnimatedPressable>
   )
 }
 
@@ -128,7 +155,7 @@ function SettingsScreenInner() {
   const [displayName, setDisplayName] = useState(identity?.displayName ?? '')
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0'
-  const buildNumber = Constants.nativeBuildVersion ?? '42'
+  const buildNumber = String(Constants.nativeBuildVersion ?? '42')
   const contentMaxWidth = isDesktop ? 500 : undefined
 
   const handleAvatarPress = useCallback(async () => {
@@ -202,7 +229,7 @@ function SettingsScreenInner() {
             paddingTop: spacing.lg,
           }}
         >
-          <Card style={styles.profileCard}>
+          <View style={styles.profileCard}>
             <AnimatedPressable
               onPress={handleAvatarPress}
               style={styles.avatarButton}
@@ -257,19 +284,22 @@ function SettingsScreenInner() {
               onPress={editingName ? handleSaveName : () => setEditingName(true)}
               style={styles.editProfileButton}
             />
-          </Card>
+          </View>
 
           <Section title="Account">
             <ListItem
               title="Change phone"
+              subtitle="Update your linked phone number"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
               title="Verify phone"
+              subtitle="Confirm your number is reachable"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
               title="Delete account"
+              subtitle="Permanently remove all your data"
               titleStyle={{ color: colors.danger }}
               divider={false}
             />
@@ -278,6 +308,7 @@ function SettingsScreenInner() {
           <Section title="Notifications">
             <ListItem
               title="Message notifications"
+              subtitle="Get alerted when new messages arrive"
               trailing={
                 <ToggleSwitch
                   value={notificationsEnabled}
@@ -287,10 +318,12 @@ function SettingsScreenInner() {
             />
             <ListItem
               title="Sound"
+              subtitle="Play a sound for new messages"
               trailing={<ToggleSwitch value={soundEnabled} onValueChange={setSoundEnabled} />}
             />
             <ListItem
               title="Vibration"
+              subtitle="Vibrate on incoming messages"
               trailing={
                 <ToggleSwitch
                   value={vibrationEnabled}
@@ -300,6 +333,7 @@ function SettingsScreenInner() {
             />
             <ListItem
               title="Show previews"
+              subtitle="Display message content in notifications"
               trailing={
                 <ToggleSwitch
                   value={messagePreview}
@@ -313,19 +347,22 @@ function SettingsScreenInner() {
           <Section title="Privacy & Security">
             <ListItem
               title="Encryption"
-              subtitle="End-to-End"
+              subtitle="All messages are end-to-end encrypted"
               trailing={<Ionicons name="lock-closed-outline" size={18} color={colors.accent} />}
             />
             <ListItem
               title="Blocked contacts"
+              subtitle="Manage people you've blocked"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
               title="Data deletion"
+              subtitle="Request removal of your stored data"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
-              title="Two-factor"
+              title="Two-factor authentication"
+              subtitle="Add an extra layer of login security"
               trailing={
                 <ToggleSwitch
                   value={twoFactorEnabled}
@@ -337,14 +374,14 @@ function SettingsScreenInner() {
           </Section>
 
           <Section title="App">
-            <View style={styles.themeRow}>
+            <View style={[styles.themeTabContainer, { backgroundColor: colors.surfaceMuted }]}>
               <ThemeSegment mode="light" currentMode={mode} onPress={() => setMode('light')} />
               <ThemeSegment mode="dark" currentMode={mode} onPress={() => setMode('dark')} />
               <ThemeSegment mode="system" currentMode={mode} onPress={() => setMode('system')} />
             </View>
             <ListItem
               title="Language"
-              subtitle="English"
+              subtitle="English — tap to change"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
@@ -361,6 +398,7 @@ function SettingsScreenInner() {
             />
             <ListItem
               title="Auto-backup"
+              subtitle="Automatically back up your chats"
               trailing={
                 <ToggleSwitch
                   value={autoBackupEnabled}
@@ -375,15 +413,18 @@ function SettingsScreenInner() {
             <ListItem title="Version" subtitle={appVersion} />
             <ListItem title="Build" subtitle={buildNumber} />
             <ListItem
-              title="Terms"
+              title="Terms of service"
+              subtitle="Read our usage terms"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
               title="Privacy policy"
+              subtitle="How we handle your data"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
             />
             <ListItem
               title="License"
+              subtitle="Open-source licenses used in this app"
               trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />}
               divider={false}
             />
@@ -424,6 +465,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xxl,
     marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
   avatarButton: {
     marginBottom: spacing.lg,
@@ -454,14 +496,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     marginLeft: spacing.xs,
   },
-  themeRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-    paddingBottom: 0,
+  sectionBody: {
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  themeButton: {
+  themeTabContainer: {
+    flexDirection: 'row',
+    borderRadius: borderRadius.md,
+    padding: 3,
+    margin: spacing.md,
+  },
+  themeTab: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  themeTabLabel: {
+    fontSize: typography.fontSize.sm,
   },
   logoutButton: {
     marginTop: spacing.sm,

@@ -35,6 +35,16 @@ import Animated, {
 } from "react-native-reanimated";
 import "react-native-reanimated";
 import "../global.css";
+
+// Suppress GunDB's "No localStorage exists" message — expected on React Native;
+// we disable localStorage in our Gun config (localStorage: false, radisk: false).
+// eslint-disable-next-line no-console
+const _origConsoleLog = console.log;
+// eslint-disable-next-line no-console
+console.log = (...args: unknown[]) => {
+  if (typeof args[0] === 'string' && args[0].includes('No localStorage')) return;
+  _origConsoleLog(...args);
+};
 import { useIdentityStore } from "@/stores/identity.store";
 import { StatusBar } from "expo-status-bar";
 import "react-native-get-random-values";
@@ -97,12 +107,12 @@ function buildNavigationTheme(isDark: boolean): ThemeMode {
     ...base,
     dark: isDark,
     colors: {
-      primary: isDark ? "#58a6ff" : "#0969da",
-      background: isDark ? "#0d1117" : "#f6f8fa",
-      card: isDark ? "#161b22" : "#ffffff",
-      text: isDark ? "#c9d1d9" : "#24292f",
-      border: isDark ? "#30363d" : "#d0d7de",
-      notification: isDark ? "#f85149" : "#cf222e",
+      primary: isDark ? '#FAF9F4' : '#25211E',
+      background: isDark ? '#25211E' : '#FAF9F4',
+      card: isDark ? '#302C29' : '#FFFFFF',
+      text: isDark ? '#FAF9F4' : '#25211E',
+      border: isDark ? '#3D3835' : '#E0DAD1',
+      notification: isDark ? '#f87171' : '#ef4444',
     },
   };
 }
@@ -303,16 +313,13 @@ function RootLayoutContent() {
   // Fonts — Geist fonts will load automatically when added to assets/fonts/
   // Only SpaceMono is currently available; Geist falls back to system font.
   const [fontsLoaded, fontError] = useFonts({
-    "Geist-Regular": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
-    "Geist-Medium": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
-    "Geist-SemiBold": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
-    "Geist-Bold": require("../assets/fonts/SpaceGrotesk-Variable.ttf"),
+    "Geist-Regular": require("../assets/fonts/SpaceGrotesk-Regular.otf"),
+    "Geist-Medium": require("../assets/fonts/SpaceGrotesk-Medium.otf"),
+    "Geist-SemiBold": require("../assets/fonts/SpaceGrotesk-SemiBold.otf"),
+    "Geist-Bold": require("../assets/fonts/SpaceGrotesk-Bold.otf"),
   });
 
   const [isIdentityChecked, setIsIdentityChecked] = useState(false);
-  const isOnboarded = useIdentityStore((state) => state.isOnboarded);
-  const router = useRouter();
-  const segments = useSegments();
 
   useEffect(() => {
     loadIdentity()
@@ -320,16 +327,46 @@ function RootLayoutContent() {
       .catch(() => setIsIdentityChecked(true));
   }, []);
 
-  // Handle navigation based on onboarding state
+  // Hide splash once fonts and identity are ready
   useEffect(() => {
-    if (!isIdentityChecked) return;
+    if ((fontsLoaded || fontError) && isIdentityChecked) {
+      SplashScreen.hideAsync().catch(console.error);
+    }
+  }, [fontsLoaded, fontError, isIdentityChecked]);
+
+  // isReady: navigator always mounts; loading overlay is removed once ready
+  const isReady = (fontsLoaded || !!fontError) && isIdentityChecked;
+
+  return (
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={rootStyles.fill}>
+        <DatabaseProvider>
+          <ThemeProvider>
+            <RootLayoutThemedNav isReady={isReady} />
+          </ThemeProvider>
+        </DatabaseProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
+  );
+}
+
+function RootLayoutThemedNav({ isReady }: { isReady: boolean }) {
+  const { isDark, colors } = useTheme();
+  const navTheme = buildNavigationTheme(isDark);
+  const router = useRouter();
+  const segments = useSegments();
+  const isOnboarded = useIdentityStore((state) => state.isOnboarded);
+
+  // Navigation guard — runs only after the Stack is mounted (isReady)
+  useEffect(() => {
+    if (!isReady) return;
     const inOnboarding = segments[0] === "(onboarding)";
     if (!isOnboarded && !inOnboarding) {
       router.replace("/(onboarding)/welcome");
     } else if (isOnboarded && inOnboarding) {
       router.replace("/(tabs)/chats");
     }
-  }, [isIdentityChecked, isOnboarded, segments]);
+  }, [isReady, isOnboarded, segments]);
 
   // Register for push notifications and set up deep-link handler
   useEffect(() => {
@@ -352,34 +389,6 @@ function RootLayoutContent() {
     return () => sub.remove();
   }, []);
 
-  // Hide splash once fonts are ready (font errors are graceful — use system font)
-  useEffect(() => {
-    if ((fontsLoaded || fontError) && isIdentityChecked) {
-      SplashScreen.hideAsync().catch(console.error);
-    }
-  }, [fontsLoaded, fontError, isIdentityChecked]);
-
-  if ((!fontsLoaded && !fontError) || !isIdentityChecked) {
-    return <LoadingScreen message="Loading..." />;
-  }
-
-  return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={rootStyles.fill}>
-        <DatabaseProvider>
-          <ThemeProvider>
-            <RootLayoutThemedNav />
-          </ThemeProvider>
-        </DatabaseProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
-  );
-}
-
-function RootLayoutThemedNav() {
-  const { isDark, colors } = useTheme();
-  const navTheme = buildNavigationTheme(isDark);
-
   return (
     <>
       <StatusBar
@@ -396,6 +405,13 @@ function RootLayoutThemedNav() {
         </Stack>
       </NavigationThemeProvider>
 
+      {/* Loading overlay — shown until fonts & identity are ready */}
+      {!isReady && (
+        <View style={rootStyles.loadingOverlay}>
+          <LoadingScreen message="Loading..." />
+        </View>
+      )}
+
       {/* In-app toast overlay — rendered above the navigation stack */}
       <ToastLayer />
     </>
@@ -404,4 +420,8 @@ function RootLayoutThemedNav() {
 
 const rootStyles = StyleSheet.create({
   fill: { flex: 1 },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9998,
+  },
 });

@@ -43,8 +43,6 @@ export function subscribeToInbox(
   myPeerId: string,
   onMessage: (msg: GunMessage) => void,
 ): () => void {
-  console.log("[Messaging] Subscribing to inbox for:", myPeerId);
-
   // Connect (no-op if already connected for this peerId)
   wsRelay.connect(myPeerId);
 
@@ -53,7 +51,6 @@ export function subscribeToInbox(
     if (!data || typeof data !== "object") return;
     if (!data.ciphertext || !data.nonce || !data.fromPeerId || !data.id) return;
 
-    console.log("[Messaging] 📨 Incoming message from:", data.fromPeerId);
     onMessage({
       id: String(data.id),
       fromPeerId: String(data.fromPeerId),
