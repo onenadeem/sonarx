@@ -1,11 +1,15 @@
 export const CHUNK_SIZE = 64 * 1024;
 export const MAX_FILE_SIZE = 1024 * 1024 * 1024;
+const getChunkBounds = (fileSize, chunkIndex) => {
+    const start = chunkIndex * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, fileSize);
+    return { start, end };
+};
 export function calculateChunkCount(fileSize) {
     return Math.ceil(fileSize / CHUNK_SIZE);
 }
 export function getChunkInfo(fileSize, chunkIndex) {
-    const start = chunkIndex * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, fileSize);
+    const { start, end } = getChunkBounds(fileSize, chunkIndex);
     return {
         index: chunkIndex,
         start,

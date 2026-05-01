@@ -5,12 +5,17 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 import { typography, spacing } from '@/src/theme/tokens';
 import { TAB_BAR_HEIGHT } from '@/src/constants/layout';
 import AnimatedPressable from '../ui/Pressable';
+const TAB_ICON_SIZE = 22;
+const TAB_PADDING_TOP = spacing.xs;
+const getTabBarLabel = (route, options) => typeof options.tabBarLabel === 'string'
+    ? options.tabBarLabel
+    : (options.title ?? route.name);
 function TabItem({ isFocused, label, icon, onPress, onLongPress }) {
     const { colors } = useTheme();
     const color = isFocused ? colors.tabBarActive : colors.tabBarInactive;
     return (<AnimatedPressable onPress={onPress} onLongPress={onLongPress} haptic hapticType="selection" style={styles.tab} accessibilityLabel={label}>
       <View style={styles.tabInner}>
-        {icon?.({ color, focused: isFocused, size: 22 })}
+        {icon?.({ color, focused: isFocused, size: TAB_ICON_SIZE })}
         <Text style={[
             styles.tabLabel,
             {
@@ -41,9 +46,7 @@ export default function BottomTabBar({ state, descriptors, navigation, }) {
             const descriptor = descriptors[route.key];
             const { options } = descriptor;
             const isFocused = state.index === index;
-            const label = typeof options.tabBarLabel === 'string'
-                ? options.tabBarLabel
-                : (options.title ?? route.name);
+            const label = getTabBarLabel(route, options);
             const handlePress = () => {
                 const event = navigation.emit({
                     type: 'tabPress',
@@ -57,7 +60,7 @@ export default function BottomTabBar({ state, descriptors, navigation, }) {
             const handleLongPress = () => {
                 navigation.emit({ type: 'tabLongPress', target: route.key });
             };
-            return (<TabItem key={route.key} route={route} isFocused={isFocused} label={label} icon={options.tabBarIcon} onPress={handlePress} onLongPress={handleLongPress}/>);
+        return (<TabItem key={route.key} isFocused={isFocused} label={label} icon={options.tabBarIcon} onPress={handlePress} onLongPress={handleLongPress}/>);
         })}
     </View>);
 }
@@ -70,7 +73,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: spacing.xs,
+        paddingTop: TAB_PADDING_TOP,
     },
     tabInner: {
         alignItems: 'center',

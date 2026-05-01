@@ -2,14 +2,21 @@
 import { StyleSheet, Text, View, } from 'react-native';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { typography, spacing } from '@/src/theme/tokens';
+const MIN_COUNT = 0;
+const TONE_MAP = {
+    accent: (colors) => colors.accent,
+    error: (colors) => colors.danger,
+};
+const DEFAULT_TONE = TONE_MAP.accent;
+const getBadgeToneColor = (tone, colors) => (TONE_MAP[tone] ?? DEFAULT_TONE)(colors);
 export default function Badge({ count, max = 99, tone = 'accent', style, textStyle, }) {
     const { colors } = useTheme();
-    if (count === 0)
+    if (count === MIN_COUNT)
         return null;
     const label = count > max ? `${max}+` : String(count);
     return (<View style={[
             styles.badge,
-            { backgroundColor: tone === 'error' ? colors.danger : colors.accent },
+            { backgroundColor: getBadgeToneColor(tone, colors) },
             style,
         ]}>
       <Text style={[styles.text, { color: colors.accentForeground }, textStyle]}>

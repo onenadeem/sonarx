@@ -1,4 +1,4 @@
-export const extractedLightPalette = {
+const lightPalette = {
     primary: '#101010',
     secondary: '#EDE8DF',
     accent: '#B4CEE7',
@@ -12,7 +12,7 @@ export const extractedLightPalette = {
     warning: '#f59e0b',
     disabled: '#BCB6AE',
 };
-export const extractedDarkPalette = {
+const darkPalette = {
     primary: '#FEFEFE',
     secondary: '#1A1A1A',
     accent: '#C8DDF0',
@@ -26,12 +26,13 @@ export const extractedDarkPalette = {
     warning: '#fbbf24',
     disabled: '#6A6560',
 };
-export const extractedPalette = {
-    light: extractedLightPalette,
-    dark: extractedDarkPalette,
-};
-export const lightTheme = {
-    ...extractedLightPalette,
+const createTheme = (palette, config) => ({
+    ...palette,
+    textDisabled: palette.disabled,
+    accentMuted: palette.secondary,
+    ...config,
+});
+export const lightTheme = createTheme(lightPalette, {
     primaryForeground: '#FFFFFF',
     secondaryForeground: '#101010',
     accentForeground: '#101010',
@@ -39,7 +40,7 @@ export const lightTheme = {
     surfaceMuted: '#EDE8DF',
     chatBackground: '#E7E1D7',
     borderMuted: '#E8E2D9',
-    danger: extractedLightPalette.error,
+    danger: lightPalette.error,
     dangerMuted: '#FEF2F2',
     successMuted: '#F0FDF4',
     warningMuted: '#FFFBEB',
@@ -50,18 +51,17 @@ export const lightTheme = {
         incomingText: '#101010',
         incomingBorder: '#E0DAD1',
     },
-    online: extractedLightPalette.success,
-    typing: extractedLightPalette.textSecondary,
+    online: lightPalette.success,
+    typing: lightPalette.textSecondary,
     overlay: 'rgba(37, 33, 30, 0.28)',
     inputBackground: '#FFFFFF',
     tabBar: '#FAF9F4',
-    tabBarActive: '#FD5C08',
+    tabBarActive: '#FEFEFE',
     tabBarInactive: '#BCB6AE',
     headerBackground: '#FAF9F4',
     statusBarStyle: 'dark',
-};
-export const darkTheme = {
-    ...extractedDarkPalette,
+});
+export const darkTheme = createTheme(darkPalette, {
     primaryForeground: '#101010',
     secondaryForeground: '#FAF9F4',
     accentForeground: '#101010',
@@ -69,7 +69,7 @@ export const darkTheme = {
     surfaceMuted: '#1A1A1A',
     chatBackground: '#1C1917',
     borderMuted: '#312D2A',
-    danger: extractedDarkPalette.error,
+    danger: darkPalette.error,
     dangerMuted: '#2F1517',
     successMuted: '#052E16',
     warningMuted: '#2A2209',
@@ -80,13 +80,13 @@ export const darkTheme = {
         incomingText: '#FAF9F4',
         incomingBorder: '#222126',
     },
-    online: extractedDarkPalette.success,
-    typing: extractedDarkPalette.textSecondary,
+    online: darkPalette.success,
+    typing: darkPalette.textSecondary,
     overlay: 'rgba(0, 0, 0, 0.56)',
     inputBackground: '#1A1A1A',
     tabBar: '#101010',
-    tabBarActive: '#FD5C08',
+    tabBarActive: '#FEFEFE',
     tabBarInactive: '#6A6560',
     headerBackground: '#101010',
     statusBarStyle: 'light',
-};
+});

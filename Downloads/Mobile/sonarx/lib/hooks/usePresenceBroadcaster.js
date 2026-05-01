@@ -1,37 +1,43 @@
 import { announcePresence } from "@/lib/p2p/discovery";
 import { useIdentityStore } from "@/stores/identity.store";
 import * as SecureStore from "expo-secure-store";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { decodeBase64 } from "tweetnacl-util";
 const SIGNING_KEY_STORE_KEY = "sonarx-signing-keys";
 const ANNOUNCE_INTERVAL_MS = 30 * 1000;
 export function usePresenceBroadcaster() {
     const identity = useIdentityStore((state) => state.identity);
+    const broadcast = useCallback(async () => {
+        if (!identity)
+            return;
+        const signingKeyStr = await SecureStore.getItemAsync(SIGNING_KEY_STORE_KEY);
+        if (!signingKeyStr)
+            return;
+        const signingSecretKey = decodeBase64(signingKeyStr);
+        await announcePresence(identity, signingSecretKey);
+    }, [identity]);
     useEffect(() => {
         if (!identity)
             return;
         let isMounted = true;
         let intervalId;
-        const broadcast = async () => {
+        const executeBroadcast = async () => {
             if (!isMounted)
                 return;
             try {
-                const signingKeyStr = await SecureStore.getItemAsync(SIGNING_KEY_STORE_KEY);
-                if (!signingKeyStr)
-                    return;
-                const signingSecretKey = decodeBase64(signingKeyStr);
-                await announcePresence(identity, signingSecretKey);
+                await broadcast();
             }
-            catch {
+            catch (error) {
+                console.error("[Presence] Broadcast failed:", error);
             }
         };
         // Broadcast immediately on mount / login
-        broadcast();
+        executeBroadcast();
         // Then continually broadcast to stay online
-        intervalId = setInterval(broadcast, ANNOUNCE_INTERVAL_MS);
+        intervalId = setInterval(executeBroadcast, ANNOUNCE_INTERVAL_MS);
         return () => {
             isMounted = false;
             clearInterval(intervalId);
         };
-    }, [identity]);
+    }, [identity, broadcast]);
 }

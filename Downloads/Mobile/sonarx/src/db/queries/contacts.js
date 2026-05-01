@@ -1,6 +1,7 @@
 import { asc, eq, like, or } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { contacts, } from '@/src/db/schema';
+import { requireCreatedRecord } from '@/src/db/queryHelpers';
 export async function getContacts() {
     return db.select().from(contacts).orderBy(asc(contacts.displayName));
 }
@@ -22,14 +23,15 @@ export async function getContactByPhone(phone) {
 }
 export async function insertContact(contact) {
     await db.insert(contacts).values(contact);
-    const [created] = await db
-        .select()
-        .from(contacts)
-        .where(eq(contacts.id, contact.id))
-        .limit(1);
-    if (!created)
-        throw new Error('Failed to insert contact');
-    return created;
+    return requireCreatedRecord(
+        () => db
+            .select()
+            .from(contacts)
+            .where(eq(contacts.id, contact.id))
+            .limit(1)
+            .then(([created]) => created),
+        'Failed to insert contact',
+    );
 }
 export async function updateContact(id, updates) {
     await db.update(contacts).set(updates).where(eq(contacts.id, id));

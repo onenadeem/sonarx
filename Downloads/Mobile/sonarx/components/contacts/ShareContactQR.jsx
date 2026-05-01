@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { View, Modal } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { Text } from "@/components/ui/text";
@@ -7,19 +7,17 @@ import { Button } from "@/components/ui/button";
 import { useIdentityStore } from "@/stores/identity.store";
 function ShareContactQR({ isOpen, onClose }) {
     const identity = useIdentityStore((state) => state.identity);
-    const [qrData, setQrData] = useState("");
-    useEffect(() => {
-        if (identity && isOpen) {
-            const data = {
-                v: 1,
-                phone: identity.phoneNumber,
-                name: identity.displayName,
-                pk: identity.publicKey,
-                spk: identity.signingPublicKey,
-            };
-            setQrData(JSON.stringify(data));
-        }
-    }, [identity, isOpen]);
+    const qrData = useMemo(() => {
+        if (!identity)
+            return "";
+        return JSON.stringify({
+            v: 1,
+            phone: identity.phoneNumber,
+            name: identity.displayName,
+            pk: identity.publicKey,
+            spk: identity.signingPublicKey,
+        });
+    }, [identity]);
     if (!isOpen || !identity)
         return null;
     return (<Modal animationType="slide" transparent={true} visible={isOpen} onRequestClose={onClose}>

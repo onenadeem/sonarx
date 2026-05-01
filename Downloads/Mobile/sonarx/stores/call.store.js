@@ -1,5 +1,5 @@
 import { create } from "zustand";
-export const useCallStore = create()((set, get) => ({
+const getInitialCallState = () => ({
     activeCallPeerId: null,
     callId: null,
     callDirection: null,
@@ -12,11 +12,15 @@ export const useCallStore = create()((set, get) => ({
     isMuted: false,
     isCameraOff: false,
     isSpeakerOn: false,
+});
+const getIncomingCallState = (direction) => (direction === "outgoing" ? "calling" : "ringing");
+export const useCallStore = create()((set, get) => ({
+    ...getInitialCallState(),
     setActiveCall: ({ peerId, callId, direction, isVideo }) => set({
         activeCallPeerId: peerId,
         callId,
         callDirection: direction,
-        callState: direction === "outgoing" ? "calling" : "ringing",
+        callState: getIncomingCallState(direction),
         isVideoCall: isVideo,
         startedAt: new Date(),
         endedAt: null,
@@ -50,18 +54,5 @@ export const useCallStore = create()((set, get) => ({
         callState: "ended",
         endedAt: new Date(),
     }),
-    clearCall: () => set({
-        activeCallPeerId: null,
-        callId: null,
-        callDirection: null,
-        callState: "idle",
-        isVideoCall: false,
-        startedAt: null,
-        endedAt: null,
-        localStream: null,
-        remoteStream: null,
-        isMuted: false,
-        isCameraOff: false,
-        isSpeakerOn: false,
-    }),
+    clearCall: () => set(getInitialCallState()),
 }));

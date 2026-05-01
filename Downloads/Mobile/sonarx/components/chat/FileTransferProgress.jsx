@@ -3,45 +3,17 @@ import { cn } from "@/lib/utils";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import Ionicons from "@expo/vector-icons/Ionicons";
-function formatFileSize(bytes) {
-    if (bytes === 0)
-        return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
+import { formatFileSize, getFileTransferStatusMeta } from "@/components/common/chatUtils";
 function FileTransferProgress({ fileName, fileSize, progress, status, direction, onCancel, onRetry, onOpen, className, }) {
     const isComplete = status === "complete";
     const isFailed = status === "failed";
     const isTransferring = status === "transferring";
-    const getStatusIcon = () => {
-        switch (status) {
-            case "complete":
-                return "checkmark-done-outline";
-            case "failed":
-                return "close-circle-outline";
-            case "cancelled":
-                return "close-circle-outline";
-            default:
-                return direction === "upload"
-                    ? "arrow-up-outline"
-                    : "arrow-down-outline";
-        }
-    };
+    const statusMeta = getFileTransferStatusMeta(status, direction);
     return (<View className={cn("bg-card border border-border rounded-lg p-3", isComplete && "border-border", isFailed && "border-border", className)}>
       {/* File Info */}
       <View className="flex-row items-center">
-        <View className={cn("w-10 h-10 rounded-lg items-center justify-center", isComplete
-            ? "bg-green-100 dark:bg-green-900/30"
-            : isFailed
-                ? "bg-red-100 dark:bg-red-900/30"
-                : "bg-muted")}>
-          <Ionicons name={getStatusIcon()} size={16} color={isComplete
-            ? "#16a34a"
-            : isFailed
-                ? "#dc2626"
-                : "#334155"}/>
+        <View className={cn("w-10 h-10 rounded-lg items-center justify-center", statusMeta.iconBgClass)}>
+          <Ionicons name={statusMeta.iconName} size={16} color={statusMeta.iconColor}/>
         </View>
 
         <View className="flex-1 ml-3">

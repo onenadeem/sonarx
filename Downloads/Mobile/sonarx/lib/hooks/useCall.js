@@ -2,25 +2,31 @@ import { useCallback } from "react";
 import { mediaDevices, } from "react-native-webrtc";
 import { useCallStore } from "@/stores/call.store";
 import { sendCallEnd, } from "@/lib/p2p/data-channel";
+const stopStreamTracks = (stream) => {
+    stream?.getTracks().forEach((track) => track.stop());
+};
+const setTrackEnabled = (stream, trackAccessor, enabled) => {
+    if (!stream) {
+        return;
+    }
+    trackAccessor(stream).forEach((track) => {
+        track.enabled = enabled;
+    });
+};
 export function useCall(peerId) {
     const { callState, localStream, remoteStream, isMuted, isCameraOff, isSpeakerOn, activeCallPeerId, isVideoCall, } = useCallStore();
     const startCall = useCallback(async (withVideo) => {
-        try {
-            const mediaStream = await mediaDevices.getUserMedia({
-                audio: true,
-                video: withVideo,
-            });
-            useCallStore.getState().setLocalStream(mediaStream);
-            useCallStore.getState().setActiveCall({
-                peerId,
-                callId: crypto.randomUUID(),
-                direction: "outgoing",
-                isVideo: withVideo,
-            });
-        }
-        catch (error) {
-            throw error;
-        }
+        const mediaStream = await mediaDevices.getUserMedia({
+            audio: true,
+            video: withVideo,
+        });
+        useCallStore.getState().setLocalStream(mediaStream);
+        useCallStore.getState().setActiveCall({
+            peerId,
+            callId: crypto.randomUUID(),
+            direction: "outgoing",
+            isVideo: withVideo,
+        });
     }, [peerId]);
     const acceptCall = useCallback(async () => {
         try {
@@ -40,28 +46,25 @@ export function useCall(peerId) {
         useCallStore.getState().clearCall();
     }, []);
     const endCall = useCallback(() => {
-        localStream?.getTracks().forEach((track) => track.stop());
-        remoteStream?.getTracks().forEach((track) => track.stop());
-        if (activeCallPeerId) {
-            const duration = useCallStore.getState().startedAt
-                ? Math.floor((Date.now() - useCallStore.getState().startedAt.getTime()) / 1000)
+        const state = useCallStore.getState();
+        stopStreamTracks(state.localStream);
+        stopStreamTracks(state.remoteStream);
+        if (state.activeCallPeerId) {
+            const duration = state.startedAt
+                ? Math.floor((Date.now() - state.startedAt.getTime()) / 1000)
                 : 0;
-            sendCallEnd(activeCallPeerId, "", duration).catch(console.error);
+            sendCallEnd(state.activeCallPeerId, "", duration).catch(console.error);
         }
         useCallStore.getState().clearCall();
-    }, [localStream, remoteStream, activeCallPeerId]);
+    }, []);
     const toggleMute = useCallback(() => {
         const newMutedState = !isMuted;
-        localStream?.getAudioTracks().forEach((track) => {
-            track.enabled = !newMutedState;
-        });
+        setTrackEnabled(localStream, (stream) => stream.getAudioTracks(), !newMutedState);
         useCallStore.getState().setIsMuted(newMutedState);
     }, [localStream, isMuted]);
     const toggleCamera = useCallback(() => {
         const newCameraOffState = !isCameraOff;
-        localStream?.getVideoTracks().forEach((track) => {
-            track.enabled = !newCameraOffState;
-        });
+        setTrackEnabled(localStream, (stream) => stream.getVideoTracks(), !newCameraOffState);
         useCallStore.getState().setIsCameraOff(newCameraOffState);
     }, [localStream, isCameraOff]);
     const toggleSpeaker = useCallback(() => {

@@ -17,6 +17,13 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 import { borderRadius, spacing, typography } from '@/src/theme/tokens';
 import { useIdentityStore } from '@/stores/identity.store';
 import { Strings } from '@/src/constants/strings';
+import { SETTINGS_SCREEN_MAX_WIDTH } from '@/src/constants/layout';
+
+const THEME_OPTIONS = [
+    { mode: 'light', icon: 'sunny-outline', label: 'Light' },
+    { mode: 'dark', icon: 'moon-outline', label: 'Dark' },
+    { mode: 'system', icon: 'phone-portrait-outline', label: 'System' },
+];
 class SettingsErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -36,24 +43,26 @@ class SettingsErrorBoundary extends Component {
 }
 function Section({ title, children, }) {
     const { colors } = useTheme();
+    const titleStyle = useMemo(() => ([
+        styles.sectionTitle,
+        {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.semiBold,
+        },
+    ]), [colors.textSecondary]);
+    const bodyStyle = useMemo(() => ([
+        styles.sectionBody,
+        {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderRadius: borderRadius.lg,
+        },
+    ]), [colors.border, colors.surface]);
     return (<View style={styles.section}>
-      <Text style={[
-            styles.sectionTitle,
-            {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.semiBold,
-            },
-        ]}>
+      <Text style={titleStyle}>
         {title.toUpperCase()}
       </Text>
-      <View style={[
-            styles.sectionBody,
-            {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderRadius: borderRadius.lg,
-            },
-        ]}>
+      <View style={bodyStyle}>
         {children}
       </View>
     </View>);
@@ -61,55 +70,99 @@ function Section({ title, children, }) {
 function ThemePicker({ currentMode, onSelect, }) {
     const { colors } = useTheme();
     const [visible, setVisible] = useState(false);
-    const options = [
-        { mode: 'light', icon: 'sunny-outline', label: 'Light' },
-        { mode: 'dark', icon: 'moon-outline', label: 'Dark' },
-        { mode: 'system', icon: 'phone-portrait-outline', label: 'System' },
-    ];
-    const currentLabel = options.find((o) => o.mode === currentMode)?.label ?? 'System';
+    const currentLabel = THEME_OPTIONS.find((o) => o.mode === currentMode)?.label ?? 'System';
+    const badgeStyle = useMemo(() => ([
+        styles.appearanceBadge,
+        {
+            backgroundColor: colors.surfaceMuted,
+            borderColor: colors.border,
+        },
+    ]), [colors.border, colors.surfaceMuted]);
+    const badgeTextStyle = useMemo(() => ([
+        styles.appearanceBadgeText,
+        {
+            color: colors.accent,
+            fontFamily: typography.fontFamily.medium,
+        },
+    ]), [colors.accent]);
+    const modalSheetStyle = useMemo(() => ([
+        styles.modalSheet,
+        {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+        },
+    ]), [colors.border, colors.surface]);
+    const modalTitleStyle = useMemo(() => ([
+        styles.modalTitle,
+        {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.bold,
+        },
+    ]), [colors.textPrimary]);
+    const modalSubtitleStyle = useMemo(() => ([
+        styles.modalSubtitle,
+        {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+        },
+    ]), [colors.textSecondary]);
     return (<>
-      <ListItem title="Appearance" subtitle={`${currentLabel} mode`} trailing={<View style={[styles.appearanceBadge, { backgroundColor: colors.surfaceMuted, borderColor: colors.border }]}>
-            <Text style={[styles.appearanceBadgeText, { color: colors.accent, fontFamily: typography.fontFamily.medium }]}>
+            <ListItem title="Appearance" subtitle={`${currentLabel} mode`} trailing={<View style={badgeStyle}>
+            <Text style={badgeTextStyle}>
               {currentLabel}
             </Text>
           </View>} onPress={() => setVisible(true)} divider={false}/>
 
       <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setVisible(false)}>
-          <Pressable style={[styles.modalSheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Pressable style={modalSheetStyle}>
             <View style={styles.modalHandle}/>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary, fontFamily: typography.fontFamily.bold }]}>
+            <Text style={modalTitleStyle}>
               Appearance
             </Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textSecondary, fontFamily: typography.fontFamily.regular }]}>
+            <Text style={modalSubtitleStyle}>
               Choose how sonarx looks to you
             </Text>
 
             <View style={styles.pillRow}>
-              {options.map(({ mode, icon, label }) => {
+              {THEME_OPTIONS.map(({ mode, icon, label }) => {
             const active = mode === currentMode;
+            const itemStyle = active
+                ? {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                }
+                : {
+                    backgroundColor: colors.surfaceMuted,
+                    borderColor: colors.border,
+                };
+            const labelStyle = active
+                ? {
+                    color: colors.background,
+                    fontFamily: typography.fontFamily.semiBold,
+                }
+                : {
+                    color: colors.textPrimary,
+                    fontFamily: typography.fontFamily.regular,
+                };
+            const iconColor = active ? colors.background : colors.textSecondary;
+            const pillStyle = [
+                styles.pill,
+                itemStyle,
+            ];
+            const activeTextStyle = [
+                styles.pillLabel,
+                labelStyle,
+            ];
             return (<AnimatedPressable key={mode} onPress={() => {
                     onSelect(mode);
                     setVisible(false);
-                }} accessibilityLabel={`Set ${mode} theme`} style={[
-                    styles.pill,
-                    active
-                        ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                        : { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
-                ]}>
-                    <Ionicons name={icon} size={20} color={active ? colors.background : colors.textSecondary}/>
-                    <Text style={[
-                    styles.pillLabel,
-                    {
-                        color: active ? colors.background : colors.textPrimary,
-                        fontFamily: active
-                            ? typography.fontFamily.semiBold
-                            : typography.fontFamily.regular,
-                    },
-                ]}>
+                }} accessibilityLabel={`Set ${mode} theme`} style={pillStyle}>
+                    <Ionicons name={icon} size={20} color={iconColor}/>
+                    <Text style={activeTextStyle}>
                       {label}
                     </Text>
-                    {active && (<Ionicons name="checkmark" size={16} color={colors.background} style={styles.pillCheck}/>)}
+                    {active && (<Ionicons name="checkmark" size={16} color={iconColor} style={styles.pillCheck}/>)}
                   </AnimatedPressable>);
         })}
             </View>
@@ -136,7 +189,7 @@ function SettingsScreenInner() {
     const [displayName, setDisplayName] = useState(identity?.displayName ?? '');
     const appVersion = Constants.expoConfig?.version ?? '1.0.0';
     const buildNumber = String(Constants.nativeBuildVersion ?? '42');
-    const contentMaxWidth = isDesktop ? 500 : undefined;
+    const contentMaxWidth = isDesktop ? SETTINGS_SCREEN_MAX_WIDTH : undefined;
     const handleAvatarPress = useCallback(async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
@@ -171,47 +224,54 @@ function SettingsScreenInner() {
             },
         ]);
     }, [clearIdentity]);
-    const storageValue = useMemo(() => 'Encrypted cache', []);
+    const storageValue = 'Encrypted cache';
+    const screenStyle = useMemo(() => ({
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+    }), [colors.background, insets.top]);
+    const contentShellStyle = useMemo(() => (contentMaxWidth
+        ? [styles.contentShell, { maxWidth: contentMaxWidth }]
+        : [styles.contentShell]), [contentMaxWidth]);
+    const scrollContentStyle = useMemo(() => ({
+        paddingBottom: insets.bottom + spacing.xxl,
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.lg,
+    }), [insets.bottom]);
+    const profileNameStyle = useMemo(() => ([
+        styles.profileName,
+        {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.semiBold,
+        },
+    ]), [colors.textPrimary]);
+    const profilePhoneStyle = useMemo(() => ([
+        styles.profilePhone,
+        {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+        },
+    ]), [colors.textSecondary]);
+    const deleteAccountTitleStyle = useMemo(() => ({
+        color: colors.danger,
+    }), [colors.danger]);
     return (<View style={[
             styles.screen,
-            {
-                backgroundColor: colors.background,
-                paddingTop: insets.top,
-            },
+            screenStyle,
         ]}>
-      <View style={[
-            styles.contentShell,
-            contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
-        ]}>
+      <View style={contentShellStyle}>
         <Header title="Settings" subtitle="Manage your account and preferences"/>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{
-            paddingBottom: insets.bottom + spacing.xxl,
-            paddingHorizontal: spacing.lg,
-            paddingTop: spacing.lg,
-        }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
           <View style={styles.profileCard}>
             <AnimatedPressable onPress={handleAvatarPress} style={styles.avatarButton} accessibilityLabel="Change profile picture">
               <Avatar uri={identity?.avatarUri} name={identity?.displayName ?? 'Shaik'} size="xl"/>
             </AnimatedPressable>
 
-            {editingName ? (<TextInput value={displayName} onChangeText={setDisplayName} onSubmitEditing={handleSaveName} onBlur={handleSaveName} autoFocus placeholder="Display name" containerStyle={styles.nameInputContainer}/>) : (<Text style={[
-                styles.profileName,
-                {
-                    color: colors.textPrimary,
-                    fontFamily: typography.fontFamily.semiBold,
-                },
-            ]}>
+            {editingName ? (<TextInput value={displayName} onChangeText={setDisplayName} onSubmitEditing={handleSaveName} onBlur={handleSaveName} autoFocus placeholder="Display name" containerStyle={styles.nameInputContainer}/>) : (<Text style={profileNameStyle}>
                 {identity?.displayName ?? 'Your profile'}
               </Text>)}
 
-            <Text style={[
-            styles.profilePhone,
-            {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.regular,
-            },
-        ]}>
+            <Text style={profilePhoneStyle}>
               {identity?.phoneNumber ?? 'No phone linked'}
             </Text>
 
@@ -221,7 +281,7 @@ function SettingsScreenInner() {
           <Section title="Account">
             <ListItem title="Change phone" subtitle="Update your linked phone number" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
             <ListItem title="Verify phone" subtitle="Confirm your number is reachable" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Delete account" subtitle="Permanently remove all your data" titleStyle={{ color: colors.danger }} divider={false}/>
+            <ListItem title="Delete account" subtitle="Permanently remove all your data" titleStyle={deleteAccountTitleStyle} divider={false}/>
           </Section>
 
           <Section title="Notifications">

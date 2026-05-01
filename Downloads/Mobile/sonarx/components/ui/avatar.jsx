@@ -1,13 +1,12 @@
 import * as React from "react";
 import { View, Image, Text } from "react-native";
 import { cn } from "@/lib/utils";
-const avatarSizes = {
-    sm: 32,
-    md: 40,
-    lg: 56,
-};
+import { AVATAR_SIZES } from "./styleTokens";
 function getInitials(name) {
-    return name
+    const normalizedName = (name ?? "").trim();
+    if (!normalizedName)
+        return "";
+    return normalizedName
         .split(" ")
         .map((n) => n[0])
         .slice(0, 2)
@@ -15,7 +14,7 @@ function getInitials(name) {
         .toUpperCase();
 }
 const Avatar = React.forwardRef(({ uri, name, size = "md", isOnline, className, ...props }, ref) => {
-    const dimension = avatarSizes[size];
+    const dimension = AVATAR_SIZES[size] ?? AVATAR_SIZES.md;
     const initials = getInitials(name);
     return (<View ref={ref} className={cn("relative", className)} style={{ width: dimension, height: dimension }} {...props}>
         {uri ? (<Image source={{ uri }} className="rounded-full" style={{ width: dimension, height: dimension }}/>) : (<View className="items-center justify-center rounded-full bg-muted" style={{ width: dimension, height: dimension }}>
@@ -30,4 +29,4 @@ const Avatar = React.forwardRef(({ uri, name, size = "md", isOnline, className, 
       </View>);
 });
 Avatar.displayName = "Avatar";
-export { Avatar, avatarSizes, getInitials };
+export { Avatar, AVATAR_SIZES as avatarSizes, getInitials };

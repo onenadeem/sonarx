@@ -1,4 +1,17 @@
 import { create } from "zustand";
+const removeConnectionFromMap = (connections, peerId) => {
+    const remainingConnections = { ...connections };
+    delete remainingConnections[peerId];
+    return remainingConnections;
+};
+const replaceConnectionState = (connections, peerId, state) => {
+    const connection = connections[peerId];
+    if (!connection) {
+        return null;
+    }
+    return { ...connection, state };
+};
+const removeOffersByPeer = (offers, fromPeerId) => offers.filter((o) => o.fromPeerId !== fromPeerId);
 export const usePeersStore = create()((set, get) => ({
     connections: {},
     onlineStatus: {},
@@ -9,19 +22,18 @@ export const usePeersStore = create()((set, get) => ({
             [peerId]: connection,
         },
     })),
-    removeConnection: (peerId) => set((state) => {
-        const remainingConnections = { ...state.connections };
-        delete remainingConnections[peerId];
-        return { connections: remainingConnections };
-    }),
+    removeConnection: (peerId) => set((state) => ({
+        connections: removeConnectionFromMap(state.connections, peerId),
+    })),
     updateConnectionState: (peerId, newState) => set((state) => {
-        const conn = state.connections[peerId];
-        if (!conn)
+        const updatedConnection = replaceConnectionState(state.connections, peerId, newState);
+        if (!updatedConnection) {
             return state;
+        }
         return {
             connections: {
                 ...state.connections,
-                [peerId]: { ...conn, state: newState },
+                [peerId]: updatedConnection,
             },
         };
     }),
@@ -35,7 +47,7 @@ export const usePeersStore = create()((set, get) => ({
         incomingOffers: [...state.incomingOffers, offer],
     })),
     removeIncomingOffer: (fromPeerId) => set((state) => ({
-        incomingOffers: state.incomingOffers.filter((o) => o.fromPeerId !== fromPeerId),
+        incomingOffers: removeOffersByPeer(state.incomingOffers, fromPeerId),
     })),
     getConnection: (peerId) => get().connections[peerId],
     isConnected: (peerId) => {

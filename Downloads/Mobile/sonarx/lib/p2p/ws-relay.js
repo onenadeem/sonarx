@@ -12,6 +12,22 @@
  *   ← { type:"ack", id:"msgUUID" }
  */
 import Constants from "expo-constants";
+
+const ACK_TIMEOUT_MS = 6000;
+const RECONNECT_DELAY_MS = 4000;
+
+const parseRelayMessage = (rawData) => {
+    if (typeof rawData !== "string") {
+        return null;
+    }
+    try {
+        return JSON.parse(rawData);
+    }
+    catch {
+        return null;
+    }
+};
+
 class WsRelayClient {
     ws = null;
     url = null;
@@ -54,25 +70,7 @@ class WsRelayClient {
             // Subscribe to our inbox
             this._send({ type: "subscribe", inbox: this.myId });
         };
-        ws.onmessage = (event) => {
-            let msg;
-            try {
-                msg = JSON.parse(event.data);
-            }
-            catch {
-                return;
-            }
-            if (msg.type === "ack" && msg.id) {
-                const cb = this.ackListeners.get(msg.id);
-                if (cb) {
-                    cb(msg.id);
-                    this.ackListeners.delete(msg.id);
-                }
-            }
-            else if (msg.type === "message") {
-                this.msgListeners.forEach((l) => l(msg));
-            }
-        };
+        ws.onmessage = this._handleMessage.bind(this);
         ws.onerror = () => {
             // connection errors are expected when local relay is not running
         };
@@ -86,9 +84,33 @@ class WsRelayClient {
             this.ws.send(JSON.stringify(obj));
         }
     }
+    _handleMessage(event) {
+        const message = parseRelayMessage(event.data);
+        if (!message || typeof message.type !== "string") {
+            return;
+        }
+        if (message.type === "ack" && message.id) {
+            this._handleAck(message.id);
+            return;
+        }
+        if (message.type === "message") {
+            this._notifyMessageListeners(message);
+        }
+    }
+    _handleAck(messageId) {
+        const onAck = this.ackListeners.get(messageId);
+        if (!onAck) {
+            return;
+        }
+        onAck();
+        this.ackListeners.delete(messageId);
+    }
+    _notifyMessageListeners(message) {
+        this.msgListeners.forEach((listener) => listener(message));
+    }
     _scheduleReconnect() {
         this._clearReconnect();
-        this.reconnectTimer = setTimeout(() => this._connect(), 4000);
+        this.reconnectTimer = setTimeout(() => this._connect(), RECONNECT_DELAY_MS);
     }
     _clearReconnect() {
         if (this.reconnectTimer) {
@@ -102,19 +124,18 @@ class WsRelayClient {
      */
     sendMessage(to, id, data) {
         return new Promise((resolve) => {
-            const timer = setTimeout(() => {
-                this.ackListeners.delete(id);
-                resolve(); // resolve anyway — retry is future work
-            }, 6000);
-            this.ackListeners.set(id, () => {
+            const finish = () => {
                 clearTimeout(timer);
+                this.ackListeners.delete(id);
                 resolve();
-            });
+            };
+            const timer = setTimeout(() => {
+                finish();
+            }, ACK_TIMEOUT_MS);
+            this.ackListeners.set(id, finish);
             if (!this.connected) {
                 // Don't queue here; the server queues for the recipient, not the sender
-                clearTimeout(timer);
-                this.ackListeners.delete(id);
-                resolve();
+                finish();
                 return;
             }
             this._send({ type: "send", to, id, data });

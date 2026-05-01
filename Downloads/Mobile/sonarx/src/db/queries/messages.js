@@ -1,6 +1,7 @@
 import { and, desc, eq, lte, ne, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { attachments, chats, messages, } from '@/src/db/schema';
+import { requireCreatedRecord } from '@/src/db/queryHelpers';
 // ─── Messages ─────────────────────────────────────────────────────────────────
 export async function getMessages(chatId, limit = 50, offset = 0) {
     return db
@@ -13,14 +14,15 @@ export async function getMessages(chatId, limit = 50, offset = 0) {
 }
 export async function insertMessage(msg) {
     await db.insert(messages).values(msg);
-    const [created] = await db
-        .select()
-        .from(messages)
-        .where(eq(messages.id, msg.id))
-        .limit(1);
-    if (!created)
-        throw new Error('Failed to insert message');
-    return created;
+    return requireCreatedRecord(
+        () => db
+            .select()
+            .from(messages)
+            .where(eq(messages.id, msg.id))
+            .limit(1)
+            .then(([created]) => created),
+        'Failed to insert message',
+    );
 }
 export async function updateMessageStatus(id, status, timestamp) {
     const updates = { status };
@@ -85,14 +87,15 @@ export async function getOrCreateChat(contactId) {
         createdAt: now,
     };
     await db.insert(chats).values(newChat);
-    const [created] = await db
-        .select()
-        .from(chats)
-        .where(eq(chats.id, id))
-        .limit(1);
-    if (!created)
-        throw new Error('Failed to create chat');
-    return created;
+    return requireCreatedRecord(
+        () => db
+            .select()
+            .from(chats)
+            .where(eq(chats.id, id))
+            .limit(1)
+            .then(([created]) => created),
+        'Failed to create chat',
+    );
 }
 export async function updateChatLastMessage(chatId, messageId, timestamp) {
     await db

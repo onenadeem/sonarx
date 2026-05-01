@@ -22,20 +22,20 @@ function AddContactSheet({ isOpen, onClose, onAddContact, }) {
     const [showShareQR, setShowShareQR] = useState(false);
     const [showScanQR, setShowScanQR] = useState(false);
     const [mode, setMode] = useState("phone");
-    const handleSearch = async () => {
+    const getNormalizedPhone = () => {
         const myIdentity = useIdentityStore.getState().identity;
         const defaultCountry = myIdentity
             ? detectCountryFromNumber(myIdentity.phoneNumber)
             : "US";
-        const normalized = normalizePhoneNumber(phoneNumber, defaultCountry);
-        console.log("[AddContact] Searching for:", phoneNumber);
-        console.log("[AddContact] Default country:", defaultCountry);
-        console.log("[AddContact] Normalized:", normalized);
-        console.log("[AddContact] My identity:", myIdentity?.phoneNumber);
+        return normalizePhoneNumber(phoneNumber, defaultCountry);
+    };
+    const handleSearch = async () => {
+        const normalized = getNormalizedPhone();
         if (!normalized) {
             setError("Please enter a valid phone number");
             return;
         }
+        const myIdentity = useIdentityStore.getState().identity;
         if (myIdentity && myIdentity.phoneNumber === normalized) {
             setError("This is your own phone number.");
             return;
@@ -63,11 +63,7 @@ function AddContactSheet({ isOpen, onClose, onAddContact, }) {
     };
     const handleAdd = () => {
         if (foundPeer) {
-            const myIdentity = useIdentityStore.getState().identity;
-            const defaultCountry = myIdentity
-                ? detectCountryFromNumber(myIdentity.phoneNumber)
-                : "US";
-            const normalized = normalizePhoneNumber(phoneNumber, defaultCountry);
+            const normalized = getNormalizedPhone();
             if (normalized) {
                 onAddContact(normalized, foundPeer);
                 resetAndClose();

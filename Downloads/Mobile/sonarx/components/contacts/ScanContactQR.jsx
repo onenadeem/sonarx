@@ -9,14 +9,14 @@ function ScanContactQR({ isOpen, onClose, onContactFound }) {
     const [scanned, setScanned] = useState(false);
     const [error, setError] = useState(null);
     useEffect(() => {
-        if (isOpen) {
-            setScanned(false);
-            setError(null);
-            if (!permission?.granted) {
-                requestPermission();
-            }
+        if (!isOpen)
+            return;
+        setScanned(false);
+        setError(null);
+        if (!permission?.granted) {
+            requestPermission();
         }
-    }, [isOpen, permission]);
+    }, [isOpen, permission?.granted, requestPermission]);
     const handleBarCodeScanned = ({ data }) => {
         if (scanned)
             return;

@@ -1,9 +1,13 @@
 import "./prng";
 import nacl from "tweetnacl";
 import { encodeBase64, decodeBase64 } from "tweetnacl-util";
+
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
 export function encryptForPeer(message, peerPublicKey, mySecretKey) {
     const nonce = nacl.randomBytes(nacl.box.nonceLength);
-    const messageUint8 = new TextEncoder().encode(message);
+    const messageUint8 = textEncoder.encode(message);
     const encrypted = nacl.box(messageUint8, nonce, peerPublicKey, mySecretKey);
     return {
         ciphertext: encodeBase64(encrypted),
@@ -16,7 +20,7 @@ export function decryptFromPeer(payload, senderPublicKey, mySecretKey) {
         if (!decrypted) {
             return null;
         }
-        return new TextDecoder().decode(decrypted);
+        return textDecoder.decode(decrypted);
     }
     catch {
         return null;

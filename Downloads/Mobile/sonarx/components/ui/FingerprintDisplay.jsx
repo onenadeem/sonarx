@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { Text } from "./text";
 import { hexToEmoji } from "@/lib/crypto/fingerprint";
 function FingerprintDisplay({ fingerprint, showLabel = true, className, }) {
-    const emojiGroups = hexToEmoji(fingerprint);
+    const safeFingerprint = typeof fingerprint === "string" ? fingerprint : "";
+    const emojiGroups = hexToEmoji(safeFingerprint);
     return (<View className={cn("items-center", className)}>
       {showLabel && (<Text className="text-sm text-muted-foreground mb-3">
           Security Verification

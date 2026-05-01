@@ -1,21 +1,48 @@
 import { useState } from 'react'
-import { View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Platform, Alert, ScrollView, } from 'react-native';
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, Alert, ScrollView, } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/src/theme/ThemeProvider';
-import { typography, spacing, borderRadius } from '@/src/theme/tokens';
+import { typography, spacing } from '@/src/theme/tokens';
 import { db } from '@/db/client';
 import { peers } from '@/db/schema';
+import { addContactModalStyles } from '@/src/theme/screenStyles';
 export default function AddContactModal() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { colors, isDark } = useTheme();
+    const { colors } = useTheme();
     const [phone, setPhone] = useState('');
     const [name, setName] = useState('');
     const [saving, setSaving] = useState(false);
     const canSave = phone.trim().length > 5 && name.trim().length > 0;
+    const fieldTextStyles = {
+        label: {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+        },
+        input: {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.regular,
+        },
+        title: {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.semiBold,
+        },
+        muted: {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+        },
+        headerAction: {
+            color: canSave ? colors.accent : colors.textDisabled,
+            fontFamily: typography.fontFamily.semiBold,
+        },
+        cancelAction: {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+        },
+    };
     const handleSave = async () => {
         if (!canSave || saving)
             return;
@@ -47,97 +74,70 @@ export default function AddContactModal() {
             setSaving(false);
         }
     };
-    return (<View style={styles.root}>
-      <StatusBar style={isDark ? 'light' : 'dark'}/>
+    return (<View style={addContactModalStyles.root}>
+      <StatusBar style={colors.statusBarStyle}/>
 
       {/* Backdrop — tap to dismiss */}
-      <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={() => router.back()}/>
+      <Pressable style={[addContactModalStyles.backdrop, { backgroundColor: colors.overlay }]} onPress={() => router.back()}/>
 
       {/* Sheet */}
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboardView}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[
-            styles.sheet,
+            addContactModalStyles.sheet,
             {
                 backgroundColor: colors.background,
                 paddingBottom: Math.max(insets.bottom, spacing.xl),
             },
         ]}>
           {/* Handle */}
-          <View style={[styles.handle, { backgroundColor: colors.border }]}/>
+          <View style={[addContactModalStyles.handle, { backgroundColor: colors.border }]}/>
 
           {/* Sheet header */}
-          <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
-            <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={10} accessibilityLabel="Cancel">
-              <Text style={[
-            styles.headerBtnText,
-            { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
-        ]}>
+          <View style={[addContactModalStyles.sheetHeader, { borderBottomColor: colors.border }]}>
+            <Pressable onPress={() => router.back()} style={addContactModalStyles.headerBtn} hitSlop={10} accessibilityLabel="Cancel">
+              <Text style={[addContactModalStyles.headerBtnText, fieldTextStyles.cancelAction]}>
                 Cancel
               </Text>
             </Pressable>
 
-            <Text style={[
-            styles.sheetTitle,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold },
-        ]}>
+            <Text style={[addContactModalStyles.sheetTitle, fieldTextStyles.title]}>
               New Contact
             </Text>
 
-            <Pressable onPress={handleSave} disabled={!canSave || saving} style={styles.headerBtn} hitSlop={10} accessibilityLabel="Save contact">
-              <Text style={[
-            styles.headerBtnText,
-            {
-                fontFamily: typography.fontFamily.semiBold,
-                color: canSave ? colors.accent : colors.textDisabled,
-            },
-        ]}>
+            <Pressable onPress={handleSave} disabled={!canSave || saving} style={addContactModalStyles.headerBtn} hitSlop={10} accessibilityLabel="Save contact">
+              <Text style={[addContactModalStyles.headerBtnText, fieldTextStyles.headerAction]}>
                 {saving ? 'Saving…' : 'Save'}
               </Text>
             </Pressable>
           </View>
 
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={addContactModalStyles.body}>
             {/* Avatar placeholder */}
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceMuted }]}>
+            <View style={[addContactModalStyles.avatarPlaceholder, { backgroundColor: colors.surfaceMuted }]}>
               <Ionicons name="person" size={36} color={colors.textDisabled}/>
             </View>
 
             {/* Form fields */}
             <View style={[
-            styles.fieldGroup,
+            addContactModalStyles.fieldGroup,
             { backgroundColor: colors.surface, borderColor: colors.border },
         ]}>
-              <View style={[styles.field, { borderBottomColor: colors.border }]}>
-                <Text style={[
-            styles.fieldLabel,
-            { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
-        ]}>
+              <View style={[addContactModalStyles.field, { borderBottomColor: colors.border }]}>
+                <Text style={[addContactModalStyles.fieldLabel, fieldTextStyles.label]}>
                   Name
                 </Text>
-                <TextInput value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor={colors.textDisabled} style={[
-            styles.fieldInput,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-        ]} autoFocus returnKeyType="next"/>
+                <TextInput value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor={colors.textDisabled} style={[addContactModalStyles.fieldInput, fieldTextStyles.input]} autoFocus returnKeyType="next"/>
               </View>
 
-              <View style={styles.field}>
-                <Text style={[
-            styles.fieldLabel,
-            { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
-        ]}>
+              <View style={addContactModalStyles.field}>
+                <Text style={[addContactModalStyles.fieldLabel, fieldTextStyles.label]}>
                   Phone
                 </Text>
-                <TextInput value={phone} onChangeText={setPhone} placeholder="+1 (555) 000-0000" placeholderTextColor={colors.textDisabled} style={[
-            styles.fieldInput,
-            { color: colors.textPrimary, fontFamily: typography.fontFamily.regular },
-        ]} keyboardType="phone-pad" returnKeyType="done" onSubmitEditing={handleSave}/>
+                <TextInput value={phone} onChangeText={setPhone} placeholder="+1 (555) 000-0000" placeholderTextColor={colors.textDisabled} style={[addContactModalStyles.fieldInput, fieldTextStyles.input]} keyboardType="phone-pad" returnKeyType="done" onSubmitEditing={handleSave}/>
               </View>
             </View>
 
-            <Text style={[
-            styles.hint,
-            { color: colors.textSecondary, fontFamily: typography.fontFamily.regular },
-        ]}>
+            <Text style={[addContactModalStyles.hint, fieldTextStyles.muted]}>
               The contact will be saved locally on your device.
             </Text>
           </ScrollView>
@@ -145,90 +145,3 @@ export default function AddContactModal() {
       </KeyboardAvoidingView>
     </View>);
 }
-const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    backdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    keyboardView: {
-    // Sits above the backdrop
-    },
-    sheet: {
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        overflow: 'hidden',
-    },
-    handle: {
-        width: 36,
-        height: 4,
-        borderRadius: 2,
-        alignSelf: 'center',
-        marginTop: spacing.sm,
-        marginBottom: spacing.xs,
-    },
-    sheetHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
-    headerBtn: {
-        minWidth: 64,
-    },
-    headerBtnText: {
-        fontSize: 16,
-    },
-    sheetTitle: {
-        fontSize: 17,
-        textAlign: 'center',
-        flex: 1,
-    },
-    body: {
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.xl,
-        paddingBottom: spacing.lg,
-        gap: spacing.xl,
-        alignItems: 'stretch',
-    },
-    avatarPlaceholder: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        alignSelf: 'center',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    fieldGroup: {
-        borderRadius: borderRadius.md,
-        borderWidth: StyleSheet.hairlineWidth,
-        overflow: 'hidden',
-    },
-    field: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        gap: spacing.sm,
-        minHeight: 50,
-    },
-    fieldLabel: {
-        width: 56,
-        fontSize: 15,
-    },
-    fieldInput: {
-        flex: 1,
-        fontSize: 15,
-        paddingVertical: 0,
-    },
-    hint: {
-        fontSize: 12,
-        textAlign: 'center',
-        lineHeight: 18,
-    },
-});

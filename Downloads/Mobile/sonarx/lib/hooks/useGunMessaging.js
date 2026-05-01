@@ -14,6 +14,20 @@ const SECRET_KEY_STORE_KEY = "sonarx-secret-keys";
  * Decrypts incoming messages and saves them to the local SQLite DB.
  * Mount this once at the root tab layout so it runs while the app is open.
  */
+const sanitizeIncomingMessage = (msg) => {
+    if (!msg || typeof msg !== "object")
+        return null;
+    if (!msg.id || !msg.fromPeerId || !msg.ciphertext || !msg.nonce) {
+        return null;
+    }
+    return {
+        id: String(msg.id),
+        fromPeerId: String(msg.fromPeerId),
+        ciphertext: String(msg.ciphertext),
+        nonce: String(msg.nonce),
+        timestamp: typeof msg.timestamp === "number" ? msg.timestamp : Date.now(),
+    };
+};
 export function useGunMessaging() {
     const identity = useIdentityStore((state) => state.identity);
     const unsubRef = useRef(null);
@@ -26,9 +40,13 @@ export function useGunMessaging() {
             if (!secretKeyStr || !isMounted)
                 return;
             const mySecretKey = decodeBase64(secretKeyStr);
-            const unsub = subscribeToInbox(identity.phoneNumber, async (msg) => {
+            const unsub = subscribeToInbox(identity.phoneNumber, async (rawMsg) => {
                 if (!isMounted)
                     return;
+                const msg = sanitizeIncomingMessage(rawMsg);
+                if (!msg) {
+                    return;
+                }
                 try {
                     // Dedup: skip if we already have this message
                     const existing = await db.query.messages.findFirst({

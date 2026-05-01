@@ -3,10 +3,12 @@ import * as WebBrowser from "expo-web-browser";
 
 import { Platform } from "react-native";
 export function ExternalLink(props) {
-    return (<Link target="_blank" {...props} href={props.href} onPress={(e) => {
-            if (Platform.OS !== "web") {
-                e.preventDefault();
-                WebBrowser.openBrowserAsync(props.href);
-            }
-        }}/>);
+    const { href, ...remainingProps } = props;
+    const handlePress = (event) => {
+        if (Platform.OS !== "web" && href) {
+            event.preventDefault();
+            WebBrowser.openBrowserAsync(href);
+        }
+    };
+    return (<Link target="_blank" {...remainingProps} href={href} onPress={handlePress}/>);
 }

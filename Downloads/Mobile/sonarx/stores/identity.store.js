@@ -1,7 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-const zustandStorage = {
+const STORE_NAME = "identity-storage";
+const storage = {
     getItem: async (name) => {
         const value = await SecureStore.getItemAsync(name);
         return value ?? null;
@@ -28,7 +29,7 @@ export const useIdentityStore = create()(persist((set) => ({
         identity: state.identity ? { ...state.identity, ...updates } : null,
     })),
 }), {
-    name: "identity-storage",
-    storage: createJSONStorage(() => zustandStorage),
+    name: STORE_NAME,
+    storage: createJSONStorage(() => storage),
 }));
 export { useIdentityStore as useIdentity };

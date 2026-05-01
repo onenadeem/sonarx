@@ -2,18 +2,22 @@
 import { StyleSheet, Text, View, } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/src/theme/ThemeProvider';
+import { HEADER_HEIGHT, HEADER_HEIGHT_LARGE } from '@/src/constants/layout';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { spacing, typography } from '@/src/theme/tokens';
 import AnimatedPressable from './Pressable';
 export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, rightActions, rightAccessory, style, }) {
     const { colors } = useTheme();
     const { isTablet, isDesktop } = useResponsive();
-    const height = isTablet || isDesktop ? 64 : 56;
-    // Icon and text color adapt to header background:
-    // light header → dark (textPrimary), dark header → light (primaryForeground)
+    const height = isTablet || isDesktop ? HEADER_HEIGHT_LARGE : HEADER_HEIGHT;
+    const hasLeftAction = Boolean(leftAccessory || leftIcon);
     const iconColor = colors.textPrimary;
     const titleColor = colors.textPrimary;
     const subtitleColor = colors.textSecondary;
+    const rightButtons = rightActions ?? [];
+    const renderedLeft = leftAccessory ? (leftAccessory) : leftIcon ? (<AnimatedPressable onPress={onLeftPress} accessibilityLabel={title} style={styles.iconButton}>
+            <Ionicons name={leftIcon} size={22} color={iconColor}/>
+          </AnimatedPressable>) : null;
     return (<View style={[
             styles.container,
             {
@@ -23,9 +27,7 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
             style,
         ]}>
       <View style={styles.leftSection}>
-        {leftAccessory ? (leftAccessory) : leftIcon ? (<AnimatedPressable onPress={onLeftPress} accessibilityLabel={title} style={styles.iconButton}>
-            <Ionicons name={leftIcon} size={22} color={iconColor}/>
-          </AnimatedPressable>) : null}
+        {hasLeftAction && renderedLeft}
 
         <View style={styles.titleBlock}>
           <Text style={[
@@ -44,7 +46,7 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
       </View>
 
       <View style={styles.rightSection}>
-        {rightActions?.map((action) => (<AnimatedPressable key={action.accessibilityLabel} onPress={action.onPress} accessibilityLabel={action.accessibilityLabel} style={styles.iconButton}>
+        {rightButtons.map((action) => (<AnimatedPressable key={action.accessibilityLabel} onPress={action.onPress} accessibilityLabel={action.accessibilityLabel} style={styles.iconButton}>
             <Ionicons name={action.icon} size={22} color={iconColor}/>
           </AnimatedPressable>))}
         {rightAccessory}

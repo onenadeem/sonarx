@@ -1,130 +1,92 @@
 import { peerManager } from "./peer-manager";
-export async function sendMessagePacket(peerId, messageId, encryptedBody, nonce, timestamp) {
-    const packet = {
-        type: "message",
-        payload: {
-            id: messageId,
-            encryptedBody,
-            nonce,
-            timestamp,
-        },
-    };
+
+const buildPacket = (type, payload) => ({
+    type,
+    payload,
+});
+const sendPacket = (peerId, packet) => {
     return peerManager.sendPacket(peerId, packet);
+};
+const dispatchHandler = (handler, payload) => {
+    if (typeof handler !== "function") {
+        return;
+    }
+    handler(payload);
+};
+export async function sendMessagePacket(peerId, messageId, encryptedBody, nonce, timestamp) {
+    return sendPacket(peerId, buildPacket("message", { id: messageId, encryptedBody, nonce, timestamp }));
 }
 export async function sendFileMetaPacket(peerId, meta) {
-    const packet = {
-        type: "file_meta",
-        payload: meta,
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("file_meta", meta));
 }
 export async function sendFileChunkPacket(peerId, chunk) {
-    const packet = {
-        type: "file_chunk",
-        payload: chunk,
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("file_chunk", chunk));
 }
 export async function sendFileAckPacket(peerId, fileId, chunkIndex) {
-    const packet = {
-        type: "file_ack",
-        payload: { fileId, chunkIndex },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("file_ack", { fileId, chunkIndex }));
 }
 export async function sendDeliveryReceipt(peerId, messageId) {
-    const packet = {
-        type: "delivery_receipt",
-        payload: {
-            messageId,
-            deliveredAt: Date.now(),
-        },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("delivery_receipt", {
+        messageId,
+        deliveredAt: Date.now(),
+    }));
 }
 export async function sendReadReceipt(peerId, messageId) {
-    const packet = {
-        type: "read_receipt",
-        payload: {
-            messageId,
-            readAt: Date.now(),
-        },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("read_receipt", { messageId, readAt: Date.now() }));
 }
 export async function sendTypingIndicator(peerId, isTyping) {
-    const packet = {
-        type: "typing",
-        payload: { isTyping },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("typing", { isTyping }));
 }
 export async function sendCallRequest(peerId, callId, isVideo, sdp) {
-    const packet = {
-        type: "call_request",
-        payload: { callId, isVideo, sdp },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("call_request", { callId, isVideo, sdp }));
 }
 export async function sendCallAccept(peerId, callId, sdp) {
-    const packet = {
-        type: "call_accept",
-        payload: { callId, sdp },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("call_accept", { callId, sdp }));
 }
 export async function sendCallReject(peerId, callId, reason) {
-    const packet = {
-        type: "call_reject",
-        payload: { callId, reason },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("call_reject", { callId, reason }));
 }
 export async function sendCallEnd(peerId, callId, duration) {
-    const packet = {
-        type: "call_end",
-        payload: { callId, duration },
-    };
-    return peerManager.sendPacket(peerId, packet);
+    return sendPacket(peerId, buildPacket("call_end", { callId, duration }));
 }
 export function handleIncomingPacket(packet, handlers) {
-    if (!packet || !packet.type) {
+    if (!packet || !packet.type || !handlers) {
         console.warn("Received invalid packet");
         return;
     }
     switch (packet.type) {
         case "message":
-            handlers.onMessage(packet.payload);
+            dispatchHandler(handlers.onMessage, packet.payload);
             break;
         case "file_meta":
-            handlers.onFileMetadata(packet.payload);
+            dispatchHandler(handlers.onFileMetadata, packet.payload);
             break;
         case "file_chunk":
-            handlers.onFileChunk(packet.payload);
+            dispatchHandler(handlers.onFileChunk, packet.payload);
             break;
         case "file_ack":
-            handlers.onFileAck(packet.payload);
+            dispatchHandler(handlers.onFileAck, packet.payload);
             break;
         case "delivery_receipt":
-            handlers.onDeliveryReceipt(packet.payload);
+            dispatchHandler(handlers.onDeliveryReceipt, packet.payload);
             break;
         case "read_receipt":
-            handlers.onReadReceipt(packet.payload);
+            dispatchHandler(handlers.onReadReceipt, packet.payload);
             break;
         case "typing":
-            handlers.onTyping(packet.payload);
+            dispatchHandler(handlers.onTyping, packet.payload);
             break;
         case "call_request":
-            handlers.onCallRequest(packet.payload);
+            dispatchHandler(handlers.onCallRequest, packet.payload);
             break;
         case "call_accept":
-            handlers.onCallAccept(packet.payload);
+            dispatchHandler(handlers.onCallAccept, packet.payload);
             break;
         case "call_reject":
-            handlers.onCallReject(packet.payload);
+            dispatchHandler(handlers.onCallReject, packet.payload);
             break;
         case "call_end":
-            handlers.onCallEnd(packet.payload);
+            dispatchHandler(handlers.onCallEnd, packet.payload);
             break;
         default:
             console.warn("Unknown packet type:", packet.type);

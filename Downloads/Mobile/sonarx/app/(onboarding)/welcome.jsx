@@ -4,16 +4,32 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { H1, Muted } from "@/components/ui/typography";
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
+import { useTheme } from "@/src/theme/ThemeProvider";
 export default function WelcomeScreen() {
     const router = useRouter();
-    const colorScheme = useColorScheme();
+    const { colors } = useTheme();
+    const featureHighlights = [
+        {
+            icon: "lock-closed-outline",
+            title: "End-to-End Encrypted",
+            description: "Only you and the recipient can read your messages",
+        },
+        {
+            icon: "globe-outline",
+            title: "Peer-to-Peer",
+            description: "Direct connections — no central servers",
+        },
+        {
+            icon: "videocam-outline",
+            title: "Voice & Video Calls",
+            description: "Crystal-clear encrypted calls with your contacts",
+        },
+    ];
     return (<SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-6 justify-center items-center bg-background">
         {/* Logo / Icon */}
         <View className="w-24 h-24 rounded-full bg-primary items-center justify-center mb-8">
-          <Ionicons name="radio-outline" size={46} color={Colors[colorScheme].text}/>
+          <Ionicons name="radio-outline" size={46} color={colors.textPrimary}/>
         </View>
 
         {/* Title */}
@@ -30,29 +46,7 @@ export default function WelcomeScreen() {
 
         {/* Feature highlights */}
         <View className="w-full mb-10 space-y-4">
-          <View className="flex-row items-center px-4 py-3 bg-card rounded-xl border border-border">
-            <Ionicons name="lock-closed-outline" size={24} color={Colors[colorScheme].text} style={{ marginRight: 12 }}/>
-            <View className="flex-1">
-              <Text className="font-semibold text-foreground">End-to-End Encrypted</Text>
-              <Muted>Only you and the recipient can read your messages</Muted>
-            </View>
-          </View>
-
-          <View className="flex-row items-center px-4 py-3 bg-card rounded-xl border border-border">
-            <Ionicons name="globe-outline" size={24} color={Colors[colorScheme].text} style={{ marginRight: 12 }}/>
-            <View className="flex-1">
-              <Text className="font-semibold text-foreground">Peer-to-Peer</Text>
-              <Muted>Direct connections — no central servers</Muted>
-            </View>
-          </View>
-
-          <View className="flex-row items-center px-4 py-3 bg-card rounded-xl border border-border">
-            <Ionicons name="videocam-outline" size={24} color={Colors[colorScheme].text} style={{ marginRight: 12 }}/>
-            <View className="flex-1">
-              <Text className="font-semibold text-foreground">Voice & Video Calls</Text>
-              <Muted>Crystal-clear encrypted calls with your contacts</Muted>
-            </View>
-          </View>
+          {featureHighlights.map((feature) => (<WelcomeFeature key={feature.title} icon={feature.icon} title={feature.title} description={feature.description} iconColor={colors.textPrimary}/>))}
         </View>
       </View>
 
@@ -68,4 +62,14 @@ export default function WelcomeScreen() {
         </Muted>
       </View>
     </SafeAreaView>);
+}
+
+function WelcomeFeature({ icon, title, description, iconColor }) {
+    return <View className="flex-row items-center px-4 py-3 bg-card rounded-xl border border-border">
+      <Ionicons name={icon} size={24} color={iconColor} style={{ marginRight: 12 }}/>
+      <View className="flex-1">
+        <Text className="font-semibold text-foreground">{title}</Text>
+        <Muted>{description}</Muted>
+      </View>
+    </View>;
 }

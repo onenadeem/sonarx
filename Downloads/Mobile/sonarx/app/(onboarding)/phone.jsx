@@ -9,11 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { normalizePhoneNumber, formatPhoneDisplay } from "@/lib/phone/format";
 import { readSimPhoneNumber, getCarrierInfo } from "@/lib/phone/verify";
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
+import { useTheme } from "@/src/theme/ThemeProvider";
 export default function PhoneScreen() {
     const router = useRouter();
-    const colorScheme = useColorScheme();
+    const { colors } = useTheme();
     const [phoneNumber, setPhoneNumber] = useState("");
     const [countryCode, setCountryCode] = useState("US");
     const [detectedNumber, setDetectedNumber] = useState(null);
@@ -63,7 +62,7 @@ export default function PhoneScreen() {
         <ScrollView className="flex-1 px-6 py-8" contentContainerStyle={{ flexGrow: 1 }}>
           <View className="items-center mb-8">
             <View className="w-16 h-16 rounded-full bg-primary items-center justify-center mb-4">
-              <Ionicons name="phone-portrait-outline" size={28} color={Colors[colorScheme].text}/>
+              <Ionicons name="phone-portrait-outline" size={28} color={colors.textPrimary}/>
             </View>
             <H1 className="text-center">Your Phone Number</H1>
             <Text className="text-xs tracking-[0.2em] text-muted-foreground mt-2 uppercase">
@@ -79,7 +78,7 @@ export default function PhoneScreen() {
 
             {detectedNumber && (<View className="bg-secondary rounded-xl border border-border p-3">
                 <View className="flex-row items-center">
-                  <Ionicons name="checkmark-circle-outline" size={16} color={Colors[colorScheme].text} style={{ marginRight: 6 }}/>
+                  <Ionicons name="checkmark-circle-outline" size={16} color={colors.textPrimary} style={{ marginRight: 6 }}/>
                   <Text className="text-sm text-foreground">
                     Detected from your SIM: {formatPhoneDisplay(detectedNumber)}
                   </Text>
@@ -91,7 +90,7 @@ export default function PhoneScreen() {
 
             {Platform.OS === "ios" && !detectedNumber && (<View className="bg-secondary rounded-xl border border-border p-3">
                 <View className="flex-row items-start">
-                  <Ionicons name="information-circle-outline" size={16} color={Colors[colorScheme].text} style={{ marginRight: 6, marginTop: 2 }}/>
+                  <Ionicons name="information-circle-outline" size={16} color={colors.textPrimary} style={{ marginRight: 6, marginTop: 2 }}/>
                   <Text className="text-sm text-foreground">
                     We'll use the number you enter. Make sure it matches your
                     SIM.

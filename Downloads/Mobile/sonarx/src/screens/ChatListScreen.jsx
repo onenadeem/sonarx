@@ -20,6 +20,7 @@ import { spacing, typography } from '@/src/theme/tokens';
 import { Strings } from '@/src/constants/strings';
 import { formatMessageTime } from '@/src/utils/formatTime';
 import SonarXLogo from '@/components/SonarXLogo';
+import { CHAT_LIST_MAX_WIDTH } from '@/src/constants/layout';
 class ChatListErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -39,14 +40,17 @@ class ChatListErrorBoundary extends Component {
 }
 function SearchBar({ value, onChangeText, onClear, }) {
     const { colors } = useTheme();
+    const searchInputWrapperThemeStyle = useMemo(() => ({
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+    }), [colors.border, colors.surface]);
     return (<View style={styles.searchContainer}>
       <TextInput value={value} onChangeText={onChangeText} leftIcon="search-outline" rightIcon={value ? 'close-outline' : undefined} onRightIconPress={onClear} placeholder="Search chats, contacts..." containerStyle={styles.searchInputContainer} inputWrapperStyle={[
             styles.searchInputWrapper,
+            styles.searchInputWrapperTheme,
             {
-                backgroundColor: colors.surface,
                 borderRadius: 24,
-                borderWidth: 1,
-                borderColor: colors.border,
+                ...searchInputWrapperThemeStyle,
             },
         ]} inputStyle={styles.searchInput}/>
     </View>);
@@ -56,55 +60,56 @@ function ConversationRow({ item, onPress, }) {
     const unreadCount = item.unreadCount ?? 0;
     const hasUnread = unreadCount > 0;
     const peerName = item.peer?.displayName ?? item.peerId;
-    return (<ListItem title={peerName} subtitle={Strings.chat.emptyChat} onPress={onPress} height={72} divider dividerInset={80} style={{ backgroundColor: 'transparent' }} accessibilityLabel={`Open chat with ${peerName}`} leading={<View>
+    const timestampStyle = useMemo(() => ({
+        color: hasUnread ? colors.accent : colors.textSecondary,
+        fontFamily: hasUnread ? typography.fontFamily.semiBold : typography.fontFamily.regular,
+    }), [colors.accent, colors.textSecondary, hasUnread]);
+    const subtitleStyle = useMemo(() => ({
+        color: hasUnread ? colors.textPrimary : colors.textSecondary,
+        fontFamily: hasUnread ? typography.fontFamily.medium : typography.fontFamily.regular,
+    }), [colors.textPrimary, colors.textSecondary, hasUnread]);
+    return (<ListItem title={peerName} subtitle={Strings.chat.emptyChat} onPress={onPress} height={72} divider dividerInset={80} style={styles.listItemTransparent} accessibilityLabel={`Open chat with ${peerName}`} leading={<View>
           <Avatar uri={item.peer?.avatarUri} name={peerName} size="md" showOnlineBadge={false}/>
           {hasUnread ? (<Badge count={unreadCount} style={styles.floatingBadge}/>) : null}
         </View>} meta={item.lastMessageAt ? (<Text style={[
                 styles.timestamp,
-                {
-                    color: hasUnread ? colors.accent : colors.textSecondary,
-                    fontFamily: hasUnread
-                        ? typography.fontFamily.semiBold
-                        : typography.fontFamily.regular,
-                },
+                timestampStyle,
             ]}>
             {formatMessageTime(item.lastMessageAt)}
           </Text>) : null} titleStyle={styles.conversationTitle} subtitleStyle={[
             styles.conversationSubtitle,
-            {
-                color: hasUnread ? colors.textPrimary : colors.textSecondary,
-                fontFamily: hasUnread
-                    ? typography.fontFamily.medium
-                    : typography.fontFamily.regular,
-            },
+                subtitleStyle,
         ]}/>);
 }
 function EmptyState({ onPress }) {
     const { colors } = useTheme();
+    const iconStyle = useMemo(() => ({
+        backgroundColor: colors.surfaceMuted,
+    }), [colors.surfaceMuted]);
+    const titleStyle = useMemo(() => ({
+        color: colors.textPrimary,
+        fontFamily: typography.fontFamily.semiBold,
+    }), [colors.textPrimary]);
+    const subtitleStyle = useMemo(() => ({
+        color: colors.textSecondary,
+        fontFamily: typography.fontFamily.regular,
+    }), [colors.textSecondary]);
     return (<View style={styles.emptyState}>
       <View style={[
             styles.emptyIcon,
-            {
-                backgroundColor: colors.surfaceMuted,
-            },
+            iconStyle,
         ]}>
         <Ionicons name="chatbubble-ellipses-outline" size={40} color={colors.textSecondary}/>
       </View>
       <Text style={[
             styles.emptyTitle,
-            {
-                color: colors.textPrimary,
-                fontFamily: typography.fontFamily.semiBold,
-            },
+            titleStyle,
         ]}>
         No chats yet
       </Text>
       <Text style={[
             styles.emptySubtitle,
-            {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.regular,
-            },
+            subtitleStyle,
         ]}>
         Add a contact to start a secure conversation.
       </Text>
@@ -159,22 +164,30 @@ function ChatListScreenInner() {
         return allConversations.filter((conversation) => conversation.peer?.displayName?.toLowerCase().includes(normalizedQuery) ||
             conversation.peerId.toLowerCase().includes(normalizedQuery));
     }, [allConversations, searchQuery]);
-    const contentMaxWidth = isDesktop ? 920 : isTablet ? 600 : undefined;
+    const contentMaxWidth = isDesktop
+        ? CHAT_LIST_MAX_WIDTH.desktop
+        : isTablet
+            ? CHAT_LIST_MAX_WIDTH.tablet
+            : undefined;
     const navigateToContacts = useCallback(() => {
         router.push('/(tabs)/contacts');
     }, [router]);
     const renderItem = useCallback(({ item }) => (<ConversationRow item={item} onPress={() => router.push(`/chat/${item.peerId}`)}/>), [router]);
+    const listContentStyle = useMemo(() => ({
+        paddingBottom: insets.bottom + spacing.xl,
+    }), [insets.bottom]);
+    const screenStyle = useMemo(() => ({
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+    }), [colors.background, insets.top]);
+    const contentShellStyle = useMemo(() => (contentMaxWidth
+        ? [styles.contentShell, { maxWidth: contentMaxWidth }]
+        : [styles.contentShell]), [contentMaxWidth]);
     return (<View style={[
             styles.screen,
-            {
-                backgroundColor: colors.background,
-                paddingTop: insets.top,
-            },
+            screenStyle,
         ]}>
-      <View style={[
-            styles.contentShell,
-            contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
-        ]}>
+      <View style={contentShellStyle}>
         <Header title="sonarx" leftAccessory={<SonarXLogo size={33}/>} rightActions={[
             {
                 icon: showSearch ? 'close-outline' : 'search-outline',
@@ -190,9 +203,7 @@ function ChatListScreenInner() {
 
         {showSearch ? (<SearchBar value={searchQuery} onChangeText={setSearchQuery} onClear={() => setSearchQuery('')}/>) : null}
 
-        {filteredConversations.length === 0 ? (<EmptyState onPress={navigateToContacts}/>) : (<FlatList data={filteredConversations} keyExtractor={(item) => item.id} renderItem={renderItem} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{
-                paddingBottom: insets.bottom + spacing.xl,
-            }}/>)}
+        {filteredConversations.length === 0 ? (<EmptyState onPress={navigateToContacts}/>) : (<FlatList data={filteredConversations} keyExtractor={(item) => item.id} renderItem={renderItem} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={listContentStyle}/>)}
       </View>
     </View>);
 }
@@ -223,6 +234,12 @@ const styles = StyleSheet.create({
     },
     searchInput: {
         fontSize: 14,
+    },
+    searchInputWrapperTheme: {
+        borderWidth: 1,
+    },
+    listItemTransparent: {
+        backgroundColor: 'transparent',
     },
     conversationTitle: {
         fontSize: 16,

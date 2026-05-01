@@ -1,5 +1,20 @@
 import { encryptForPeer } from "@/lib/crypto/box";
 import { wsRelay } from "./ws-relay";
+function buildRelayMessage(data) {
+    if (!data || typeof data !== "object") {
+        return null;
+    }
+    if (!data.ciphertext || !data.nonce || !data.fromPeerId || !data.id) {
+        return null;
+    }
+    return {
+        id: String(data.id),
+        fromPeerId: String(data.fromPeerId),
+        ciphertext: String(data.ciphertext),
+        nonce: String(data.nonce),
+        timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),
+    };
+}
 /**
  * Encrypt and send a message to the recipient via the WebSocket relay.
  * The relay delivers it immediately if the recipient is online, or queues
@@ -24,18 +39,10 @@ export function subscribeToInbox(myPeerId, onMessage) {
     // Connect (no-op if already connected for this peerId)
     wsRelay.connect(myPeerId);
     const unsub = wsRelay.onMessage((relayMsg) => {
-        const data = relayMsg.data;
-        if (!data || typeof data !== "object")
-            return;
-        if (!data.ciphertext || !data.nonce || !data.fromPeerId || !data.id)
-            return;
-        onMessage({
-            id: String(data.id),
-            fromPeerId: String(data.fromPeerId),
-            ciphertext: String(data.ciphertext),
-            nonce: String(data.nonce),
-            timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),
-        });
+        const normalized = buildRelayMessage(relayMsg.data);
+        if (normalized) {
+            onMessage(normalized);
+        }
     });
     return unsub;
 }

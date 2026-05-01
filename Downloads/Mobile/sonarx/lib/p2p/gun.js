@@ -1,5 +1,26 @@
 import Gun from "gun";
 import Constants from "expo-constants";
+
+const DEV_RELAY_PORT = 8765;
+const ACK_TIMEOUT_MS = 6000;
+const DEFAULT_TTL_SECONDS = 7 * 24 * 60 * 60;
+const FALLBACK_GUN_PEERS = [
+    "https://peer.wallie.io/gun",
+    "https://gundb-relay-milheirofernandes.b4a.run/gun",
+];
+
+const trimPeerEntry = (host) => {
+    if (!host) {
+        return null;
+    }
+    const ip = host.split(":")[0];
+    return `http://${ip}:${DEV_RELAY_PORT}/gun`;
+};
+
+function sanitizeGunData(data) {
+    const { expiresAt, ...cleanData } = data;
+    return cleanData;
+}
 /**
  * Build the peer list at runtime so we can inject the local dev relay.
  *
@@ -11,21 +32,18 @@ import Constants from "expo-constants";
  * local relay is not running.
  */
 function buildPeers() {
-    const peers = [];
+    const peers = [...FALLBACK_GUN_PEERS];
     if (__DEV__) {
         // Metro's host is the same machine we run `npm run relay` on.
         // Both new manifest and old manifest APIs are checked for compatibility.
         const debuggerHost = Constants.expoGoConfig?.debuggerHost ??
             Constants.manifest2?.extra?.expoGo?.debuggerHost ??
             Constants.manifest?.debuggerHost;
-        if (debuggerHost) {
-            const ip = debuggerHost.split(":")[0];
-            const localRelay = `http://${ip}:8765/gun`;
-            peers.push(localRelay);
+        const localRelay = trimPeerEntry(debuggerHost);
+        if (localRelay) {
+            peers.unshift(localRelay);
         }
     }
-    // Public fallback peers (gun-manhattan.herokuapp.com was shut down in 2022)
-    peers.push("https://peer.wallie.io/gun", "https://gundb-relay-milheirofernandes.b4a.run/gun");
     return peers;
 }
 export const SL_NAMESPACE = "sonarx/v1";
@@ -44,7 +62,7 @@ export function getGun() {
 export function getSLNode() {
     return getGun().get(SL_NAMESPACE);
 }
-export async function writeToGun(path, data, ttlSeconds = 7 * 24 * 60 * 60) {
+export async function writeToGun(path, data, ttlSeconds = DEFAULT_TTL_SECONDS) {
     const gun = getGun();
     const node = gun.get(path);
     const dataWithExpiry = {
@@ -52,10 +70,10 @@ export async function writeToGun(path, data, ttlSeconds = 7 * 24 * 60 * 60) {
         expiresAt: Date.now() + ttlSeconds * 1000,
     };
     return new Promise((resolve, reject) => {
-        // Without relay file-storage, ack can arrive late — cap the wait at 6s
+        // Without relay file-storage, ack can arrive late — cap the wait.
         const timer = setTimeout(() => {
             resolve();
-        }, 6000);
+        }, ACK_TIMEOUT_MS);
         node.put(dataWithExpiry, (ack) => {
             clearTimeout(timer);
             if (ack.err) {
@@ -77,8 +95,7 @@ export function subscribeToGun(path, callback) {
         if (expiry && Date.now() > expiry) {
             return;
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { expiresAt, ...cleanData } = data;
+        const cleanData = sanitizeGunData(data);
         callback(cleanData);
     };
     node.on(handler);
@@ -100,7 +117,7 @@ export async function getFromGun(path) {
                 resolve(null);
                 return;
             }
-            const { expiresAt, ...cleanData } = data;
+            const cleanData = sanitizeGunData(data);
             resolve(cleanData);
         });
     });

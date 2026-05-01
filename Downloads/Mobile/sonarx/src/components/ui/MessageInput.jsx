@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput as RNTextInput, View, } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/src/theme/ThemeProvider';
@@ -6,7 +6,17 @@ import { borderRadius, spacing, typography } from '@/src/theme/tokens';
 export default function MessageInput({ value, onChangeText, onSend, onAttachmentPress, onVoicePress, placeholder = 'Message', disabled = false, replyText, onCancelReply, }) {
     const { colors } = useTheme();
     const [focused, setFocused] = useState(false);
-    const canSend = value.trim().length > 0 && !disabled;
+    const trimmedValue = value.trim();
+    const canSend = trimmedValue.length > 0 && !disabled;
+    const handleFocus = useCallback(() => setFocused(true), []);
+    const handleBlur = useCallback(() => setFocused(false), []);
+    const handleSendPress = useCallback(() => {
+        if (!canSend) {
+            return;
+        }
+        onSend?.();
+    }, [canSend, onSend]);
+    const hasReply = Boolean(replyText);
     return (<View style={[
             styles.wrapper,
             {
@@ -15,7 +25,7 @@ export default function MessageInput({ value, onChangeText, onSend, onAttachment
             },
         ]}>
       {/* Reply banner */}
-      {replyText ? (<View style={[
+      {hasReply ? (<View style={[
                 styles.replyBar,
                 {
                     backgroundColor: colors.surfaceMuted,
@@ -48,7 +58,7 @@ export default function MessageInput({ value, onChangeText, onSend, onAttachment
           <Ionicons name="add" size={22} color={colors.textSecondary}/>
         </Pressable>
 
-        <RNTextInput value={value} onChangeText={onChangeText} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} style={[
+        <RNTextInput value={value} onChangeText={onChangeText} onFocus={handleFocus} onBlur={handleBlur} style={[
             styles.input,
             {
                 color: colors.textPrimary,
@@ -57,7 +67,7 @@ export default function MessageInput({ value, onChangeText, onSend, onAttachment
         ]} placeholder={placeholder} placeholderTextColor={colors.textSecondary} multiline numberOfLines={1} editable={!disabled}/>
 
         {/* Show mic when empty, send when has text */}
-        {canSend ? (<Pressable onPress={onSend} style={[
+        {canSend ? (<Pressable onPress={handleSendPress} style={[
                 styles.sendButton,
                 { backgroundColor: colors.accent },
             ]} accessibilityLabel="Send message">

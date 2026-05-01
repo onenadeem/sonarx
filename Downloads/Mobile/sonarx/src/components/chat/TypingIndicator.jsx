@@ -7,16 +7,19 @@ const DOT_SIZE = 8;
 const DOT_COUNT = 3;
 const BOUNCE_DURATION = 400;
 const STAGGER_MS = 150;
+const BOUNCE_OFFSET = -6;
+const BOUNCE_START = 0;
+const buildDotStyle = (color) => ({ backgroundColor: color });
 function Dot({ index }) {
     const { colors } = useTheme();
     const translateY = useSharedValue(0);
     useEffect(() => {
-        translateY.value = withDelay(index * STAGGER_MS, withRepeat(withSequence(withTiming(-6, { duration: BOUNCE_DURATION }), withTiming(0, { duration: BOUNCE_DURATION })), -1, false));
+        translateY.value = withDelay(index * STAGGER_MS, withRepeat(withSequence(withTiming(BOUNCE_OFFSET, { duration: BOUNCE_DURATION }), withTiming(BOUNCE_START, { duration: BOUNCE_DURATION })), -1, false));
     }, [index]);
     const animStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: translateY.value }],
     }));
-    return (<Animated.View style={[styles.dot, { backgroundColor: colors.textSecondary }, animStyle]}/>);
+    return (<Animated.View style={[styles.dot, buildDotStyle(colors.textSecondary), animStyle]}/>);
 }
 export default function TypingIndicator({ visible }) {
     const { colors } = useTheme();

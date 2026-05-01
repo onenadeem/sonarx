@@ -1,5 +1,17 @@
 import { useMemo } from 'react';
 import { usePresenceStore } from '@/src/store/presenceStore';
+const MINUTES_IN_HOUR = 60;
+const HOURS_IN_DAY = 24;
+const getLastSeenText = (minutes) => {
+    if (minutes < 1)
+        return 'Last seen just now';
+    if (minutes < MINUTES_IN_HOUR)
+        return `Last seen ${minutes}m ago`;
+    const hours = Math.floor(minutes / MINUTES_IN_HOUR);
+    if (hours < HOURS_IN_DAY)
+        return `Last seen ${hours}h ago`;
+    return `Last seen ${Math.floor(hours / HOURS_IN_DAY)}d ago`;
+};
 export function usePresence(peerId) {
     const status = usePresenceStore((state) => state.onlineStatus[peerId]);
     const statusText = useMemo(() => {
@@ -10,14 +22,7 @@ export function usePresence(peerId) {
         if (status.lastSeen) {
             const diffMs = Date.now() - status.lastSeen.getTime();
             const minutes = Math.floor(diffMs / 60_000);
-            if (minutes < 1)
-                return 'Last seen just now';
-            if (minutes < 60)
-                return `Last seen ${minutes}m ago`;
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24)
-                return `Last seen ${hours}h ago`;
-            return `Last seen ${Math.floor(hours / 24)}d ago`;
+            return getLastSeenText(minutes);
         }
         return 'Connecting...';
     }, [status]);

@@ -1,20 +1,23 @@
+const WEBRTC_UNAVAILABLE_MESSAGE = "WebRTC requires development build";
+const createNotAvailableError = () => new Error(WEBRTC_UNAVAILABLE_MESSAGE);
+
 // Expo Go compatible stub - WebRTC not available in Expo Go
 // Run npx expo run:android for full WebRTC functionality
 export const ICE_SERVERS = [];
 class MockPeerManager {
     connections = new Map();
     async initiateConnection() {
-        console.warn("WebRTC requires development build");
-        throw new Error("WebRTC not available in Expo Go");
+        console.warn(WEBRTC_UNAVAILABLE_MESSAGE);
+        throw createNotAvailableError();
     }
     async handleOffer() {
-        throw new Error("WebRTC not available in Expo Go");
+        throw createNotAvailableError();
     }
     async handleAnswer() {
-        throw new Error("WebRTC not available in Expo Go");
+        throw createNotAvailableError();
     }
     async addIceCandidate() {
-        throw new Error("WebRTC not available in Expo Go");
+        throw createNotAvailableError();
     }
     closeConnection(peerId) {
         this.connections.delete(peerId);
@@ -31,7 +34,7 @@ class MockPeerManager {
 export const peerManager = new MockPeerManager();
 export const RTCPeerConnection = class {
     constructor() {
-        throw new Error("WebRTC requires development build");
+        throw createNotAvailableError();
     }
 };
 export const RTCIceCandidate = class {

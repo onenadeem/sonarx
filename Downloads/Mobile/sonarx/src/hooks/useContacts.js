@@ -15,23 +15,24 @@ function peerToContact(peer) {
         isOnline: 0,
     };
 }
+const toContacts = (peers) => peers.map(peerToContact);
+const toLower = (value) => value.toLowerCase();
+const matchesContact = (contact, query) => toLower(contact.displayName).includes(query) || toLower(contact.phoneNumber).includes(query);
 export function useContacts() {
     const { contacts, isLoading, error, setContacts, setLoading, setError } = useContactsStore();
     // Use the peers table (existing schema) as the reactive source of truth
     const { data: peersData } = useLiveQuery(db.query.peers.findMany({ orderBy: asc(peers.displayName) }));
     useEffect(() => {
         if (peersData) {
-            setContacts(peersData.map(peerToContact));
+            setContacts(toContacts(peersData));
         }
     }, [peersData, setContacts]);
     const refetch = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const fresh = await db.query.peers.findMany({
-                orderBy: asc(peers.displayName),
-            });
-            setContacts(fresh.map(peerToContact));
+            const fresh = await db.query.peers.findMany({ orderBy: asc(peers.displayName) });
+            setContacts(toContacts(fresh));
         }
         catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to load contacts');
@@ -41,12 +42,11 @@ export function useContacts() {
         }
     }, [setContacts, setLoading, setError]);
     const searchContacts = useCallback(async (query) => {
-        if (!query.trim())
+        const normalizedQuery = query.trim().toLowerCase();
+        if (!normalizedQuery)
             return contacts;
         // Search from the in-memory list first (peers mapped to contacts)
-        const lower = query.toLowerCase();
-        const localResults = contacts.filter((c) => c.displayName.toLowerCase().includes(lower) ||
-            c.phoneNumber.toLowerCase().includes(lower));
+        const localResults = contacts.filter((c) => matchesContact(c, normalizedQuery));
         if (localResults.length > 0)
             return localResults;
         // Fall back to DB query on new contacts table

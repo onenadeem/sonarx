@@ -7,12 +7,13 @@ import Colors from "@/constants/Colors";
 function MessageInput({ onSend, onAttachment, onVoiceRecord, placeholder = "Type a message...", className, }) {
     const [text, setText] = useState("");
     const [isRecording, setIsRecording] = useState(false);
+    const trimmedText = text.trim();
     const handleSend = useCallback(() => {
-        if (text.trim()) {
-            onSend(text.trim());
+        if (trimmedText) {
+            onSend(trimmedText);
             setText("");
         }
-    }, [text, onSend]);
+    }, [onSend, trimmedText]);
     const handleVoicePress = useCallback(() => {
         if (onVoiceRecord) {
             setIsRecording(!isRecording);
@@ -32,8 +33,8 @@ function MessageInput({ onSend, onAttachment, onVoiceRecord, placeholder = "Type
       </View>
 
       {/* Voice/Send Button */}
-      <TouchableOpacity onPress={text.trim() ? handleSend : handleVoicePress} className={cn("p-2.5 ml-2 rounded-full", text.trim() ? "bg-primary" : "bg-muted")}>
-        <Ionicons name={text.trim() ? "send-outline" : "mic-outline"} size={20} color={text.trim() ? Colors[colorScheme].background : Colors[colorScheme].text}/>
+      <TouchableOpacity onPress={trimmedText ? handleSend : handleVoicePress} className={cn("p-2.5 ml-2 rounded-full", trimmedText ? "bg-primary" : "bg-muted")}>
+        <Ionicons name={trimmedText ? "send-outline" : "mic-outline"} size={20} color={trimmedText ? Colors[colorScheme].background : Colors[colorScheme].text}/>
       </TouchableOpacity>
     </View>);
 }

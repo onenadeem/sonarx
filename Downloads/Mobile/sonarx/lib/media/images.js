@@ -2,6 +2,28 @@ import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { encode } from "blurhash";
+
+const IMAGE_MEDIA_TYPE = ImagePicker.MediaTypeOptions.Images;
+const IMAGE_PERMISSION_ERROR = {
+  library: "Media library permission denied",
+  camera: "Camera permission denied",
+};
+const DEFAULT_MEDIA_OPTIONS = {
+  mediaTypes: IMAGE_MEDIA_TYPE,
+  quality: 1,
+};
+
+async function ensureMediaPermission(requestPermission, permissionErrorMessage) {
+  const { status } = await requestPermission();
+  if (status !== "granted") {
+    throw new Error(permissionErrorMessage);
+  }
+}
+
+async function launchImagePicker(launchFn, options = {}) {
+  return launchFn({ ...DEFAULT_MEDIA_OPTIONS, ...options });
+}
+
 export async function compressImage(uri, maxWidth = 1920, quality = 0.8) {
     const { width, height } = await new Promise((resolve) => {
         const img = new Image();
@@ -43,26 +65,22 @@ export async function createThumbnail(uri, size = 300) {
     return thumbnail.uri;
 }
 export async function pickImage() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-        throw new Error("Media library permission denied");
-    }
-    return ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    await ensureMediaPermission(
+      ImagePicker.requestMediaLibraryPermissionsAsync,
+      IMAGE_PERMISSION_ERROR.library,
+    );
+    return launchImagePicker(ImagePicker.launchImageLibraryAsync, {
         allowsEditing: false,
         allowsMultipleSelection: false,
-        quality: 1,
     });
 }
 export async function takePhoto() {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-        throw new Error("Camera permission denied");
-    }
-    return ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    await ensureMediaPermission(
+      ImagePicker.requestCameraPermissionsAsync,
+      IMAGE_PERMISSION_ERROR.camera,
+    );
+    return launchImagePicker(ImagePicker.launchCameraAsync, {
         allowsEditing: false,
-        quality: 1,
     });
 }
 export async function saveToGallery(uri) {

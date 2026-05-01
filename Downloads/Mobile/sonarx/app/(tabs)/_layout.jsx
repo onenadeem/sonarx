@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePresenceBroadcaster } from "@/lib/hooks/usePresenceBroadcaster";
 import { useGunMessaging } from "@/lib/hooks/useGunMessaging";
 import { useTheme } from "@/src/theme/ThemeProvider";
+import { buildTabBarStyle, getTabBarIconRenderer, TAB_BAR_HIDDEN_SCREENS, TAB_BAR_TABS } from "@/src/constants/tabBar";
 export default function TabLayout() {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
@@ -16,39 +17,26 @@ export default function TabLayout() {
             tabBarActiveTintColor: colors.tabBarActive,
             tabBarInactiveTintColor: colors.tabBarInactive,
             tabBarShowLabel: false,
-            tabBarStyle: {
-                backgroundColor: colors.tabBar,
-                borderTopWidth: 0,
-                height: 65 + insets.bottom,
-                paddingBottom: insets.bottom,
-                paddingTop: 17,
-            },
+            tabBarStyle: buildTabBarStyle(colors, insets.bottom),
             headerShown: false,
         }} initialRouteName="chats">
       {/* Hide template screens from tabs */}
-      <Tabs.Screen name="index" options={{ href: null }}/>
-      <Tabs.Screen name="two" options={{ href: null }}/>
+      {TAB_BAR_HIDDEN_SCREENS.map(({ name, options }) => <Tabs.Screen key={`hidden-${name}`} name={name} options={options}/>)}
 
       {/* Actual app tabs */}
-      <Tabs.Screen name="chats" options={{
-            title: "Chats",
-            tabBarIcon: ({ color, focused }) => (<Ionicons name={focused ? "chatbubbles" : "chatbubbles-outline"} size={23} color={color}/>),
-        }}/>
-      <Tabs.Screen name="community" options={{
-            title: "Community",
-            tabBarIcon: ({ color, focused }) => (<Ionicons name={focused ? "earth" : "earth-outline"} size={23} color={color}/>),
-        }}/>
-      <Tabs.Screen name="find" options={{
-            title: "Find",
-            tabBarIcon: ({ color, focused }) => (<Ionicons name={focused ? "file-tray-stacked" : "file-tray-stacked-outline"} size={22} color={color}/>),
-        }}/>
-      <Tabs.Screen name="contacts" options={{
-            title: "Contacts",
-            tabBarIcon: ({ color, focused }) => (<Ionicons name={focused ? "person" : "person-outline"} size={22} color={color}/>),
-        }}/>
-      <Tabs.Screen name="settings" options={{
-            title: "Settings",
-            tabBarIcon: ({ color, focused }) => (<Ionicons name={focused ? "settings" : "settings-outline"} size={23} color={color}/>),
-        }}/>
+      {TAB_BAR_TABS.map(({ name, title }) => {
+            const iconRenderer = getTabBarIconRenderer(name);
+            return <Tabs.Screen key={name} name={name} options={{
+                    title,
+                    tabBarIcon: ({ color, focused }) => {
+                        const iconProps = iconRenderer?.({ color, focused }) || {
+                            name: "ellipse-outline",
+                            color,
+                            size: 20,
+                        };
+                        return <Ionicons {...iconProps}/>;
+                    },
+                }}/>;
+        })}
     </Tabs>);
 }

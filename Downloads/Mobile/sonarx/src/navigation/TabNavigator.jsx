@@ -30,6 +30,7 @@ const TABS = [
         Screen: SettingsScreen,
     },
 ];
+const TAB_ICON_SIZE = 24;
 const Tab = createBottomTabNavigator();
 // ─── Component ────────────────────────────────────────────────────────────────
 export function TabNavigator() {
@@ -45,7 +46,7 @@ export function TabNavigator() {
         }}>
       {TABS.map(({ name, label, icon, iconOutline, Screen }) => (<Tab.Screen key={name} name={name} component={Screen} options={{
                 tabBarLabel: label,
-                tabBarIcon: ({ color, focused, size }) => (<Ionicons name={focused ? icon : iconOutline} size={size} color={color}/>),
+                tabBarIcon: ({ color, focused }) => (<Ionicons name={focused ? icon : iconOutline} size={TAB_ICON_SIZE} color={color}/>),
             }}/>))}
     </Tab.Navigator>);
 }

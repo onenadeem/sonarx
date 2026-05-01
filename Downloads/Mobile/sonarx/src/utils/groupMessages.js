@@ -1,27 +1,27 @@
 import { formatDateSeparator } from './formatTime';
+const toDate = (value) => (typeof value === "number" ? new Date(value) : value);
 export function isSameDay(a, b) {
-    const dateA = typeof a === 'number' ? new Date(a) : a;
-    const dateB = typeof b === 'number' ? new Date(b) : b;
+    const dateA = toDate(a);
+    const dateB = toDate(b);
     return (dateA.getFullYear() === dateB.getFullYear() &&
         dateA.getMonth() === dateB.getMonth() &&
         dateA.getDate() === dateB.getDate());
 }
 export function groupMessagesByDate(messages) {
-    if (messages.length === 0)
+    if (messages.length === 0) {
         return [];
-    const groups = [];
-    let currentGroup = null;
-    for (const message of messages) {
-        const sentAt = message.sentAt instanceof Date ? message.sentAt : new Date(message.sentAt);
-        if (!currentGroup || !isSameDay(currentGroup.date, sentAt)) {
-            currentGroup = {
+    }
+    return messages.reduce((groups, message) => {
+        const sentAt = toDate(message.sentAt);
+        const activeGroup = groups[groups.length - 1];
+        if (!activeGroup || !isSameDay(activeGroup.date, sentAt)) {
+            groups.push({
                 date: sentAt,
                 dateLabel: formatDateSeparator(sentAt),
                 messages: [],
-            };
-            groups.push(currentGroup);
+            });
         }
-        currentGroup.messages.push(message);
-    }
-    return groups;
+        groups[groups.length - 1].messages.push(message);
+        return groups;
+    }, []);
 }

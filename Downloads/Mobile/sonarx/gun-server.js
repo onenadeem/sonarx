@@ -74,6 +74,43 @@ const pendingMessages = new Map();
 
 const msgWss = new WebSocketServer({ port: MSG_PORT });
 
+function normalizePeerId(peerId) {
+  return String(peerId);
+}
+
+function parseIncomingMessage(raw) {
+  try {
+    return JSON.parse(raw);
+  }
+  catch {
+    return null;
+  }
+}
+
+function getPendingQueue(peerId) {
+  return pendingMessages.get(peerId) || [];
+}
+
+function queuePendingMessage(peerId, item) {
+  if (!pendingMessages.has(peerId)) {
+    pendingMessages.set(peerId, []);
+  }
+  pendingMessages.get(peerId).push(item);
+}
+
+function popPendingMessages(peerId) {
+  const pending = getPendingQueue(peerId);
+  pendingMessages.delete(peerId);
+  return pending;
+}
+
+function deliverPendingMessages(peerId, ws) {
+  popPendingMessages(peerId).forEach((item) => {
+    send(ws, { type: "message", id: item.id, data: item.data });
+    console.log(`[MsgRelay] 📬 Delivered pending msg ${item.id} to ${peerId}`);
+  });
+}
+
 function send(ws, obj) {
   if (ws.readyState === ws.OPEN) {
     ws.send(JSON.stringify(obj));
@@ -85,39 +122,38 @@ msgWss.on("connection", (ws) => {
 
   ws.on("message", (raw) => {
     let msg;
-    try { msg = JSON.parse(raw); } catch { return; }
+    const parsed = parseIncomingMessage(raw);
+    if (!parsed) {
+      return;
+    }
+    msg = parsed;
 
     if (msg.type === "subscribe" && msg.inbox) {
-      myId = String(msg.inbox);
+      myId = normalizePeerId(msg.inbox);
       subscribers.set(myId, ws);
       console.log(`[MsgRelay] 🔌 ${myId} subscribed`);
 
       // Deliver any pending messages
-      const pending = pendingMessages.get(myId) || [];
-      pending.forEach((item) => {
-        send(ws, { type: "message", id: item.id, data: item.data });
-        console.log(`[MsgRelay] 📬 Delivered pending msg ${item.id} to ${myId}`);
-      });
-      pendingMessages.delete(myId);
+      deliverPendingMessages(myId, ws);
 
     } else if (msg.type === "send" && msg.to && msg.id && msg.data) {
-      const recipientId = String(msg.to);
+      const recipientId = normalizePeerId(msg.to);
       const subscriber = subscribers.get(recipientId);
 
       // Ack the sender immediately
       send(ws, { type: "ack", id: msg.id });
 
+      const payload = { type: "message", id: msg.id, data: msg.data };
       if (subscriber && subscriber.readyState === subscriber.OPEN) {
         // Recipient online — deliver now
-        send(subscriber, { type: "message", id: msg.id, data: msg.data });
+        send(subscriber, payload);
         console.log(`[MsgRelay] ✉️  ${myId || "?"} → ${recipientId} (live)`);
       } else {
         // Recipient offline — queue for later
-        if (!pendingMessages.has(recipientId)) {
-          pendingMessages.set(recipientId, []);
-        }
-        pendingMessages.get(recipientId).push({ id: msg.id, data: msg.data });
-        console.log(`[MsgRelay] 📮 ${myId || "?"} → ${recipientId} (queued, ${pendingMessages.get(recipientId).length} pending)`);
+        queuePendingMessage(recipientId, payload);
+        console.log(
+          `[MsgRelay] 📮 ${myId || "?"} → ${recipientId} (queued, ${pendingMessages.get(recipientId).length} pending)`,
+        );
       }
     }
   });

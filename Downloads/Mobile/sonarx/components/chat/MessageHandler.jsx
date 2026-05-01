@@ -1,14 +1,8 @@
-import { useEffect } from "react";
 import { db } from "@/db/client";
 import { attachments } from "@/db/schema";
 import { decryptFromPeer } from "@/lib/crypto/box";
 import { getOrCreateConversation, insertMessage, } from "@/db/queries";
-export function MessageHandler({ identity }) {
-    useEffect(() => {
-        if (!identity)
-            return;
-        return () => { };
-    }, [identity]);
+export function MessageHandler() {
     return null;
 }
 export async function handleIncomingMessage(fromPeerId, encryptedBody, nonce, mySecretKey, senderPublicKey) {
@@ -39,4 +33,3 @@ export async function handleIncomingFileMetadata(fromPeerId, fileId, fileName, f
         createdAt: new Date(),
     });
 }
-export async function handleIncomingFileChunk() { }

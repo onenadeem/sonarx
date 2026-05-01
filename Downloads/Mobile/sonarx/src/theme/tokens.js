@@ -1,7 +1,4 @@
-import { borderRadius } from '@/constants/borderRadius';
-import { elevation } from '@/constants/elevation';
-import { spacing } from '@/constants/spacing';
-import { typography } from '@/constants/typography';
+import { borderRadius, elevation, spacing, typography } from '@/src/theme/tokens-core';
 import { darkTheme, lightTheme } from './palette';
 export const lightColors = {
     ...lightTheme,

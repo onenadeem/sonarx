@@ -1,5 +1,18 @@
 import { create } from 'zustand';
 // ─── Store ────────────────────────────────────────────────────────────────────
+const sortChatsByLastMessage = (chats) => [...chats].sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
+const updateMessagesByChatId = (state, chatId, updater) => {
+    const messages = state.messagesByChatId[chatId];
+    if (!messages) {
+        return state;
+    }
+    return {
+        messagesByChatId: {
+            ...state.messagesByChatId,
+            [chatId]: updater(messages),
+        },
+    };
+};
 export const useMessagesStore = create()((set) => ({
     // ── ChatState ──────────────────────────────────────────────────────────────
     messagesByChatId: {},
@@ -8,43 +21,18 @@ export const useMessagesStore = create()((set) => ({
     })),
     addMessage: (chatId, message) => set((state) => {
         const existing = state.messagesByChatId[chatId] ?? [];
-        return {
-            messagesByChatId: {
-                ...state.messagesByChatId,
-                [chatId]: [message, ...existing],
-            },
-        };
+        return updateMessagesByChatId(state, chatId, () => [message, ...existing]);
     }),
-    updateMessageStatus: (chatId, messageId, status, timestamp) => set((state) => {
-        const msgs = state.messagesByChatId[chatId];
-        if (!msgs)
-            return state;
-        return {
-            messagesByChatId: {
-                ...state.messagesByChatId,
-                [chatId]: msgs.map((m) => m.id === messageId
-                    ? {
-                        ...m,
-                        status,
-                        readAt: status === 'read'
-                            ? (timestamp ?? Date.now())
-                            : m.readAt,
-                    }
-                    : m),
-            },
-        };
-    }),
-    deleteMessage: (chatId, messageId) => set((state) => {
-        const msgs = state.messagesByChatId[chatId];
-        if (!msgs)
-            return state;
-        return {
-            messagesByChatId: {
-                ...state.messagesByChatId,
-                [chatId]: msgs.map((m) => m.id === messageId ? { ...m, isDeleted: 1, content: '' } : m),
-            },
-        };
-    }),
+    updateMessageStatus: (chatId, messageId, status, timestamp) => set((state) => updateMessagesByChatId(state, chatId, (msgs) => msgs.map((m) => m.id === messageId
+        ? {
+            ...m,
+            status,
+            readAt: status === 'read'
+                ? (timestamp ?? Date.now())
+                : m.readAt,
+        }
+        : m))),
+    deleteMessage: (chatId, messageId) => set((state) => updateMessagesByChatId(state, chatId, (msgs) => msgs.map((m) => m.id === messageId ? { ...m, isDeleted: 1, content: '' } : m))),
     clearChat: (chatId) => set((state) => {
         const next = { ...state.messagesByChatId };
         delete next[chatId];
@@ -54,7 +42,7 @@ export const useMessagesStore = create()((set) => ({
     chats: [],
     unreadCounts: {},
     setChats: (chats) => set({
-        chats: [...chats].sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0)),
+        chats: sortChatsByLastMessage(chats),
     }),
     addOrUpdateChat: (chat) => set((state) => {
         const idx = state.chats.findIndex((c) => c.id === chat.id);
@@ -66,7 +54,7 @@ export const useMessagesStore = create()((set) => ({
             ]
             : [chat, ...state.chats];
         return {
-            chats: updated.sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0)),
+            chats: sortChatsByLastMessage(updated),
         };
     }),
     updateUnreadCount: (chatId, count) => set((state) => ({

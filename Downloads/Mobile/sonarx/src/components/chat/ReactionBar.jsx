@@ -4,6 +4,16 @@ import Animated, { useSharedValue, withSpring, useAnimatedStyle, } from 'react-n
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens';
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+const DEFAULT_POSITION = { x: '10%', y: '40%' };
+const getPositionValue = (position, axis, fallback) => position?.[axis] ?? fallback;
+function ReactionButton({ emoji, onPress }) {
+    return <Pressable onPress={onPress} style={({ pressed }) => [
+        styles.emojiBtn,
+        pressed && styles.emojiPressed,
+    ]}>
+        <Text style={styles.emoji}>{emoji}</Text>
+      </Pressable>;
+}
 export default function ReactionBar({ visible, onReact, onDismiss, position, }) {
     const { colors } = useTheme();
     const scale = useSharedValue(0);
@@ -24,21 +34,22 @@ export default function ReactionBar({ visible, onReact, onDismiss, position, }) 
             {
                 backgroundColor: colors.surfaceElevated,
                 borderColor: colors.border,
-                top: position?.y ?? '40%',
-                left: position?.x ?? '10%',
+                top: getPositionValue(position, 'y', DEFAULT_POSITION.y),
+                left: getPositionValue(position, 'x', DEFAULT_POSITION.x),
             },
             shadows.lg,
             animStyle,
         ]}>
-              {EMOJIS.map((emoji) => (<Pressable key={emoji} onPress={() => {
-                onReact(emoji);
-                onDismiss();
-            }} style={({ pressed }) => [
-                styles.emojiBtn,
-                pressed && styles.emojiPressed,
-            ]}>
-                  <Text style={styles.emoji}>{emoji}</Text>
-                </Pressable>))}
+            {EMOJIS.map((emoji) => (
+              <ReactionButton
+                key={emoji}
+                emoji={emoji}
+                onPress={() => {
+                  onReact(emoji);
+                  onDismiss();
+                }}
+              />
+            ))}
             </Animated.View>
           </TouchableWithoutFeedback>
         </View>

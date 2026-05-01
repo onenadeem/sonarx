@@ -1,5 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+const MESSAGE_TYPES = ['text', 'image', 'file', 'audio', 'video'];
+const MESSAGE_STATUSES = ['sending', 'sent', 'delivered', 'read'];
 // ─── Tables ───────────────────────────────────────────────────────────────────
 export const contacts = sqliteTable('contacts', {
     id: text('id').primaryKey(),
@@ -27,12 +29,12 @@ export const messages = sqliteTable('messages', {
     senderId: text('sender_id').notNull(),
     content: text('content').notNull(),
     type: text('type', {
-        enum: ['text', 'image', 'file', 'audio', 'video'],
+        enum: MESSAGE_TYPES,
     })
         .notNull()
         .default('text'),
     status: text('status', {
-        enum: ['sending', 'sent', 'delivered', 'read'],
+        enum: MESSAGE_STATUSES,
     })
         .notNull()
         .default('sending'),

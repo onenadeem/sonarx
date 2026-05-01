@@ -1,6 +1,7 @@
 import * as React from "react";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSequence, } from "react-native-reanimated";
 import { cn } from "@/lib/utils";
+import { SKELETON_CLASS } from "./styleTokens";
 function Skeleton({ className, width, height, circle }) {
     const opacity = useSharedValue(0.7);
     React.useEffect(() => {
@@ -14,6 +15,6 @@ function Skeleton({ className, width, height, circle }) {
             width !== undefined ? { width } : undefined,
             height !== undefined ? { height } : undefined,
             circle ? { borderRadius: 9999 } : undefined,
-        ]} className={cn("bg-muted rounded-md", className)}/>);
+        ]} className={cn(SKELETON_CLASS, className)}/>);
 }
 export { Skeleton };

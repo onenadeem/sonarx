@@ -5,6 +5,11 @@ import { spacing, typography } from '@/src/theme/tokens';
 import AnimatedPressable from './Pressable';
 export default function ListItem({ title, subtitle, meta, leading, trailing, onPress, onLongPress, height = 64, divider = true, dividerInset = 64, style, titleStyle, subtitleStyle, accessibilityLabel, }) {
     const { colors } = useTheme();
+    const isTitleText = typeof title === 'string';
+    const isSubtitleText = typeof subtitle === 'string' || typeof subtitle === 'number';
+    const listItemContent = isSubtitleText
+        ? String(subtitle)
+        : subtitle;
     const content = (<View style={[
             styles.row,
             { minHeight: height, backgroundColor: colors.surface },
@@ -14,7 +19,7 @@ export default function ListItem({ title, subtitle, meta, leading, trailing, onP
 
       <View style={styles.content}>
         <View style={styles.primaryRow}>
-          {typeof title === 'string' ? (<Text style={[
+          {isTitleText ? (<Text style={[
                 styles.title,
                 {
                     color: colors.textPrimary,
@@ -27,7 +32,7 @@ export default function ListItem({ title, subtitle, meta, leading, trailing, onP
           {meta ? <View style={styles.meta}>{meta}</View> : null}
         </View>
 
-        {subtitle ? (typeof subtitle === 'string' || typeof subtitle === 'number' ? (<Text style={[
+        {listItemContent ? (isSubtitleText ? (<Text style={[
                 styles.subtitle,
                 {
                     color: colors.textSecondary,
@@ -35,8 +40,8 @@ export default function ListItem({ title, subtitle, meta, leading, trailing, onP
                 },
                 subtitleStyle,
             ]} numberOfLines={1}>
-              {String(subtitle)}
-            </Text>) : (<View>{subtitle}</View>)) : null}
+              {listItemContent}
+            </Text>) : (<View>{listItemContent}</View>)) : null}
       </View>
 
       {trailing ? <View style={styles.trailing}>{trailing}</View> : null}

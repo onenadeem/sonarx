@@ -1,61 +1,44 @@
 import { parsePhoneNumber, isValidPhoneNumber, } from "libphonenumber-js";
-export function normalizePhoneNumber(input, countryCode = "US") {
+const parseNumber = (value, countryCode = "US") => {
     try {
-        const phoneNumber = parsePhoneNumber(input, countryCode);
-        if (phoneNumber && isValidPhoneNumber(phoneNumber.number)) {
-            return phoneNumber.format("E.164");
-        }
-        return null;
+        return parsePhoneNumber(value, countryCode);
     }
     catch {
         return null;
     }
+};
+export function normalizePhoneNumber(input, countryCode = "US") {
+    const phoneNumber = parseNumber(input, countryCode);
+    if (!phoneNumber || !isValidPhoneNumber(phoneNumber.number)) {
+        return null;
+    }
+    return phoneNumber.format("E.164");
 }
 export function formatPhoneDisplay(e164) {
-    try {
-        const phoneNumber = parsePhoneNumber(e164);
-        if (phoneNumber) {
-            return phoneNumber.formatInternational();
-        }
+    const phoneNumber = parseNumber(e164);
+    if (!phoneNumber) {
         return e164;
     }
-    catch {
-        return e164;
-    }
+    return phoneNumber.formatInternational();
 }
 export function getCountryCode(e164) {
-    try {
-        const phoneNumber = parsePhoneNumber(e164);
-        if (phoneNumber) {
-            return `+${phoneNumber.countryCallingCode}`;
-        }
+    const phoneNumber = parseNumber(e164);
+    if (!phoneNumber) {
         return null;
     }
-    catch {
-        return null;
-    }
+    return `+${phoneNumber.countryCallingCode}`;
 }
 export function getNationalNumber(e164) {
-    try {
-        const phoneNumber = parsePhoneNumber(e164);
-        if (phoneNumber) {
-            return phoneNumber.nationalNumber.toString();
-        }
+    const phoneNumber = parseNumber(e164);
+    if (!phoneNumber) {
         return null;
     }
-    catch {
-        return null;
-    }
+    return phoneNumber.nationalNumber.toString();
 }
 export function detectCountryFromNumber(phoneNumber) {
-    try {
-        const parsed = parsePhoneNumber(phoneNumber);
-        if (parsed && parsed.country) {
-            return parsed.country;
-        }
-    }
-    catch {
+    const parsed = parseNumber(phoneNumber);
+    if (!parsed || !parsed.country) {
         return "US";
     }
-    return "US";
+    return parsed.country;
 }

@@ -6,21 +6,23 @@ const HAPTIC_MAP = {
     medium: Haptics.ImpactFeedbackStyle.Medium,
     heavy: Haptics.ImpactFeedbackStyle.Heavy,
 };
+const normalizeHapticType = (type) => (HAPTIC_MAP[type] ? type : 'light');
+const triggerHaptic = (type, isSelection = false) => {
+    if (isSelection) {
+        return Haptics.selectionAsync();
+    }
+    return Haptics.impactAsync(HAPTIC_MAP[normalizeHapticType(type)]);
+};
 export default function AnimatedPressable({ onPress, onLongPress, haptic = false, hapticType = 'light', style, children, disabled = false, hitSlop, accessibilityLabel, }) {
     const handlePress = () => {
         if (haptic) {
-            if (hapticType === 'selection') {
-                Haptics.selectionAsync();
-            }
-            else {
-                Haptics.impactAsync(HAPTIC_MAP[hapticType]);
-            }
+            triggerHaptic(hapticType, hapticType === 'selection');
         }
         onPress?.();
     };
     const handleLongPress = () => {
         if (haptic) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            triggerHaptic('heavy');
         }
         onLongPress?.();
     };

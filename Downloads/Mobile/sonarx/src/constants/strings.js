@@ -1,3 +1,15 @@
+const sharedCommon = {
+    send: 'Send',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    copy: 'Copy',
+    reply: 'Reply',
+    loading: 'Loading...',
+    error: 'Something went wrong.',
+    retry: 'Retry',
+    ok: 'OK',
+    confirm: 'Confirm',
+};
 export const Strings = {
     app: {
         name: 'Shaik',
@@ -50,22 +62,13 @@ export const Strings = {
         clearCache: 'Clear Message Cache',
         clearCacheConfirm: 'This will delete all local message history. This action cannot be undone.',
         clearCacheConfirmBtn: 'Clear',
-        cancel: 'Cancel',
+        cancel: sharedCommon.cancel,
         about: 'About',
         version: 'Version',
         licenses: 'Open Source Licenses',
     },
     common: {
-        send: 'Send',
-        cancel: 'Cancel',
-        delete: 'Delete',
-        copy: 'Copy',
-        reply: 'Reply',
-        loading: 'Loading...',
-        error: 'Something went wrong.',
-        retry: 'Retry',
-        ok: 'OK',
-        confirm: 'Confirm',
+        ...sharedCommon,
     },
     attachments: {
         camera: 'Camera',

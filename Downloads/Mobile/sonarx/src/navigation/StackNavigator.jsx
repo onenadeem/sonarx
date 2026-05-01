@@ -4,6 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { typography } from '@/src/theme/tokens';
 import { TabNavigator } from './TabNavigator';
+const STACK_SCREEN_ANIMATION = Platform.OS === 'ios' ? 'default' : 'slide_from_right';
+const callScreenOptions = {
+    animation: STACK_SCREEN_ANIMATION,
+};
 // ─── Placeholder screens ──────────────────────────────────────────────────────
 function CallPlaceholder() {
     const { colors } = useTheme();
@@ -17,26 +21,29 @@ const Stack = createNativeStackNavigator();
 // ─── Component ────────────────────────────────────────────────────────────────
 export function StackNavigator() {
     const { colors } = useTheme();
+    const screenOptions = {
+        headerShown: false,
+        animation: STACK_SCREEN_ANIMATION,
+        headerStyle: {
+            backgroundColor: colors.headerBackground,
+        },
+        headerTintColor: colors.accent,
+        headerTitleStyle: {
+            fontFamily: typography.fontFamily.semiBold,
+            fontSize: typography.fontSize.lg,
+            color: colors.textPrimary,
+        },
+        headerShadowVisible: false,
+        contentStyle: {
+            backgroundColor: colors.background,
+        },
+    };
     return (<Stack.Navigator screenOptions={{
-            headerShown: false,
-            animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right',
-            headerStyle: {
-                backgroundColor: colors.headerBackground,
-            },
-            headerTintColor: colors.accent,
-            headerTitleStyle: {
-                fontFamily: typography.fontFamily.semiBold,
-                fontSize: typography.fontSize.lg,
-                color: colors.textPrimary,
-            },
-            headerShadowVisible: false,
-            contentStyle: {
-                backgroundColor: colors.background,
-            },
+            ...screenOptions,
         }}>
       <Stack.Screen name="Tabs" component={TabNavigator}/>
-      {/* Chat screen is provided by the app's expo-router app/chat/[peerId].tsx */}
-      <Stack.Screen name="Call" component={CallPlaceholder} options={{ animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right' }}/>
+      {/* Chat screen is provided by the app's expo-router app/chat/[peerId].jsx */}
+      <Stack.Screen name="Call" component={CallPlaceholder} options={callScreenOptions}/>
     </Stack.Navigator>);
 }
 const styles = StyleSheet.create({

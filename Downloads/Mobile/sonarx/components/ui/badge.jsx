@@ -1,23 +1,19 @@
 
 import { View, Text } from "react-native";
 import { cn } from "@/lib/utils";
-const badgeVariants = {
-    default: "bg-primary",
-    secondary: "bg-secondary",
-    destructive: "bg-destructive",
-    outline: "border border-input bg-transparent",
-};
-const badgeTextVariants = {
-    default: "text-primary-foreground",
-    secondary: "text-secondary-foreground",
-    destructive: "text-destructive-foreground",
-    outline: "text-foreground",
-};
+import { BADGE_VARIANTS, BADGE_TEXT_VARIANTS } from "./styleTokens";
 function Badge({ variant = "default", children, className }) {
-    return (<View className={cn("items-center justify-center rounded-full px-2 py-0.5", badgeVariants[variant], className)}>
-      {typeof children === "string" || typeof children === "number" ? (<Text className={cn("text-xs font-medium", badgeTextVariants[variant])}>
+    const safeVariant = BADGE_VARIANTS[variant] ? variant : "default";
+    return (<View className={cn("items-center justify-center rounded-full px-2 py-0.5", BADGE_VARIANTS[safeVariant], className)}>
+      {typeof children === "string" || typeof children === "number" ? (<Text className={cn("text-xs font-medium", BADGE_TEXT_VARIANTS[safeVariant])}>
           {children}
         </Text>) : (children)}
     </View>);
 }
-export { Badge, badgeVariants, badgeTextVariants };
+export {
+  Badge,
+  BADGE_VARIANTS,
+  BADGE_TEXT_VARIANTS,
+  BADGE_VARIANTS as badgeVariants,
+  BADGE_TEXT_VARIANTS as badgeTextVariants,
+};

@@ -8,6 +8,18 @@ const isExpoGo = Constants.executionEnvironment === 'storeClient';
 const Notifications = isExpoGo
     ? null
     : require('expo-notifications');
+
+const withNotificationApi = async (handler) => {
+    if (!Notifications) {
+        return undefined;
+    }
+    try {
+        return await handler();
+    }
+    catch {
+        return undefined;
+    }
+};
 if (Notifications) {
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
@@ -19,34 +31,28 @@ if (Notifications) {
     });
 }
 export async function registerForPushNotificationsAsync() {
-    try {
-        const result = await Notifications?.requestPermissionsAsync();
-        return result?.status === 'granted';
-    }
-    catch {
-        return false;
-    }
+    return withNotificationApi(async () => {
+        const result = await Notifications.requestPermissionsAsync();
+        return result.status === 'granted';
+    }) ?? false;
 }
 export function useLocalNotification() {
     const [isPermissionGranted, setIsPermissionGranted] = useState(false);
     useEffect(() => {
         registerForPushNotificationsAsync().then(setIsPermissionGranted);
         let subscription;
-        try {
-            subscription = Notifications?.addNotificationResponseReceivedListener((response) => {
+        withNotificationApi(async () => {
+            subscription = Notifications.addNotificationResponseReceivedListener((response) => {
                 const url = response.notification.request.content.data?.url;
                 if (url) {
                     router.push(url);
                 }
             });
-        }
-        catch {
-            // Not supported in Expo Go (SDK 53+).
-        }
+        });
         return () => subscription?.remove();
     }, []);
     const scheduleMessageNotification = useCallback(async (senderName, messagePreview, chatPeerId) => {
-        try {
+        return withNotificationApi(async () => {
             await Notifications?.scheduleNotificationAsync({
                 content: {
                     title: senderName,
@@ -55,18 +61,12 @@ export function useLocalNotification() {
                 },
                 trigger: null,
             });
-        }
-        catch {
-            // Not supported in Expo Go (SDK 53+).
-        }
+        });
     }, []);
     const cancelAllNotifications = useCallback(async () => {
-        try {
-            await Notifications?.cancelAllScheduledNotificationsAsync();
-        }
-        catch {
-            // Not supported in Expo Go (SDK 53+).
-        }
+        return withNotificationApi(async () => {
+            await Notifications.cancelAllScheduledNotificationsAsync();
+        });
     }, []);
     return {
         scheduleMessageNotification,

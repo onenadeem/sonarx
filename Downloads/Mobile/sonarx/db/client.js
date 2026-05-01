@@ -1,8 +1,14 @@
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync } from "expo-sqlite";
 import * as schema from "./schema";
+
 const DATABASE_NAME = "sonarx.db";
-const expo = openDatabaseSync(DATABASE_NAME, {
-    enableChangeListener: true,
-});
-export const db = drizzle(expo, { schema });
+
+function createDatabase(name) {
+    const database = openDatabaseSync(name, {
+        enableChangeListener: true,
+    });
+    return drizzle(database, { schema });
+}
+
+export const db = createDatabase(DATABASE_NAME);

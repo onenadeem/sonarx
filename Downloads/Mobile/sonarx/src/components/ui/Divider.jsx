@@ -1,12 +1,14 @@
 
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, } from 'react-native';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { typography, spacing } from '@/src/theme/tokens';
 export default function Divider({ label, style }) {
     const { colors } = useTheme();
+    const lineColorStyle = useMemo(() => ({ backgroundColor: colors.border }), [colors.border]);
     if (label) {
         return (<View style={[styles.row, style]}>
-        <View style={[styles.line, { backgroundColor: colors.border }]}/>
+        <View style={[styles.line, lineColorStyle]}/>
         <Text style={[
                 styles.labelText,
                 {
@@ -16,12 +18,12 @@ export default function Divider({ label, style }) {
             ]}>
           {label}
         </Text>
-        <View style={[styles.line, { backgroundColor: colors.border }]}/>
+        <View style={[styles.line, lineColorStyle]}/>
       </View>);
     }
     return (<View style={[
             styles.hairline,
-            { backgroundColor: colors.border },
+            lineColorStyle,
             style,
         ]}/>);
 }

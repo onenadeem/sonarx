@@ -17,13 +17,10 @@ export function useMessages(conversationId) {
         orderBy: desc(messages.sentAt),
         limit: 50,
     }), [conversationId]);
-    const loadMore = useCallback(async () => { }, [conversationId]);
     return {
         messages: data || [],
         isLoading: !data && !error,
         error,
-        loadMore,
-        hasMore: false,
     };
 }
 export function useSendMessage(peerId) {

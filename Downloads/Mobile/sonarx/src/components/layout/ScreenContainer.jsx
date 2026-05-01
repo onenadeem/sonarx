@@ -2,6 +2,7 @@ import { Component } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/theme/ThemeProvider';
+const DEFAULT_EDGES = ['top', 'bottom', 'left', 'right'];
 class ErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -17,7 +18,7 @@ class ErrorBoundary extends Component {
         return this.props.children;
     }
 }
-export default function ScreenContainer({ children, edges = ['top', 'bottom', 'left', 'right'], style, scrollable = false, }) {
+export default function ScreenContainer({ children, edges = DEFAULT_EDGES, style, scrollable = false, }) {
     const { colors } = useTheme();
     const inner = scrollable ? (<ScrollView style={[styles.fill, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       {children}

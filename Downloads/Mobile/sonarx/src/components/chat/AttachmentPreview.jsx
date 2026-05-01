@@ -8,11 +8,35 @@ import { formatFileSize, formatDuration } from '@/src/utils/formatTime';
 import AnimatedPressable from '@/src/components/ui/Pressable';
 const THUMB_SIZE = 60;
 const BAR_COUNT = 8;
+const HIDE_OFFSET_Y = 80;
+const PANEL_ANIMATION_DURATION_MS = 250;
+const BASE_WAVE_HEIGHT = 4;
+const WAVE_STEP = 7;
+const MIN_WAVE_DELAY = 300;
+const WAVE_DELAY_MODIFIER = 400;
+const EMPTY_ATTACHMENT_OPACITY = 0;
+const DOCUMENT_WIDTH = 100;
+const DOCUMENT_NAME_FONT_SIZE = 10;
+const DOCUMENT_NAME_MARGIN_TOP = 2;
+const DOCUMENT_NAME_MAX_WIDTH = 80;
+const DOCUMENT_SIZE_FONT_SIZE = 10;
+const DOCUMENT_SIZE_MARGIN_TOP = 1;
+const REMOVE_BTN_SIZE = 18;
+const REMOVE_BTN_RADIUS = 9;
+const REMOVE_BTN_BG = 'rgba(0,0,0,0.6)';
+const mapAttachmentRenderer = (item, onRemove, type) => {
+    if (type === 'image')
+        return <ImageThumb key={item.id} item={item} onRemove={onRemove}/>;
+    if (type === 'document')
+        return <DocumentThumb key={item.id} item={item} onRemove={onRemove}/>;
+    return <AudioThumb key={item.id} item={item} onRemove={onRemove}/>;
+};
 function AnimatedBar({ index, color }) {
     const height = useSharedValue(4);
     useEffect(() => {
-        const baseDuration = 300 + (index * 80) % 400;
-        height.value = withRepeat(withSequence(withTiming(4 + ((index * 7) % 16), { duration: baseDuration }), withTiming(4, { duration: baseDuration })), -1, false);
+        const baseDuration = MIN_WAVE_DELAY + (index * 80) % WAVE_DELAY_MODIFIER;
+        const toHeight = BASE_WAVE_HEIGHT + ((index * WAVE_STEP) % 16);
+        height.value = withRepeat(withSequence(withTiming(toHeight, { duration: baseDuration }), withTiming(BASE_WAVE_HEIGHT, { duration: baseDuration })), -1, false);
     }, [index]);
     const animStyle = useAnimatedStyle(() => ({
         height: height.value,
@@ -80,8 +104,8 @@ export default function AttachmentPreview({ attachments, onRemove, }) {
     const { colors } = useTheme();
     const translateY = useSharedValue(80);
     useEffect(() => {
-        translateY.value = withTiming(attachments.length > 0 ? 0 : 80, {
-            duration: 250,
+        translateY.value = withTiming(attachments.length > 0 ? EMPTY_ATTACHMENT_OPACITY : HIDE_OFFSET_Y, {
+            duration: PANEL_ANIMATION_DURATION_MS,
         });
     }, [attachments.length]);
     const animStyle = useAnimatedStyle(() => ({
@@ -95,15 +119,7 @@ export default function AttachmentPreview({ attachments, onRemove, }) {
             animStyle,
         ]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {attachments.map((item) => {
-            if (item.type === 'image') {
-                return <ImageThumb key={item.id} item={item} onRemove={onRemove}/>;
-            }
-            if (item.type === 'document') {
-                return <DocumentThumb key={item.id} item={item} onRemove={onRemove}/>;
-            }
-            return <AudioThumb key={item.id} item={item} onRemove={onRemove}/>;
-        })}
+        {attachments.map((item) => mapAttachmentRenderer(item, onRemove, item.type))}
       </ScrollView>
     </Animated.View>);
 }
@@ -126,7 +142,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.md,
     },
     docWrapper: {
-        width: 100,
+        width: DOCUMENT_WIDTH,
         height: THUMB_SIZE,
         borderRadius: borderRadius.md,
         borderWidth: StyleSheet.hairlineWidth,
@@ -140,13 +156,14 @@ const styles = StyleSheet.create({
     docName: {
         fontSize: typography.fontSize.xs,
         fontWeight: typography.fontWeight.medium,
-        marginTop: 2,
-        maxWidth: 80,
+        fontSize: DOCUMENT_NAME_FONT_SIZE,
+        marginTop: DOCUMENT_NAME_MARGIN_TOP,
+        maxWidth: DOCUMENT_NAME_MAX_WIDTH,
     },
     docSize: {
-        fontSize: 10,
+        fontSize: DOCUMENT_SIZE_FONT_SIZE,
         fontWeight: typography.fontWeight.regular,
-        marginTop: 1,
+        marginTop: DOCUMENT_SIZE_MARGIN_TOP,
     },
     audioWrapper: {
         width: 120,
@@ -181,10 +198,10 @@ const styles = StyleSheet.create({
         right: -4,
     },
     removeBtnInner: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        backgroundColor: 'rgba(0,0,0,0.6)',
+        width: REMOVE_BTN_SIZE,
+        height: REMOVE_BTN_SIZE,
+        borderRadius: REMOVE_BTN_RADIUS,
+        backgroundColor: REMOVE_BTN_BG,
         alignItems: 'center',
         justifyContent: 'center',
     },

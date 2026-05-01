@@ -4,6 +4,8 @@ import "../crypto/prng";
 import { SL_NAMESPACE, getGun, subscribeToGun, writeToGun } from "./gun";
 const PRESENCE_PATH = `${SL_NAMESPACE}/presence`;
 const PRESENCE_TTL_MS = 3 * 60 * 1000; // 3 minutes — generous window for network delays
+const PRESENCE_PERSIST_TTL_SECONDS = 60 * 2;
+const PRESENCE_QUERY_TIMEOUT_MS = 10 * 1000;
 export async function createPresencePayload(identity, signingSecretKey) {
     const timestamp = Date.now();
     const dataToSign = `${identity.phoneNumber}:${timestamp}`;
@@ -31,7 +33,7 @@ export async function announcePresence(identity, signingSecretKey) {
     const payload = await createPresencePayload(identity, signingSecretKey);
     const path = `${PRESENCE_PATH}/${identity.phoneNumber}`;
     const presenceData = payload;
-    await writeToGun(path, presenceData, 60 * 2);
+    await writeToGun(path, presenceData, PRESENCE_PERSIST_TTL_SECONDS);
 }
 export function subscribeToPeerPresence(peerId, onUpdate) {
     const path = `${PRESENCE_PATH}/${peerId}`;
@@ -96,7 +98,7 @@ export async function getPeerPresence(peerId) {
                 console.log("[getPeerPresence] Timeout - no data found for:", peerId);
                 resolve(null);
             }
-        }, 10000); // 10 second timeout
+        }, PRESENCE_QUERY_TIMEOUT_MS);
         // Also try to get cached data immediately
         node.once((data) => {
             if (resolved)

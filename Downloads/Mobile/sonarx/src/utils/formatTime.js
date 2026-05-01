@@ -1,6 +1,11 @@
 import { format, isToday, isYesterday, isThisWeek, isThisYear, differenceInMinutes, differenceInHours, } from 'date-fns';
+
+const WEEK_OPTIONS = { weekStartsOn: 1 };
+
+const toDate = (value) => (typeof value === 'number' ? new Date(value) : value);
+
 export function formatMessageTime(date) {
-    const d = typeof date === 'number' ? new Date(date) : date;
+    const d = toDate(date);
     const now = new Date();
     const minutesAgo = differenceInMinutes(now, d);
     if (minutesAgo < 1)
@@ -9,19 +14,19 @@ export function formatMessageTime(date) {
         return `${minutesAgo}m`;
     if (isToday(d))
         return format(d, 'HH:mm');
-    if (isThisWeek(d, { weekStartsOn: 1 }))
+    if (isThisWeek(d, WEEK_OPTIONS))
         return format(d, 'EEE');
     if (isThisYear(d))
         return format(d, 'MMM d');
     return format(d, 'MMM d, yyyy');
 }
 export function formatDateSeparator(date) {
-    const d = typeof date === 'number' ? new Date(date) : date;
+    const d = toDate(date);
     if (isToday(d))
         return 'Today';
     if (isYesterday(d))
         return 'Yesterday';
-    if (isThisWeek(d, { weekStartsOn: 1 }))
+    if (isThisWeek(d, WEEK_OPTIONS))
         return format(d, 'EEEE');
     if (isThisYear(d))
         return format(d, 'MMM d');
@@ -30,7 +35,7 @@ export function formatDateSeparator(date) {
 export function formatLastSeen(date) {
     if (!date)
         return 'Last seen a while ago';
-    const d = typeof date === 'number' ? new Date(date) : date;
+    const d = toDate(date);
     const now = new Date();
     const minutesAgo = differenceInMinutes(now, d);
     const hoursAgo = differenceInHours(now, d);
@@ -44,7 +49,7 @@ export function formatLastSeen(date) {
         return 'Last seen 1 hour ago';
     if (hoursAgo < 24)
         return `Last seen ${hoursAgo} hours ago`;
-    if (isThisWeek(d, { weekStartsOn: 1 }))
+    if (isThisWeek(d, WEEK_OPTIONS))
         return `Last seen ${format(d, 'EEEE')}`;
     if (isThisYear(d))
         return `Last seen ${format(d, 'MMM d')}`;

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState, } from "react";
-import { Pressable, StyleSheet, Text, View, } from "react-native";
+import { Pressable, Text, View, } from "react-native";
 import { MigrationsProvider } from "@/db/migrations";
 import { DatabaseProvider } from "@/lib/hooks/useDb";
 import { loadIdentity } from "@/lib/identity";
@@ -28,8 +28,9 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-get-random-values";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeProvider, useTheme, } from "@/src/theme/ThemeProvider";
-import { borderRadius, shadows, spacing, typography } from "@/src/theme/tokens";
+import { spacing, typography } from "@/src/theme/tokens";
 import Avatar from "@/src/components/ui/Avatar";
+import { rootLayoutStyles, toastStyles } from "@/src/theme/screenStyles";
 // ─── Polyfill crypto.randomUUID ───────────────────────────────────────────────
 if (!("randomUUID" in crypto)) {
     crypto.randomUUID = () => {
@@ -120,7 +121,6 @@ function Toast({ data, onDismiss, onTap, }) {
                 backgroundColor: colors.surfaceElevated,
                 borderColor: colors.border,
             },
-            shadows.lg,
             animStyle,
         ]}>
       <Pressable onPress={handleTap} style={toastStyles.pressable}>
@@ -167,41 +167,6 @@ function ToastLayer() {
       </View>
     </ToastContext.Provider>);
 }
-const toastStyles = StyleSheet.create({
-    layer: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 9999,
-    },
-    container: {
-        position: "absolute",
-        left: spacing.md,
-        right: spacing.md,
-        borderRadius: borderRadius.md,
-        borderWidth: StyleSheet.hairlineWidth,
-        overflow: "hidden",
-    },
-    pressable: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: spacing.sm,
-        gap: spacing.sm,
-    },
-    content: {
-        flex: 1,
-        overflow: "hidden",
-    },
-    name: {
-        fontSize: typography.fontSize.sm,
-        fontWeight: "600",
-    },
-    preview: {
-        fontSize: typography.fontSize.sm,
-        marginTop: 1,
-    },
-});
 // ─── Root layout ──────────────────────────────────────────────────────────────
 export default function RootLayout() {
     return (<MigrationsProvider>
@@ -232,7 +197,7 @@ function RootLayoutContent() {
     // isReady: navigator always mounts; loading overlay is removed once ready
     const isReady = (fontsLoaded || !!fontError) && isIdentityChecked;
     return (<SafeAreaProvider>
-      <GestureHandlerRootView style={rootStyles.fill}>
+      <GestureHandlerRootView style={rootLayoutStyles.fill}>
         <DatabaseProvider>
           <ThemeProvider>
             <RootLayoutThemedNav isReady={isReady}/>
@@ -293,7 +258,7 @@ function RootLayoutThemedNav({ isReady }) {
 
       {/* Branded splash overlay — shown until fonts & identity are ready */}
       {!isReady && (<View style={[
-                rootStyles.loadingOverlay,
+                rootLayoutStyles.loadingOverlay,
                 { backgroundColor: colors.background },
             ]}>
           <SonarXLogo size={88}/>
@@ -303,10 +268,4 @@ function RootLayoutThemedNav({ isReady }) {
       <ToastLayer />
     </>);
 }
-const rootStyles = StyleSheet.create({
-    fill: { flex: 1 },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 9998,
-    },
-});
+ 

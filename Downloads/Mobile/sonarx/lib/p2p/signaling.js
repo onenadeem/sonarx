@@ -2,25 +2,51 @@ import { SL_NAMESPACE, writeToGun, subscribeToGun } from "./gun";
 import { encryptForPeer, decryptFromPeer, } from "@/lib/crypto/box";
 const signalPath = (targetPeerId, sourcePeerId, type) => `${SL_NAMESPACE}/signal/${targetPeerId}/${sourcePeerId}/${type}`;
 const icePath = (targetPeerId, sourcePeerId) => `${SL_NAMESPACE}/ice/${targetPeerId}/${sourcePeerId}`;
-export async function sendOffer(targetPeerId, offer, myIdentity, targetPublicKey, mySecretKey) {
-    const offerData = JSON.stringify(offer);
-    const encrypted = encryptForPeer(offerData, targetPublicKey, mySecretKey);
-    const path = signalPath(targetPeerId, myIdentity.phoneNumber, "offer");
+const SIGNAL_TTL_SECONDS = {
+    offer: 60 * 5,
+    answer: 60 * 5,
+    ice: 60 * 10,
+};
+const SIGNAL_TYPES = {
+    offer: "offer",
+    answer: "answer",
+};
+function publishSignalingPayload(targetPeerId, sourcePeerId, payloadType, payload, targetPublicKey, mySecretKey, ttlSeconds) {
+    const message = JSON.stringify(payload);
+    const encrypted = encryptForPeer(message, targetPublicKey, mySecretKey);
+    const path = signalPath(targetPeerId, sourcePeerId, payloadType);
+    return writeToGun(path, {
+        ...encrypted,
+        from: sourcePeerId,
+        timestamp: Date.now(),
+    }, ttlSeconds);
+}
+async function publishIceCandidatePayload(path, candidate, sourcePeerId, targetPublicKey, mySecretKey, ttlSeconds) {
+    const encrypted = encryptForPeer(JSON.stringify(candidate), targetPublicKey, mySecretKey);
     await writeToGun(path, {
         ...encrypted,
-        from: myIdentity.phoneNumber,
+        from: sourcePeerId,
         timestamp: Date.now(),
-    }, 60 * 5);
+    }, ttlSeconds);
+}
+function handleEncryptedSignal(data, mySecretKey, senderPublicKey, onParsed, parseErrorMessage) {
+    if (!data?.ciphertext || !data?.nonce)
+        return;
+    const decrypted = decryptFromPeer(data, senderPublicKey, mySecretKey);
+    if (!decrypted)
+        return;
+    try {
+        onParsed(JSON.parse(decrypted));
+    }
+    catch {
+        console.error(parseErrorMessage);
+    }
+}
+export async function sendOffer(targetPeerId, offer, myIdentity, targetPublicKey, mySecretKey) {
+    await publishSignalingPayload(targetPeerId, myIdentity.phoneNumber, SIGNAL_TYPES.offer, offer, targetPublicKey, mySecretKey, SIGNAL_TTL_SECONDS.offer);
 }
 export async function sendAnswer(targetPeerId, answer, myIdentity, targetPublicKey, mySecretKey) {
-    const answerData = JSON.stringify(answer);
-    const encrypted = encryptForPeer(answerData, targetPublicKey, mySecretKey);
-    const path = signalPath(targetPeerId, myIdentity.phoneNumber, "answer");
-    await writeToGun(path, {
-        ...encrypted,
-        from: myIdentity.phoneNumber,
-        timestamp: Date.now(),
-    }, 60 * 5);
+    await publishSignalingPayload(targetPeerId, myIdentity.phoneNumber, SIGNAL_TYPES.answer, answer, targetPublicKey, mySecretKey, SIGNAL_TTL_SECONDS.answer);
 }
 export function subscribeToOffers(myPeerId) {
     const path = `${SL_NAMESPACE}/signal/${myPeerId}`;
@@ -29,44 +55,16 @@ export function subscribeToOffers(myPeerId) {
 export function subscribeToAnswer(fromPeerId, myPeerId, mySecretKey, senderPublicKey, onAnswer) {
     const path = signalPath(myPeerId, fromPeerId, "answer");
     return subscribeToGun(path, (data) => {
-        if (!data?.ciphertext || !data?.nonce)
-            return;
-        const decrypted = decryptFromPeer(data, senderPublicKey, mySecretKey);
-        if (!decrypted)
-            return;
-        try {
-            const answer = JSON.parse(decrypted);
-            onAnswer(answer);
-        }
-        catch {
-            console.error("Failed to parse answer SDP");
-        }
+        handleEncryptedSignal(data, mySecretKey, senderPublicKey, onAnswer, "Failed to parse answer SDP");
     });
 }
 export async function sendIceCandidate(targetPeerId, candidate, myIdentity, targetPublicKey, mySecretKey) {
-    const candidateData = JSON.stringify(candidate);
-    const encrypted = encryptForPeer(candidateData, targetPublicKey, mySecretKey);
     const path = icePath(targetPeerId, myIdentity.phoneNumber);
-    await writeToGun(path, {
-        ...encrypted,
-        from: myIdentity.phoneNumber,
-        timestamp: Date.now(),
-    }, 60 * 10);
+    await publishIceCandidatePayload(path, candidate, myIdentity.phoneNumber, targetPublicKey, mySecretKey, SIGNAL_TTL_SECONDS.ice);
 }
 export function subscribeToIceCandidates(fromPeerId, myPeerId, mySecretKey, senderPublicKey, onCandidate) {
     const path = icePath(myPeerId, fromPeerId);
     return subscribeToGun(path, (data) => {
-        if (!data?.ciphertext || !data?.nonce)
-            return;
-        const decrypted = decryptFromPeer(data, senderPublicKey, mySecretKey);
-        if (!decrypted)
-            return;
-        try {
-            const candidate = JSON.parse(decrypted);
-            onCandidate(candidate);
-        }
-        catch {
-            console.error("Failed to parse ICE candidate");
-        }
+        handleEncryptedSignal(data, mySecretKey, senderPublicKey, onCandidate, "Failed to parse ICE candidate");
     });
 }

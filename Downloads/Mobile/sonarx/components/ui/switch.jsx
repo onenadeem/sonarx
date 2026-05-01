@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 import { TouchableOpacity } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, } from "react-native-reanimated";
+import { SWITCH_THUMB_CLASS, SWITCH_TRACK_CLASS } from "./styleTokens";
 function Switch({ checked, onCheckedChange, disabled = false, className, }) {
     const translateX = useSharedValue(checked ? 20 : 0);
     const trackOpacity = useSharedValue(checked ? 1 : 0);
@@ -15,8 +16,8 @@ function Switch({ checked, onCheckedChange, disabled = false, className, }) {
     const thumbStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: translateX.value }],
     }));
-    return (<TouchableOpacity activeOpacity={disabled ? 1 : 0.8} onPress={() => !disabled && onCheckedChange(!checked)} style={{ opacity: disabled ? 0.5 : 1 }} className={cn("h-7 w-12 rounded-full p-1", checked ? "bg-primary" : "bg-input", className)}>
-      <Animated.View style={[thumbStyle]} className="h-5 w-5 rounded-full bg-background shadow-sm"/>
+    return (<TouchableOpacity activeOpacity={disabled ? 1 : 0.8} onPress={() => !disabled && onCheckedChange?.(!checked)} style={{ opacity: disabled ? 0.5 : 1 }} className={cn(SWITCH_TRACK_CLASS, checked ? "bg-primary" : "bg-input", className)}>
+      <Animated.View style={[thumbStyle]} className={SWITCH_THUMB_CLASS}/>
     </TouchableOpacity>);
 }
 export { Switch };

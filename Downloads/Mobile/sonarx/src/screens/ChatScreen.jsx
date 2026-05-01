@@ -20,8 +20,8 @@ import { sendGunMessage } from '@/lib/p2p/messaging';
 import Header from '@/src/components/ui/Header';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens';
+import { HEADER_HEIGHT, NEAR_BOTTOM_THRESHOLD, CHAT_SCREEN_MAX_WIDTH, } from '@/src/constants/layout';
 import { Strings } from '@/src/constants/strings';
-import { HEADER_HEIGHT, NEAR_BOTTOM_THRESHOLD, } from '@/src/constants/layout';
 import { formatMessageTime } from '@/src/utils/formatTime';
 import { groupMessagesByDate } from '@/src/utils/groupMessages';
 import Avatar from '@/src/components/ui/Avatar';
@@ -40,18 +40,17 @@ const SECRET_KEY_STORE_KEY = 'sonarx-secret-keys';
 // ─── DateSeparator ────────────────────────────────────────────────────────────
 function DateSeparator({ label }) {
     const { colors } = useTheme();
+    const separatorPillStyle = useMemo(() => ([
+        styles.separatorPill,
+        { backgroundColor: colors.surfaceMuted },
+    ]), [colors.surfaceMuted]);
+    const separatorTextStyle = useMemo(() => ([
+        styles.separatorText,
+        { color: colors.textSecondary, fontFamily: typography.fontFamily.medium },
+    ]), [colors.textSecondary]);
     return (<View style={styles.separatorRow}>
-      <View style={[
-            styles.separatorPill,
-            { backgroundColor: colors.surfaceMuted },
-        ]}>
-        <Text style={[
-            styles.separatorText,
-            {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.medium,
-            },
-        ]}>
+      <View style={separatorPillStyle}>
+        <Text style={separatorTextStyle}>
           {label}
         </Text>
       </View>
@@ -60,15 +59,20 @@ function DateSeparator({ label }) {
 // ─── NewMessagesDivider ───────────────────────────────────────────────────────
 function NewMessagesDivider() {
     const { colors } = useTheme();
+    const dividerLineStyle = useMemo(() => ([
+        styles.newMsgDividerLine,
+        { backgroundColor: colors.accent },
+    ]), [colors.accent]);
+    const dividerLabelStyle = useMemo(() => ([
+        styles.newMsgDividerLabel,
+        { color: colors.accent, fontFamily: typography.fontFamily.semiBold },
+    ]), [colors.accent]);
     return (<View style={styles.newMsgDividerRow}>
-      <View style={[styles.newMsgDividerLine, { backgroundColor: colors.accent }]}/>
-      <Text style={[
-            styles.newMsgDividerLabel,
-            { color: colors.accent, fontFamily: typography.fontFamily.semiBold },
-        ]}>
+      <View style={dividerLineStyle}/>
+      <Text style={dividerLabelStyle}>
         {Strings.chat.newMessages}
       </Text>
-      <View style={[styles.newMsgDividerLine, { backgroundColor: colors.accent }]}/>
+      <View style={dividerLineStyle}/>
     </View>);
 }
 // ─── ChatBubble ───────────────────────────────────────────────────────────────
@@ -131,38 +135,47 @@ function ContextMenu({ state, onCopy, onReply, onDelete, onDismiss, }) {
             ]
             : []),
     ];
+    const overlayStyle = useMemo(() => ({
+        backgroundColor: colors.overlay,
+    }), [colors.overlay]);
+    const menuStyle = useMemo(() => ({
+        backgroundColor: colors.surfaceElevated,
+        borderColor: colors.border,
+    }), [colors.surfaceElevated, colors.border]);
+    const dividerStyle = useMemo(() => ({
+        borderBottomColor: colors.border,
+    }), [colors.border]);
+    const pressedItemStyle = useMemo(() => ({
+        backgroundColor: colors.surfaceMuted,
+    }), [colors.surfaceMuted]);
+    const itemStyle = useCallback((idx) => {
+        const isLastItem = idx < actions.length - 1;
+        return [
+            styles.ctxItem,
+            isLastItem && [
+                styles.ctxItemDivider,
+                dividerStyle,
+            ],
+        ];
+    }, [actions.length, dividerStyle]);
+    const resolveLabelStyle = useCallback((isDestructive) => ({
+        color: isDestructive ? colors.danger : colors.textPrimary,
+        fontFamily: typography.fontFamily.medium,
+    }), [colors.danger, colors.textPrimary]);
     return (<Modal transparent animationType="fade" visible={state.visible} onRequestClose={onDismiss} statusBarTranslucent>
       <TouchableWithoutFeedback onPress={onDismiss}>
-        <View style={[styles.ctxOverlay, { backgroundColor: colors.overlay }]}>
+        <View style={[styles.ctxOverlay, overlayStyle]}>
           <TouchableWithoutFeedback>
-            <View style={[
-            styles.ctxMenu,
-            {
-                backgroundColor: colors.surfaceElevated,
-                borderColor: colors.border,
-            },
-        ]}>
+            <View style={[styles.ctxMenu, menuStyle]}>
               {actions.map((action, idx) => (<RNPressable key={action.label} onPress={() => {
                 onDismiss();
                 action.onPress();
             }} style={({ pressed }) => [
-                styles.ctxItem,
-                idx < actions.length - 1 && {
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: colors.border,
-                },
-                pressed && { backgroundColor: colors.surfaceMuted },
+                itemStyle(idx),
+                pressed && pressedItemStyle,
             ]}>
                   <Ionicons name={action.icon} size={18} color={action.destructive ? colors.danger : colors.textPrimary}/>
-                  <Text style={[
-                styles.ctxLabel,
-                {
-                    color: action.destructive
-                        ? colors.danger
-                        : colors.textPrimary,
-                    fontFamily: typography.fontFamily.medium,
-                },
-            ]}>
+                  <Text style={resolveLabelStyle(action.destructive)}>
                     {action.label}
                   </Text>
                 </RNPressable>))}
@@ -176,12 +189,12 @@ function NewMessagePill({ visible, onPress }) {
     const { colors } = useTheme();
     if (!visible)
         return null;
+    const newMessagePillStyle = useMemo(() => ([styles.newMsgPill, {
+            backgroundColor: colors.accent,
+        }]), [colors.accent]);
     return (<View style={styles.newMsgPillWrapper}>
-      <AnimatedPressable onPress={onPress} haptic style={[styles.newMsgPill, { backgroundColor: colors.accent }]}>
-        <Text style={[
-            styles.newMsgPillText,
-            { fontFamily: typography.fontFamily.semiBold },
-        ]}>
+      <AnimatedPressable onPress={onPress} haptic style={newMessagePillStyle}>
+        <Text style={styles.newMsgPillText}>
           {Strings.chat.newMessagePill}
         </Text>
       </AnimatedPressable>
@@ -484,34 +497,57 @@ export default function ChatScreen() {
         handleBubbleLongPress,
         handleReplyTap,
     ]);
+    const emptyTitleStyle = useMemo(() => ([
+        styles.emptyTitle,
+        {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.medium,
+        },
+    ]), [colors.textSecondary]);
+    const emptySubStyle = useMemo(() => ([
+        styles.emptySub,
+        {
+            color: colors.textDisabled,
+            fontFamily: typography.fontFamily.regular,
+        },
+    ]), [colors.textDisabled]);
     const EmptyComponent = useMemo(() => (<View style={styles.emptyWrapper}>
-        <Text style={[
-            styles.emptyTitle,
-            {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.medium,
-            },
-        ]}>
+        <Text style={emptyTitleStyle}>
           {Strings.chat.emptyChat}
         </Text>
-        <Text style={[
-            styles.emptySub,
-            {
-                color: colors.textDisabled,
-                fontFamily: typography.fontFamily.regular,
-            },
-        ]}>
+        <Text style={emptySubStyle}>
           {Strings.chat.emptyChatSub}
         </Text>
-      </View>), [colors]);
-    const contentMaxWidth = isDesktop ? 960 : isTablet ? 680 : undefined;
-    // ── Render ────────────────────────────────────────────────────────────────
-    return (<View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <View style={[
+      </View>), [emptyTitleStyle, emptySubStyle]);
+    const contentMaxWidth = isDesktop
+        ? CHAT_SCREEN_MAX_WIDTH.desktop
+        : isTablet
+            ? CHAT_SCREEN_MAX_WIDTH.tablet
+            : undefined;
+    const screenStyle = useMemo(() => ({
+        backgroundColor: colors.background,
+    }), [colors.background]);
+    const contentShellStyle = useMemo(() => (contentMaxWidth ? [
             styles.contentShell,
-            contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
-        ]}>
-        <View style={{ height: insets.top, backgroundColor: colors.headerBackground }}/>
+            { maxWidth: contentMaxWidth },
+        ] : [styles.contentShell]), [contentMaxWidth]);
+    const headerSpacerStyle = useMemo(() => ({
+        height: insets.top,
+        backgroundColor: colors.headerBackground,
+    }), [colors.headerBackground, insets.top]);
+    const chatBackgroundStyle = useMemo(() => ({
+        backgroundColor: colors.chatBackground,
+    }), [colors.chatBackground]);
+    const keyboardAvoidingOffset = useMemo(() => (Platform.OS === 'ios'
+        ? insets.top + HEADER_HEIGHT
+        : 0), [insets.top]);
+    const inputBarPaddingStyle = useMemo(() => ({
+        paddingBottom: insets.bottom,
+    }), [insets.bottom]);
+    // ── Render ────────────────────────────────────────────────────────────────
+    return (<View style={[styles.screen, screenStyle]}>
+      <View style={contentShellStyle}>
+        <View style={headerSpacerStyle}/>
 
         <Header title={peer?.displayName ?? peerId ?? 'Chat'} subtitle={statusText} leftAccessory={<View style={styles.headerLead}>
               <AnimatedPressable onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
@@ -531,8 +567,8 @@ export default function ChatScreen() {
             },
         ]}/>
 
-        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + HEADER_HEIGHT : 0}>
-          <View style={[styles.flex, { backgroundColor: colors.chatBackground }]}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={keyboardAvoidingOffset}>
+          <View style={[styles.flex, chatBackgroundStyle]}>
             <FlatList ref={flashListRef} data={listItems} keyExtractor={keyExtractor} renderItem={renderItem} inverted overScrollMode="never" onScroll={handleScroll} scrollEventThrottle={16} contentContainerStyle={styles.listContent} ListEmptyComponent={EmptyComponent} ListFooterComponent={<TypingIndicator visible={isTyping}/>} removeClippedSubviews={Platform.OS === 'android'} maxToRenderPerBatch={20} windowSize={10}/>
 
             <NewMessagePill visible={showNewMessagePill} onPress={scrollToBottom}/>
@@ -540,7 +576,7 @@ export default function ChatScreen() {
 
           <AttachmentPreview attachments={pendingAttachments} onRemove={(id) => setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== id))}/>
 
-          <View style={{ paddingBottom: insets.bottom }}>
+          <View style={inputBarPaddingStyle}>
             <InputBar onSend={handleSend} onAttachmentPress={handleAttachmentPress} disabled={isSending || !conversationId} onTypingChange={onTypingStart} replyTo={replyToMessage} onCancelReply={() => setReplyToMessage(null)}/>
           </View>
         </KeyboardAvoidingView>
@@ -580,55 +616,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    // Header
-    header: {
-        height: HEADER_HEIGHT,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: spacing.xs,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
-    backBtn: {
-        paddingHorizontal: spacing.xs,
-        paddingVertical: spacing.xxs,
-    },
-    headerCenter: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.sm,
-        overflow: 'hidden',
-        marginLeft: spacing.xs,
-    },
-    headerTitles: {
-        flex: 1,
-        overflow: 'hidden',
-    },
-    headerName: {
-        fontSize: typography.fontSize.md,
-        fontWeight: typography.fontWeight.semiBold,
-        letterSpacing: -0.1,
-    },
-    headerSub: {
-        fontSize: typography.fontSize.xs,
-        marginTop: 1,
-    },
-    headerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-        paddingRight: spacing.xs,
-    },
-    headerActionBtn: {
-        padding: spacing.xs,
-    },
-    // Message list
     listContent: {
         paddingHorizontal: spacing.md,
         paddingTop: spacing.xs,
         paddingBottom: spacing.md,
     },
-    // Empty state
     emptyWrapper: {
         flex: 1,
         alignItems: 'center',
@@ -646,7 +638,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: typography.fontSize.sm * 1.5,
     },
-    // Date separator
     separatorRow: {
         alignItems: 'center',
         marginVertical: spacing.sm,
@@ -659,7 +650,6 @@ const styles = StyleSheet.create({
     separatorText: {
         fontSize: typography.fontSize.xs,
     },
-    // New messages divider
     newMsgDividerRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -675,116 +665,6 @@ const styles = StyleSheet.create({
     newMsgDividerLabel: {
         fontSize: typography.fontSize.xs,
     },
-    // Bubble
-    bubbleWrapper: {
-        marginVertical: 2,
-        maxWidth: '85%',
-        paddingHorizontal: spacing.xxs,
-    },
-    wrapperRight: {
-        alignSelf: 'flex-end',
-    },
-    wrapperLeft: {
-        alignSelf: 'flex-start',
-    },
-    bubble: {
-        paddingHorizontal: 12,
-        paddingTop: 8,
-        paddingBottom: 6,
-        borderRadius: 18,
-    },
-    bubbleOutgoing: {
-        borderBottomRightRadius: 6,
-    },
-    bubbleIncoming: {
-        borderBottomLeftRadius: 6,
-    },
-    messageText: {
-        fontSize: typography.fontSize.md,
-        lineHeight: typography.fontSize.md * 1.4,
-    },
-    bubbleFooter: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        marginTop: spacing.xxs,
-        gap: spacing.xxs,
-    },
-    timeText: {
-        fontSize: typography.fontSize.xs,
-    },
-    deletedBubble: {
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.lg,
-        borderWidth: StyleSheet.hairlineWidth,
-    },
-    deletedText: {
-        fontSize: typography.fontSize.sm,
-        fontStyle: 'italic',
-    },
-    replyPreview: {
-        borderLeftWidth: 3,
-        paddingLeft: spacing.xs,
-        paddingVertical: spacing.xxs,
-        marginBottom: spacing.xs,
-        borderRadius: borderRadius.sm,
-    },
-    replyText: {
-        fontSize: typography.fontSize.sm,
-        lineHeight: typography.fontSize.sm * 1.4,
-    },
-    // Input bar
-    inputBarOuter: {
-        borderTopWidth: 0,
-        paddingTop: spacing.xs,
-        paddingBottom: spacing.xs,
-        paddingHorizontal: spacing.sm,
-    },
-    replyBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: spacing.xs,
-        marginBottom: spacing.xs,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xxs,
-        borderLeftWidth: 3,
-        borderRadius: borderRadius.sm,
-        gap: spacing.xs,
-    },
-    replyBannerText: {
-        flex: 1,
-        fontSize: typography.fontSize.sm,
-    },
-    inputBarRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-    },
-    inputIconBtn: {
-        width: 36,
-        height: 36,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    textInput: {
-        flex: 1,
-        maxHeight: 120,
-        minHeight: 36,
-        borderRadius: 18,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.xs,
-        fontSize: typography.fontSize.md,
-        lineHeight: typography.fontSize.md * 1.4,
-    },
-    sendBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    // New message pill
     newMsgPillWrapper: {
         position: 'absolute',
         bottom: spacing.md,
@@ -799,8 +679,8 @@ const styles = StyleSheet.create({
     newMsgPillText: {
         fontSize: typography.fontSize.sm,
         color: '#ffffff',
+        fontFamily: typography.fontFamily.semiBold,
     },
-    // Context menu
     ctxOverlay: {
         flex: 1,
         justifyContent: 'center',
@@ -818,6 +698,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
         gap: spacing.sm,
+    },
+    ctxItemDivider: {
+        borderBottomWidth: StyleSheet.hairlineWidth,
     },
     ctxLabel: {
         fontSize: typography.fontSize.md,

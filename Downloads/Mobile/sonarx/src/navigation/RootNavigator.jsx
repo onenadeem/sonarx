@@ -3,8 +3,7 @@ import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
-import { ThemeProvider } from '@/src/theme/ThemeProvider';
-import { useTheme } from '@/src/theme/ThemeProvider';
+import { ThemeProvider, useTheme } from '@/src/theme/ThemeProvider';
 import { StackNavigator } from './StackNavigator';
 // ─── Inner: builds the React Navigation theme from app theme tokens ───────────
 function NavigationRoot() {

@@ -4,12 +4,13 @@ import { conversations } from "./conversations";
 import { messages } from "./messages";
 import { attachments } from "./attachments";
 import { peerKeys } from "./keys";
-export { identity } from "./identity";
-export { peers } from "./peers";
-export { conversations } from "./conversations";
-export { messages } from "./messages";
-export { attachments } from "./attachments";
-export { peerKeys } from "./keys";
+
+export * from "./identity";
+export * from "./peers";
+export * from "./conversations";
+export * from "./messages";
+export * from "./attachments";
+export * from "./keys";
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({
     peer: one(peers, {
         fields: [conversations.peerId],

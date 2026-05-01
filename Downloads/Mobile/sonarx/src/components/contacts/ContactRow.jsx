@@ -9,16 +9,43 @@ import { usePresenceStore } from '@/src/store/presenceStore';
 import Avatar from '@/src/components/ui/Avatar';
 import Badge from '@/src/components/ui/Badge';
 import AnimatedPressable from '@/src/components/ui/Pressable';
+const SWIPE_ACTIONS = [
+    {
+        key: 'archive',
+        icon: 'archive-outline',
+        color: (colors) => colors.accent,
+        label: 'Archive',
+    },
+    {
+        key: 'delete',
+        icon: 'trash-outline',
+        color: (colors) => colors.danger,
+        label: 'Delete',
+    },
+];
+const noop = () => { };
+const renderTime = (timestamp, isVisible, colors) => {
+    if (!isVisible) {
+        return null;
+    }
+    return <Text style={[styles.timestamp, { color: colors.textDisabled, fontFamily: typography.fontFamily.regular }]}>
+      {formatMessageTime(timestamp)}
+    </Text>;
+};
+const getLastMessageTextStyle = (colors) => [
+    styles.lastMessage,
+    {
+        color: colors.textSecondary,
+        fontFamily: typography.fontFamily.regular,
+    },
+];
 export default function ContactRow({ contact, lastMessage, timestamp, unreadCount = 0, onPress, onLongPress, showTimestamp = true, showUnreadBadge = true, rightElement, }) {
     const { colors } = useTheme();
     const isOnline = usePresenceStore((state) => state.onlineStatus[contact.id]?.isOnline ?? false);
     const renderRightActions = () => (<View style={styles.swipeActions}>
-      <AnimatedPressable onPress={() => { }} haptic style={[styles.swipeBtn, { backgroundColor: colors.accent }]} accessibilityLabel="Archive">
-        <Ionicons name="archive-outline" size={20} color="#ffffff"/>
-      </AnimatedPressable>
-      <AnimatedPressable onPress={() => { }} haptic style={[styles.swipeBtn, { backgroundColor: colors.danger }]} accessibilityLabel="Delete">
-        <Ionicons name="trash-outline" size={20} color="#ffffff"/>
-      </AnimatedPressable>
+      {SWIPE_ACTIONS.map((action) => (<AnimatedPressable key={action.key} onPress={noop} haptic style={[styles.swipeBtn, { backgroundColor: action.color(colors) }]} accessibilityLabel={action.label}>
+          <Ionicons name={action.icon} size={20} color="#ffffff"/>
+        </AnimatedPressable>))}
     </View>);
     return (<Swipeable renderRightActions={renderRightActions} overshootRight={false}>
       <AnimatedPressable onPress={onPress} onLongPress={onLongPress} haptic hapticType="light" style={[styles.row, { backgroundColor: colors.surface }]} accessibilityLabel={`Chat with ${contact.displayName}`}>
@@ -34,24 +61,10 @@ export default function ContactRow({ contact, lastMessage, timestamp, unreadCoun
         ]} numberOfLines={1}>
               {contact.displayName}
             </Text>
-            {showTimestamp && timestamp !== undefined && (<Text style={[
-                styles.timestamp,
-                {
-                    color: colors.textDisabled,
-                    fontFamily: typography.fontFamily.regular,
-                },
-            ]}>
-                {formatMessageTime(timestamp)}
-              </Text>)}
+            {renderTime(timestamp, showTimestamp && timestamp !== undefined, colors)}
           </View>
           <View style={styles.bottomRow}>
-            {lastMessage !== undefined && (<Text style={[
-                styles.lastMessage,
-                {
-                    color: colors.textSecondary,
-                    fontFamily: typography.fontFamily.regular,
-                },
-            ]} numberOfLines={1}>
+            {lastMessage !== undefined && (<Text style={getLastMessageTextStyle(colors)} numberOfLines={1}>
                 {lastMessage}
               </Text>)}
             <View style={styles.badgeWrapper}>

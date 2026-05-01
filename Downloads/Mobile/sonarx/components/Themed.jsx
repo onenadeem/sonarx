@@ -11,13 +11,13 @@ export function useThemeColor(props, colorName) {
         return Colors[theme][colorName];
     }
 }
-export function Text(props) {
-    const { style, lightColor, darkColor, ...otherProps } = props;
-    const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
-    return <DefaultText style={[{ color }, style]} {...otherProps}/>;
-}
-export function View(props) {
-    const { style, lightColor, darkColor, ...otherProps } = props;
-    const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, "background");
-    return <DefaultView style={[{ backgroundColor }, style]} {...otherProps}/>;
-}
+const createThemedComponent = (Component, colorName, styleProperty) => {
+    return function ThemedComponent(props) {
+        const { style, lightColor, darkColor, ...otherProps } = props;
+        const color = useThemeColor({ light: lightColor, dark: darkColor }, colorName);
+        return <Component style={[{ [styleProperty]: color }, style]} {...otherProps}/>;
+    };
+};
+
+export const Text = createThemedComponent(DefaultText, "text", "color");
+export const View = createThemedComponent(DefaultView, "background", "backgroundColor");

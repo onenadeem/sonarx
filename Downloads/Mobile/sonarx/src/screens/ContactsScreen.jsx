@@ -8,6 +8,7 @@ import Header from '@/src/components/ui/Header';
 import ListItem from '@/src/components/ui/ListItem';
 import TextInput from '@/src/components/ui/TextInput';
 import Avatar from '@/src/components/ui/Avatar';
+import StatePlaceholder from '@/src/components/layout/StatePlaceholder';
 import { useContacts } from '@/src/hooks/useContacts';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { usePresenceStore } from '@/src/store/presenceStore';
@@ -88,35 +89,12 @@ function ContactRow({ contact, query, onPress, }) {
         </View>} onPress={() => onPress(contact)} height={72} divider dividerInset={80} style={{ backgroundColor: 'transparent' }} accessibilityLabel={`Open chat with ${contact.displayName}`} leading={<Avatar uri={contact.avatarUri} name={contact.displayName} size="md" showOnlineBadge={isOnline} isOnline={isOnline}/>} trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>);
 }
 function EmptyState() {
-    const { colors } = useTheme();
-    return (<View style={styles.emptyState}>
-      <View style={[
-            styles.emptyIcon,
-            {
-                backgroundColor: colors.surfaceMuted,
-            },
-        ]}>
-        <Ionicons name="people-outline" size={40} color={colors.textSecondary}/>
-      </View>
-      <Text style={[
-            styles.emptyTitle,
-            {
-                color: colors.textPrimary,
-                fontFamily: typography.fontFamily.semiBold,
-            },
-        ]}>
-        No contacts
-      </Text>
-      <Text style={[
-            styles.emptySubtitle,
-            {
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.regular,
-            },
-        ]}>
-        Add contacts with a phone number to start chatting.
-      </Text>
-    </View>);
+    return (<StatePlaceholder
+        icon="people-outline"
+        title="No contacts"
+        subtitle="Add contacts with a phone number to start chatting."
+        titleStyle={styles.emptyTitle}
+        subtitleStyle={styles.emptySubtitle}/>);
 }
 function ContactsScreenInner() {
     const { colors } = useTheme();
@@ -254,20 +232,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 2,
-    },
-    emptyState: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: spacing.xxxl,
-        gap: spacing.md,
-    },
-    emptyIcon: {
-        width: 88,
-        height: 88,
-        borderRadius: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     emptyTitle: {
         ...typography.h3,

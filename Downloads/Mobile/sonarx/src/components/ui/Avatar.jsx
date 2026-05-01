@@ -3,6 +3,12 @@ import { StyleSheet, Text, View, } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { typography } from '@/src/theme/tokens';
+const DEFAULT_SELECTED_BORDER_WIDTH = 2;
+const MIN_BADGE_SIZE = 8;
+const BADGE_POSITION_OFFSET = 1;
+const DEFAULT_BG = '#e5e7eb';
+const INITIALS_COLOR = '#ffffff';
+const MIN_INITIAL_FONT_SIZE = 12;
 const SIZE_MAP = {
     xs: 32,
     sm: 40,
@@ -11,6 +17,10 @@ const SIZE_MAP = {
     xl: 64,
 };
 const FALLBACK_COLORS = ['#7AAEC8', '#5B9AB8', '#4A8BAA', '#3D7A9A', '#6BA0BC'];
+const resolveBorderStyle = (colors, selected) => ({
+    borderColor: selected ? colors.accent : 'transparent',
+    borderWidth: selected ? DEFAULT_SELECTED_BORDER_WIDTH : 0,
+});
 function getColorFromName(name) {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -29,8 +39,10 @@ function getInitials(name) {
 export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false, isOnline = false, selected = false, style, }) {
     const { colors } = useTheme();
     const dimension = typeof size === 'number' ? size : SIZE_MAP[size];
+    const initialsSize = Math.max(MIN_INITIAL_FONT_SIZE, Math.round(dimension * 0.34));
     const initials = getInitials(name);
-    const badgeSize = Math.max(8, Math.round(dimension * 0.25));
+    const badgeSize = Math.max(MIN_BADGE_SIZE, Math.round(dimension * 0.25));
+    const borderStyle = resolveBorderStyle(colors, selected);
     return (<View style={[styles.container, style]}>
       {uri ? (<Image source={{ uri }} style={[
                 styles.avatar,
@@ -38,8 +50,7 @@ export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false
                     width: dimension,
                     height: dimension,
                     borderRadius: dimension / 2,
-                    borderColor: selected ? colors.accent : 'transparent',
-                    borderWidth: selected ? 2 : 0,
+                    ...borderStyle,
                 },
             ]} contentFit="cover"/>) : (<View style={[
                 styles.avatar,
@@ -48,14 +59,13 @@ export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false
                     height: dimension,
                     borderRadius: dimension / 2,
                     backgroundColor: getColorFromName(name),
-                    borderColor: selected ? colors.accent : 'transparent',
-                    borderWidth: selected ? 2 : 0,
+                    ...borderStyle,
                 },
             ]}>
           <Text style={[
                 styles.initials,
                 {
-                    fontSize: Math.max(12, Math.round(dimension * 0.34)),
+                    fontSize: initialsSize,
                 },
             ]}>
             {initials}
@@ -70,6 +80,8 @@ export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false
                     borderRadius: badgeSize / 2,
                     backgroundColor: isOnline ? colors.online : colors.border,
                     borderColor: colors.background,
+                    right: BADGE_POSITION_OFFSET,
+                    bottom: BADGE_POSITION_OFFSET,
                 },
             ]}/>) : null}
     </View>);
@@ -83,10 +95,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        backgroundColor: '#e5e7eb',
+        backgroundColor: DEFAULT_BG,
     },
     initials: {
-        color: '#ffffff',
+        color: INITIALS_COLOR,
         fontFamily: typography.fontFamily.semiBold,
         fontWeight: '600',
     },

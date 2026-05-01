@@ -8,16 +8,7 @@ export default function Root({ children }) {
 
         <ScrollViewStyleReset />
 
-        <style dangerouslySetInnerHTML={{ __html: responsiveBackground }}/>
       </head>
       <body>{children}</body>
     </html>);
 }
-const responsiveBackground = `
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
-    Helvetica, Arial, sans-serif;
-}
-`;
