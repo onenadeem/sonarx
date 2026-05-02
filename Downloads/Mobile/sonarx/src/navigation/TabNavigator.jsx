@@ -39,7 +39,8 @@ export function TabNavigator() {
             headerShown: false,
             tabBarStyle: {
                 backgroundColor: colors.tabBar,
-                borderTopColor: colors.borderMuted,
+                borderTopWidth: 1,
+                borderTopColor: `${colors.borderMuted}80`,
             },
             tabBarActiveTintColor: colors.tabBarActive,
             tabBarInactiveTintColor: colors.tabBarInactive,

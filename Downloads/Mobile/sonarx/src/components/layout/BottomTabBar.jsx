@@ -5,7 +5,7 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 import { typography, spacing } from '@/src/theme/tokens';
 import { TAB_BAR_HEIGHT } from '@/src/constants/layout';
 import AnimatedPressable from '../ui/Pressable';
-const TAB_ICON_SIZE = 22;
+const TAB_ICON_SIZE = 20;
 const TAB_PADDING_TOP = spacing.xs;
 const getTabBarLabel = (route, options) => typeof options.tabBarLabel === 'string'
     ? options.tabBarLabel
@@ -37,7 +37,7 @@ export default function BottomTabBar({ state, descriptors, navigation, }) {
             styles.container,
             {
                 backgroundColor: colors.tabBar,
-                borderTopColor: colors.borderMuted,
+                borderTopColor: `${colors.borderMuted}80`,
                 paddingBottom: insets.bottom,
                 height: TAB_BAR_HEIGHT + insets.bottom,
             },

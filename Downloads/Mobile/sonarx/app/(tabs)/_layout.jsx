@@ -18,6 +18,7 @@ export default function TabLayout() {
             tabBarInactiveTintColor: colors.tabBarInactive,
             tabBarShowLabel: false,
             tabBarStyle: buildTabBarStyle(colors, insets.bottom),
+            tabBarIconStyle: { marginBottom: 3 },
             headerShown: false,
         }} initialRouteName="chats">
       {/* Hide template screens from tabs */}

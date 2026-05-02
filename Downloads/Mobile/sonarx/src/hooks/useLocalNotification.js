@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 // expo-notifications remote push is removed from Expo Go SDK 53+.
@@ -38,18 +38,27 @@ export async function registerForPushNotificationsAsync() {
 }
 export function useLocalNotification() {
     const [isPermissionGranted, setIsPermissionGranted] = useState(false);
+    const isMountedRef = useRef(true);
     useEffect(() => {
-        registerForPushNotificationsAsync().then(setIsPermissionGranted);
+        isMountedRef.current = true;
+        registerForPushNotificationsAsync().then((granted) => {
+            if (isMountedRef.current) {
+                setIsPermissionGranted(granted);
+            }
+        });
         let subscription;
-        withNotificationApi(async () => {
+        if (Notifications) {
             subscription = Notifications.addNotificationResponseReceivedListener((response) => {
                 const url = response.notification.request.content.data?.url;
-                if (url) {
+                if (url && isMountedRef.current) {
                     router.push(url);
                 }
             });
-        });
-        return () => subscription?.remove();
+        }
+        return () => {
+            isMountedRef.current = false;
+            subscription?.remove();
+        };
     }, []);
     const scheduleMessageNotification = useCallback(async (senderName, messagePreview, chatPeerId) => {
         return withNotificationApi(async () => {

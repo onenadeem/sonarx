@@ -1,5 +1,5 @@
 export const TAB_BAR_HEIGHT = 60;
-export const HEADER_HEIGHT = 56;
+export const HEADER_HEIGHT = 60;
 export const HEADER_HEIGHT_LARGE = 64;
 export const AVATAR_SIZE = { sm: 28, md: 40, lg: 56, xl: 80 };
 export const NEAR_BOTTOM_THRESHOLD = 100;

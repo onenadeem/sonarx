@@ -56,10 +56,11 @@ export const lightTheme = createTheme(lightPalette, {
     overlay: 'rgba(37, 33, 30, 0.28)',
     inputBackground: '#FFFFFF',
     tabBar: '#FAF9F4',
-    tabBarActive: '#FEFEFE',
-    tabBarInactive: '#BCB6AE',
+    tabBarActive: '#F2F2F2',
+    tabBarInactive: lightPalette.textSecondary,
     headerBackground: '#FAF9F4',
     statusBarStyle: 'dark',
+    primaryText: '#FAF9F4',
 });
 export const darkTheme = createTheme(darkPalette, {
     primaryForeground: '#101010',
@@ -85,8 +86,9 @@ export const darkTheme = createTheme(darkPalette, {
     overlay: 'rgba(0, 0, 0, 0.56)',
     inputBackground: '#1A1A1A',
     tabBar: '#101010',
-    tabBarActive: '#FEFEFE',
-    tabBarInactive: '#6A6560',
+    tabBarActive: '#F2F2F2',
+    tabBarInactive: darkPalette.textSecondary,
     headerBackground: '#101010',
     statusBarStyle: 'light',
+    primaryText: '#101010',
 });

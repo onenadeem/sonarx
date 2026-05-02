@@ -184,9 +184,21 @@ function RootLayoutContent() {
     });
     const [isIdentityChecked, setIsIdentityChecked] = useState(false);
     useEffect(() => {
+        let mounted = true;
         loadIdentity()
-            .then(() => setIsIdentityChecked(true))
-            .catch(() => setIsIdentityChecked(true));
+            .then(() => {
+            if (mounted) {
+                setIsIdentityChecked(true);
+            }
+        })
+            .catch(() => {
+            if (mounted) {
+                setIsIdentityChecked(true);
+            }
+        });
+        return () => {
+            mounted = false;
+        };
     }, []);
     // Hide splash once fonts and identity are ready
     useEffect(() => {
@@ -228,17 +240,21 @@ function RootLayoutThemedNav({ isReady }) {
     useEffect(() => {
         if (_isExpoGo)
             return;
+        let mounted = true;
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const Notifications = require("expo-notifications");
         Notifications.requestPermissionsAsync().catch(console.error);
         const sub = Notifications.addNotificationResponseReceivedListener((response) => {
             const url = response.notification.request.content.data
                 ?.url;
-            if (url) {
+            if (url && mounted) {
                 router.push(url);
             }
         });
-        return () => sub.remove();
+        return () => {
+            mounted = false;
+            sub.remove();
+        };
     }, []);
     return (<>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.headerBackground}/>

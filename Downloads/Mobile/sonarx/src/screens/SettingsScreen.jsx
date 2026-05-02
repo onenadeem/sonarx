@@ -1,10 +1,8 @@
 import { Component, useCallback, useMemo, useState, } from 'react'
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
-import Avatar from '@/src/components/ui/Avatar';
 import Button from '@/src/components/ui/Button';
 import Header from '@/src/components/ui/Header';
 import ListItem from '@/src/components/ui/ListItem';
@@ -24,6 +22,8 @@ const THEME_OPTIONS = [
     { mode: 'dark', icon: 'moon-outline', label: 'Dark' },
     { mode: 'system', icon: 'phone-portrait-outline', label: 'System' },
 ];
+const PROFILE_DARK_IMAGE = require('../../assets/images/profile-dark.png');
+const PROFILE_LIGHT_IMAGE = require('../../assets/images/profile-light.png');
 class SettingsErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -41,13 +41,22 @@ class SettingsErrorBoundary extends Component {
         return this.props.children;
     }
 }
-function Section({ title, children, }) {
+function Section({ title, subtitle, children, style, }) {
     const { colors } = useTheme();
     const titleStyle = useMemo(() => ([
         styles.sectionTitle,
         {
-            color: colors.textSecondary,
+            color: colors.textPrimary,
             fontFamily: typography.fontFamily.semiBold,
+        },
+    ]), [colors.textSecondary]);
+    const subtitleStyle = useMemo(() => ([
+        styles.sectionSubtitle,
+        {
+            color: colors.textSecondary,
+            fontFamily: typography.fontFamily.regular,
+            marginBottom: spacing.lg,
+            marginTop: -spacing.xs,
         },
     ]), [colors.textSecondary]);
     const bodyStyle = useMemo(() => ([
@@ -58,10 +67,16 @@ function Section({ title, children, }) {
             borderRadius: borderRadius.lg,
         },
     ]), [colors.border, colors.surface]);
-    return (<View style={styles.section}>
+    return (<View style={[
+        styles.section,
+        style,
+    ]}>
       <Text style={titleStyle}>
         {title.toUpperCase()}
       </Text>
+      {subtitle ? (<Text style={subtitleStyle}>
+        {subtitle}
+      </Text>) : null}
       <View style={bodyStyle}>
         {children}
       </View>
@@ -71,20 +86,6 @@ function ThemePicker({ currentMode, onSelect, }) {
     const { colors } = useTheme();
     const [visible, setVisible] = useState(false);
     const currentLabel = THEME_OPTIONS.find((o) => o.mode === currentMode)?.label ?? 'System';
-    const badgeStyle = useMemo(() => ([
-        styles.appearanceBadge,
-        {
-            backgroundColor: colors.surfaceMuted,
-            borderColor: colors.border,
-        },
-    ]), [colors.border, colors.surfaceMuted]);
-    const badgeTextStyle = useMemo(() => ([
-        styles.appearanceBadgeText,
-        {
-            color: colors.accent,
-            fontFamily: typography.fontFamily.medium,
-        },
-    ]), [colors.accent]);
     const modalSheetStyle = useMemo(() => ([
         styles.modalSheet,
         {
@@ -107,11 +108,7 @@ function ThemePicker({ currentMode, onSelect, }) {
         },
     ]), [colors.textSecondary]);
     return (<>
-            <ListItem title="Appearance" subtitle={`${currentLabel} mode`} trailing={<View style={badgeStyle}>
-            <Text style={badgeTextStyle}>
-              {currentLabel}
-            </Text>
-          </View>} onPress={() => setVisible(true)} divider={false}/>
+            <ListItem title="Appearance" subtitle={`${currentLabel} mode`} trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} onPress={() => setVisible(true)} dividerInset={0}/>
 
       <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setVisible(false)}>
@@ -172,35 +169,22 @@ function ThemePicker({ currentMode, onSelect, }) {
     </>);
 }
 function SettingsScreenInner() {
-    const { colors, mode, setMode } = useTheme();
+    const { colors, isDark, mode, setMode } = useTheme();
     const insets = useSafeAreaInsets();
     const { isDesktop } = useResponsive();
     const identity = useIdentityStore((state) => state.identity);
-    const clearIdentity = useIdentityStore((state) => state.clearIdentity);
     const updateProfile = useIdentityStore((state) => state.updateProfile);
     const { isPermissionGranted } = useLocalNotification();
     const [notificationsEnabled, setNotificationsEnabled] = useState(isPermissionGranted);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [vibrationEnabled, setVibrationEnabled] = useState(true);
     const [messagePreview, setMessagePreview] = useState(true);
-    const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
     const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
     const [editingName, setEditingName] = useState(false);
     const [displayName, setDisplayName] = useState(identity?.displayName ?? '');
     const appVersion = Constants.expoConfig?.version ?? '1.0.0';
-    const buildNumber = String(Constants.nativeBuildVersion ?? '42');
     const contentMaxWidth = isDesktop ? SETTINGS_SCREEN_MAX_WIDTH : undefined;
-    const handleAvatarPress = useCallback(async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-        if (!result.canceled && result.assets[0]) {
-            updateProfile({ avatarUri: result.assets[0].uri });
-        }
-    }, [updateProfile]);
+    const profileImageSource = useMemo(() => (isDark ? PROFILE_LIGHT_IMAGE : PROFILE_DARK_IMAGE), [isDark]);
     const handleSaveName = useCallback(() => {
         const trimmed = displayName.trim();
         if (trimmed.length > 0) {
@@ -208,22 +192,16 @@ function SettingsScreenInner() {
         }
         setEditingName(false);
     }, [displayName, updateProfile]);
+    const handleStartEditName = useCallback(() => {
+        setDisplayName(identity?.displayName ?? '');
+        setEditingName(true);
+    }, [identity?.displayName]);
     const handleClearCache = useCallback(() => {
         Alert.alert(Strings.settings.clearCache, Strings.settings.clearCacheConfirm, [
             { text: Strings.settings.cancel, style: 'cancel' },
             { text: Strings.settings.clearCacheConfirmBtn, style: 'destructive' },
         ]);
     }, []);
-    const handleLogout = useCallback(() => {
-        Alert.alert('Logout', 'Are you sure you want to logout?', [
-            { text: Strings.common.cancel, style: 'cancel' },
-            {
-                text: 'Logout',
-                style: 'destructive',
-                onPress: () => clearIdentity(),
-            },
-        ]);
-    }, [clearIdentity]);
     const storageValue = 'Encrypted cache';
     const screenStyle = useMemo(() => ({
         backgroundColor: colors.background,
@@ -233,24 +211,62 @@ function SettingsScreenInner() {
         ? [styles.contentShell, { maxWidth: contentMaxWidth }]
         : [styles.contentShell]), [contentMaxWidth]);
     const scrollContentStyle = useMemo(() => ({
-        paddingBottom: insets.bottom + spacing.xxl,
+        paddingBottom: insets.bottom + spacing.sm,
         paddingHorizontal: spacing.lg,
         paddingTop: spacing.lg,
     }), [insets.bottom]);
-    const profileNameStyle = useMemo(() => ([
-        styles.profileName,
+    const accountSectionBodyStyle = useMemo(() => ([
+        styles.sectionBody,
+        {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderRadius: borderRadius.lg,
+        },
+    ]), [colors.border, colors.surface]);
+    const accountLabelStyle = useMemo(() => ([
+        styles.sectionTitle,
+        {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.semiBold,
+            marginBottom: spacing.md,
+        },
+    ]), [colors.textSecondary]);
+    const accountProfileName = identity?.displayName?.trim() || 'Your profile';
+    const accountPhoneNumber = identity?.phoneNumber || 'No phone linked';
+    const accountBubbleStyle = useMemo(() => ([
+        styles.accountBubble,
+        {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+        },
+    ]), [colors.surface, colors.border]);
+    const accountBubbleNameStyle = useMemo(() => ([
+        styles.accountBubbleText,
         {
             color: colors.textPrimary,
             fontFamily: typography.fontFamily.semiBold,
         },
     ]), [colors.textPrimary]);
-    const profilePhoneStyle = useMemo(() => ([
-        styles.profilePhone,
+    const accountBubbleLabelStyle = useMemo(() => ([
+        styles.accountBubbleLabel,
         {
             color: colors.textSecondary,
             fontFamily: typography.fontFamily.regular,
         },
     ]), [colors.textSecondary]);
+    const accountBubblePhoneStyle = useMemo(() => ([
+        styles.accountBubbleText,
+        {
+            color: colors.textPrimary,
+            fontFamily: typography.fontFamily.semiBold,
+        },
+    ]), [colors.textPrimary]);
+    const editNameSectionStyle = useMemo(() => ([
+        styles.editNameSection,
+        {
+            borderColor: colors.border,
+        },
+    ]), [colors.border]);
     const deleteAccountTitleStyle = useMemo(() => ({
         color: colors.danger,
     }), [colors.danger]);
@@ -262,58 +278,71 @@ function SettingsScreenInner() {
         <Header title="Settings" subtitle="Manage your account and preferences"/>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
+          <View>
+            <Text style={accountLabelStyle}>ACCOUNT DETAILS</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Profile image, display name, and phone details</Text>
+          </View>
           <View style={styles.profileCard}>
-            <AnimatedPressable onPress={handleAvatarPress} style={styles.avatarButton} accessibilityLabel="Change profile picture">
-              <Avatar uri={identity?.avatarUri} name={identity?.displayName ?? 'Shaik'} size="xl"/>
-            </AnimatedPressable>
-
-            {editingName ? (<TextInput value={displayName} onChangeText={setDisplayName} onSubmitEditing={handleSaveName} onBlur={handleSaveName} autoFocus placeholder="Display name" containerStyle={styles.nameInputContainer}/>) : (<Text style={profileNameStyle}>
-                {identity?.displayName ?? 'Your profile'}
-              </Text>)}
-
-            <Text style={profilePhoneStyle}>
-              {identity?.phoneNumber ?? 'No phone linked'}
-            </Text>
-
-            <Button text={editingName ? 'Save profile' : 'Edit profile'} variant="secondary" onPress={editingName ? handleSaveName : () => setEditingName(true)} style={styles.editProfileButton}/>
+            <View style={styles.profileImageColumn}>
+              <Image source={profileImageSource} style={styles.profileImage} resizeMode="contain"/>
+            </View>
+            <View style={styles.accountBubblesColumn}>
+              <View style={accountBubbleStyle}>
+                <Text style={accountBubbleLabelStyle}>
+                  Name
+                </Text>
+                <Text style={accountBubbleNameStyle}>
+                  {accountProfileName}
+                </Text>
+              </View>
+              <View style={accountBubbleStyle}>
+                <Text style={accountBubbleLabelStyle}>
+                  Mobile
+                </Text>
+                <Text style={accountBubblePhoneStyle}>
+                  {accountPhoneNumber}
+                </Text>
+              </View>
+            </View>
           </View>
 
-          <Section title="Account">
-            <ListItem title="Change phone" subtitle="Update your linked phone number" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Verify phone" subtitle="Confirm your number is reachable" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Delete account" subtitle="Permanently remove all your data" titleStyle={deleteAccountTitleStyle} divider={false}/>
+          <View style={styles.section}>
+            <View style={accountSectionBodyStyle}>
+              {editingName ? (<View style={editNameSectionStyle}>
+                  <TextInput value={displayName} onChangeText={setDisplayName} onSubmitEditing={handleSaveName} onBlur={handleSaveName} autoFocus placeholder="Display name" containerStyle={styles.nameInputContainer}/>
+                  <Button text="Save name" size="sm" variant="secondary" onPress={handleSaveName}/>
+                </View>) : (<ListItem title="Edit name" subtitle={accountProfileName} trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} onPress={handleStartEditName} dividerInset={0}/>)}
+
+              <ListItem title="Change phone number" subtitle={accountPhoneNumber} trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} dividerInset={0}/>
+            <ListItem title="Verify phone" subtitle="Confirm your number is reachable" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} dividerInset={0}/>
+            <ListItem title="Delete account" subtitle="Permanently remove all your data" titleStyle={deleteAccountTitleStyle} divider={false} dividerInset={0}/>
+            </View>
+          </View>
+
+          <Section title="Notifications" subtitle="Manage alerts for messages and updates">
+            <ListItem title="Message notifications" subtitle="Get alerted when new messages arrive" trailing={<ToggleSwitch value={notificationsEnabled} onValueChange={setNotificationsEnabled}/>} dividerInset={0}/>
+            <ListItem title="Sound" subtitle="Play a sound for new messages" trailing={<ToggleSwitch value={soundEnabled} onValueChange={setSoundEnabled}/>} dividerInset={0}/>
+            <ListItem title="Vibration" subtitle="Vibrate on incoming messages" trailing={<ToggleSwitch value={vibrationEnabled} onValueChange={setVibrationEnabled}/>} dividerInset={0}/>
+            <ListItem title="Show previews" subtitle="Display message content in notifications" trailing={<ToggleSwitch value={messagePreview} onValueChange={setMessagePreview}/>} divider={false} dividerInset={0}/>
           </Section>
 
-          <Section title="Notifications">
-            <ListItem title="Message notifications" subtitle="Get alerted when new messages arrive" trailing={<ToggleSwitch value={notificationsEnabled} onValueChange={setNotificationsEnabled}/>}/>
-            <ListItem title="Sound" subtitle="Play a sound for new messages" trailing={<ToggleSwitch value={soundEnabled} onValueChange={setSoundEnabled}/>}/>
-            <ListItem title="Vibration" subtitle="Vibrate on incoming messages" trailing={<ToggleSwitch value={vibrationEnabled} onValueChange={setVibrationEnabled}/>}/>
-            <ListItem title="Show previews" subtitle="Display message content in notifications" trailing={<ToggleSwitch value={messagePreview} onValueChange={setMessagePreview}/>} divider={false}/>
+          <Section title="Privacy & Security" subtitle="Control how your account and messages stay secure">
+            <ListItem title="Encryption" subtitle="All messages are end-to-end encrypted" trailing={<Ionicons name="lock-closed-outline" size={18} color={colors.accent}/>} dividerInset={0}/>
+            <ListItem title="Blocked contacts" subtitle="Manage people you've blocked" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} dividerInset={0}/>
+            <ListItem title="Data deletion" subtitle="Request removal of your stored data" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} divider={false} dividerInset={0}/>
           </Section>
 
-          <Section title="Privacy & Security">
-            <ListItem title="Encryption" subtitle="All messages are end-to-end encrypted" trailing={<Ionicons name="lock-closed-outline" size={18} color={colors.accent}/>}/>
-            <ListItem title="Blocked contacts" subtitle="Manage people you've blocked" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Data deletion" subtitle="Request removal of your stored data" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Two-factor authentication" subtitle="Add an extra layer of login security" trailing={<ToggleSwitch value={twoFactorEnabled} onValueChange={setTwoFactorEnabled}/>} divider={false}/>
-          </Section>
-
-          <Section title="App">
+          <Section title="App" subtitle="Customize app preferences and storage">
             <ThemePicker currentMode={mode} onSelect={setMode}/>
-            <ListItem title="Language" subtitle="English — tap to change" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Storage" subtitle={storageValue} trailing={<Button text="Clear cache" size="sm" variant="secondary" onPress={handleClearCache}/>}/>
-            <ListItem title="Auto-backup" subtitle="Automatically back up your chats" trailing={<ToggleSwitch value={autoBackupEnabled} onValueChange={setAutoBackupEnabled}/>} divider={false}/>
+            <ListItem title="Storage" subtitle={storageValue} trailing={<Button text="Clear cache" size="sm" variant="secondary" onPress={handleClearCache}/>} dividerInset={0}/>
+            <ListItem title="Auto-backup" subtitle="Automatically back up your chats" trailing={<ToggleSwitch value={autoBackupEnabled} onValueChange={setAutoBackupEnabled}/>} divider={false} dividerInset={0}/>
           </Section>
 
-          <Section title="About">
-            <ListItem title="Version" subtitle={appVersion}/>
-            <ListItem title="Build" subtitle={buildNumber}/>
-            <ListItem title="Terms of service" subtitle="Read our usage terms" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="Privacy policy" subtitle="How we handle your data" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>}/>
-            <ListItem title="License" subtitle="Open-source licenses used in this app" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} divider={false}/>
+            <Section title="About" subtitle="Version details, legal terms, and policies" style={{ marginBottom: 0 }}>
+            <ListItem title="Version" subtitle={appVersion} dividerInset={0}/>
+            <ListItem title="Terms of service" subtitle="Read our usage terms" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} dividerInset={0}/>
+            <ListItem title="Privacy policy" subtitle="How we handle your data" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} divider={false} dividerInset={0}/>
           </Section>
-
-          <Button text="Logout" variant="danger" size="lg" fullWidth onPress={handleLogout} style={styles.logoutButton}/>
         </ScrollView>
       </View>
     </View>);
@@ -333,52 +362,71 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     profileCard: {
-        alignItems: 'center',
-        paddingVertical: spacing.xxl,
-        marginBottom: spacing.xl,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+        gap: spacing.md,
         paddingHorizontal: spacing.lg,
+        paddingTop: spacing.lg,
+        marginBottom: 0,
     },
-    avatarButton: {
-        marginBottom: spacing.lg,
-        paddingHorizontal: 0,
+    profileImageColumn: {
+        width: '60%',
+    },
+    profileImage: {
+        width: '100%',
+        height: 200,
+    },
+    accountBubblesColumn: {
+        width: '40%',
+        flexDirection: 'column',
+        gap: spacing.sm,
+        marginTop: spacing.md,
+    },
+    accountBubble: {
+        paddingHorizontal: spacing.sm + 8,
+        paddingVertical: spacing.xs + 8,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderRadius: borderRadius.lg,
+        width: '100%',
+        alignSelf: 'stretch',
+    },
+    accountBubbleText: {
+        ...typography.caption,
+        lineHeight: 16,
+    },
+    accountBubbleLabel: {
+        ...typography.caption,
+        lineHeight: 14,
+        marginBottom: 2,
     },
     nameInputContainer: {
         width: '100%',
         marginBottom: spacing.sm,
     },
-    profileName: {
-        ...typography.h3,
-        textAlign: 'center',
-    },
-    profilePhone: {
-        ...typography.caption,
-        marginTop: spacing.xs,
-        textAlign: 'center',
-    },
-    editProfileButton: {
-        width: 140,
-        marginTop: spacing.lg,
+    editNameSection: {
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        backgroundColor: 'transparent',
     },
     section: {
-        marginBottom: spacing.xl,
+        marginBottom: spacing.md,
     },
     sectionTitle: {
         ...typography.label,
         marginBottom: spacing.sm,
         marginLeft: spacing.xs,
     },
+    sectionSubtitle: {
+        ...typography.caption,
+        marginBottom: spacing.md,
+        marginLeft: spacing.xs,
+        marginTop: -spacing.sm
+    },
     sectionBody: {
         overflow: 'hidden',
         borderWidth: StyleSheet.hairlineWidth,
-    },
-    appearanceBadge: {
-        borderWidth: StyleSheet.hairlineWidth,
-        borderRadius: borderRadius.full ?? 999,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 4,
-    },
-    appearanceBadgeText: {
-        fontSize: typography.fontSize.sm,
     },
     modalBackdrop: {
         flex: 1,
@@ -433,10 +481,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: spacing.xs,
         right: spacing.xs,
-    },
-    logoutButton: {
-        marginTop: spacing.sm,
-        marginBottom: spacing.sm,
     },
     errorContainer: {
         flex: 1,

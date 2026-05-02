@@ -38,7 +38,7 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
           </Text>
           {subtitle ? (<Text style={[
                 styles.subtitle,
-                { color: subtitleColor, fontFamily: typography.fontFamily.regular },
+                { color: subtitleColor, fontFamily: typography.fontFamily.regular, paddingBottom: spacing.md },
             ]} numberOfLines={1}>
               {subtitle}
             </Text>) : null}
