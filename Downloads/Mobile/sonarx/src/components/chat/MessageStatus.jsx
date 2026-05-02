@@ -6,8 +6,8 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 import Spinner from '@/src/components/ui/Spinner';
 const STATUS_ICON = {
     sent: {
-        name: 'checkmark-outline',
-        style: 'default',
+        name: 'checkmark-done-outline',
+        style: 'secondary',
     },
     delivered: {
         name: 'checkmark-done-outline',
@@ -18,9 +18,9 @@ const STATUS_ICON = {
         style: 'read',
     },
 };
-const resolveIconForStatus = (status, accentColor, disabledColor) => {
-    const entry = STATUS_ICON[status] ?? { name: STATUS_ICON.read.name, style: 'default' };
-    return { name: entry.name, color: entry.style === 'read' ? accentColor : disabledColor };
+const resolveIconForStatus = (status, readColor, disabledColor) => {
+    const entry = STATUS_ICON[status] ?? STATUS_ICON.sent;
+    return { name: entry.name, color: entry.style === 'read' ? readColor : disabledColor };
 };
 export default function MessageStatus({ status, size = 14 }) {
     const { colors } = useTheme();
@@ -35,7 +35,7 @@ export default function MessageStatus({ status, size = 14 }) {
     if (status === 'sending') {
         return <Spinner size="sm"/>;
     }
-    const { name: iconName, color: iconColor } = resolveIconForStatus(status, colors.accent, colors.textDisabled);
+    const { name: iconName, color: iconColor } = resolveIconForStatus(status, colors.primary, colors.textDisabled);
     return (<Animated.View style={[styles.container, animStyle]}>
       <Ionicons name={iconName} size={size} color={iconColor}/>
     </Animated.View>);

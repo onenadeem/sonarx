@@ -40,6 +40,7 @@
     "expo-image": "^55.0.7-canary-20260328-2049187",
     "expo-image-picker": "^55.0.15-canary-20260328-2049187",
     "expo-keep-awake": "^55.0.5-canary-20260328-2049187",
+    "expo-linear-gradient": "55.0.13",
     "expo-linking": "55.0.10-canary-20260328-2049187",
     "expo-local-authentication": "^55.0.10-canary-20260328-2049187",
     "expo-media-library": "^55.0.11-canary-20260328-2049187",

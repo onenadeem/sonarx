@@ -1,15 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { Pressable, StyleSheet, Text, TextInput as RNTextInput, View, } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { borderRadius, spacing, typography } from '@/src/theme/tokens';
-export default function MessageInput({ value, onChangeText, onSend, onAttachmentPress, onVoicePress, placeholder = 'Message', disabled = false, replyText, onCancelReply, }) {
+export default function MessageInput({ value, onChangeText, onSend, onAttachmentPress, placeholder = 'Message', disabled = false, replyText, onCancelReply, }) {
     const { colors } = useTheme();
-    const [focused, setFocused] = useState(false);
     const trimmedValue = value.trim();
     const canSend = trimmedValue.length > 0 && !disabled;
-    const handleFocus = useCallback(() => setFocused(true), []);
-    const handleBlur = useCallback(() => setFocused(false), []);
     const handleSendPress = useCallback(() => {
         if (!canSend) {
             return;
@@ -20,8 +17,7 @@ export default function MessageInput({ value, onChangeText, onSend, onAttachment
     return (<View style={[
             styles.wrapper,
             {
-                backgroundColor: colors.inputBackground,
-                borderTopColor: colors.border,
+                backgroundColor: 'transparent',
             },
         ]}>
       {/* Reply banner */}
@@ -46,44 +42,48 @@ export default function MessageInput({ value, onChangeText, onSend, onAttachment
           </Pressable>
         </View>) : null}
 
-      {/* Input pill container */}
-      <View style={[
+      <View style={styles.inputRow}>
+        <Pressable onPress={onAttachmentPress} style={[styles.floatingPill, {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+        }]} accessibilityLabel="Add attachments">
+          <Ionicons name="add" size={20} color={colors.textSecondary}/>
+        </Pressable>
+
+        <View style={[
             styles.pillContainer,
             {
                 backgroundColor: colors.surface,
-                borderColor: focused ? colors.accent : colors.border,
+                borderColor: colors.border,
             },
         ]}>
-        <Pressable onPress={onAttachmentPress} style={styles.iconButton} accessibilityLabel="Add attachments">
-          <Ionicons name="add" size={22} color={colors.textSecondary}/>
-        </Pressable>
+          <RNTextInput value={value} onChangeText={onChangeText} style={[
+                styles.input,
+                {
+                    color: colors.textPrimary,
+                    fontFamily: typography.fontFamily.regular,
+                },
+            ]} placeholder={placeholder} placeholderTextColor={colors.textSecondary} multiline numberOfLines={1} editable={!disabled}/>
+        </View>
 
-        <RNTextInput value={value} onChangeText={onChangeText} onFocus={handleFocus} onBlur={handleBlur} style={[
-            styles.input,
-            {
-                color: colors.textPrimary,
-                fontFamily: typography.fontFamily.regular,
-            },
-        ]} placeholder={placeholder} placeholderTextColor={colors.textSecondary} multiline numberOfLines={1} editable={!disabled}/>
-
-        {/* Show mic when empty, send when has text */}
-        {canSend ? (<Pressable onPress={handleSendPress} style={[
-                styles.sendButton,
-                { backgroundColor: colors.accent },
+        <Pressable onPress={handleSendPress} disabled={!canSend} style={[
+                styles.actionPill,
+                {
+                    backgroundColor: canSend ? colors.primary : colors.surface,
+                    borderColor: canSend ? colors.primary : colors.border,
+                    opacity: canSend ? 1 : 0.55,
+                },
             ]} accessibilityLabel="Send message">
-            <Ionicons name="arrow-up" size={18} color="#FFFFFF"/>
-          </Pressable>) : (<Pressable onPress={onVoicePress} style={styles.iconButton} accessibilityLabel="Record voice message">
-            <Ionicons name="mic-outline" size={22} color={colors.textSecondary}/>
-          </Pressable>)}
+          <Ionicons name="arrow-up" size={18} color={canSend ? colors.primaryForeground : colors.textSecondary}/>
+        </Pressable>
       </View>
     </View>);
 }
 const styles = StyleSheet.create({
     wrapper: {
-        borderTopWidth: StyleSheet.hairlineWidth,
         paddingHorizontal: spacing.md,
         paddingTop: spacing.sm,
-        paddingBottom: spacing.md,
+        paddingBottom: 0,
     },
     replyBar: {
         flexDirection: 'row',
@@ -104,36 +104,46 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    // Claude-style pill container
-    pillContainer: {
+    inputRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: 26,
-        minHeight: 52,
-        paddingHorizontal: spacing.sm,
+        gap: spacing.xs,
     },
-    iconButton: {
-        width: 40,
-        height: 40,
+    pillContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: 45,
+        borderWidth: 1,
+        borderRadius: 30,
+        minHeight: 45,
+        paddingHorizontal: spacing.sm,
+        minWidth: 0,
+    },
+    floatingPill: {
+        width: 45,
+        height: 45,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: 22.5,
+        borderWidth: 1,
     },
     input: {
         flex: 1,
-        minHeight: 40,
+        minWidth: 0,
+        minHeight: 45,
         maxHeight: 120,
         paddingHorizontal: spacing.sm,
-        paddingVertical: 10,
+        paddingVertical: 8,
+        textAlignVertical: 'center',
         fontSize: 15,
     },
-    // Circular orange send button (Claude-style)
-    sendButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+    actionPill: {
+        width: 45,
+        height: 45,
+        borderRadius: 22.5,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 2,
+        borderWidth: 1,
     },
 });

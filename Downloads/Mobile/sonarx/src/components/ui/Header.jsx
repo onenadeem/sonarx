@@ -6,7 +6,7 @@ import { HEADER_HEIGHT, HEADER_HEIGHT_LARGE } from '@/src/constants/layout';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { spacing, typography } from '@/src/theme/tokens';
 import AnimatedPressable from './Pressable';
-export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, rightActions, rightAccessory, style, }) {
+export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, centerAccessory, rightActions, rightAccessory, style, }) {
     const { colors } = useTheme();
     const { isTablet, isDesktop } = useResponsive();
     const height = isTablet || isDesktop ? HEADER_HEIGHT_LARGE : HEADER_HEIGHT;
@@ -15,6 +15,7 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
     const titleColor = colors.textPrimary;
     const subtitleColor = colors.textSecondary;
     const rightButtons = rightActions ?? [];
+    const hasCenterAccessory = centerAccessory !== undefined && centerAccessory !== null;
     const renderedLeft = leftAccessory ? (leftAccessory) : leftIcon ? (<AnimatedPressable onPress={onLeftPress} accessibilityLabel={title} style={styles.iconButton}>
             <Ionicons name={leftIcon} size={22} color={iconColor}/>
           </AnimatedPressable>) : null;
@@ -28,21 +29,23 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
         ]}>
       <View style={styles.leftSection}>
         {hasLeftAction && renderedLeft}
+      </View>
 
-        <View style={styles.titleBlock}>
-          <Text style={[
-            styles.title,
-            { color: titleColor, fontFamily: typography.fontFamily.bold },
-        ]} numberOfLines={1}>
-            {title}
-          </Text>
-          {subtitle ? (<Text style={[
-                styles.subtitle,
-                { color: subtitleColor, fontFamily: typography.fontFamily.regular, paddingBottom: spacing.md },
+      <View style={styles.centerSection}>
+        {hasCenterAccessory ? (centerAccessory) : <View style={styles.titleBlock}>
+            <Text style={[
+                styles.title,
+                { color: titleColor, fontFamily: typography.fontFamily.bold },
             ]} numberOfLines={1}>
-              {subtitle}
-            </Text>) : null}
-        </View>
+              {title}
+            </Text>
+            {subtitle ? (<Text style={[
+                    styles.subtitle,
+                    { color: subtitleColor, fontFamily: typography.fontFamily.regular, paddingBottom: spacing.md },
+                ]} numberOfLines={1}>
+                {subtitle}
+              </Text>) : null}
+          </View>}
       </View>
 
       <View style={styles.rightSection}>
@@ -58,18 +61,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
     },
     leftSection: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
         minWidth: 0,
-        gap: spacing.sm,
+        gap: 0,
+        flexShrink: 0,
+        minHeight: 45,
+        justifyContent: 'center',
+    },
+    centerSection: {
+        flex: 1,
+        alignItems: 'center',
+        minWidth: 0,
+        minHeight: 45,
+        justifyContent: 'center',
     },
     titleBlock: {
-        justifyContent: 'center',
         minWidth: 0,
+        justifyContent: 'center',
     },
     title: {
         ...typography.bodyBold,
@@ -83,11 +96,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.xs,
-        marginLeft: spacing.md,
+        minHeight: 45,
+        justifyContent: 'center',
     },
     iconButton: {
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
     },

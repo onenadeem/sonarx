@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, } from 'react'
-import { Alert, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable as RNPressable, StyleSheet, Text, TouchableWithoutFeedback, View, } from 'react-native';
+import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable as RNPressable, StyleSheet, Text, TouchableWithoutFeedback, useWindowDimensions, View, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -37,6 +38,21 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { useSendTypingIndicator, useTypingIndicator, } from '@/src/hooks/useTypingIndicator';
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SECRET_KEY_STORE_KEY = 'sonarx-secret-keys';
+const INPUT_BAR_EXTRA_BOTTOM_PADDING = 10;
+const EDGE_FADE_HEIGHT = 36;
+const ANDROID_KEYBOARD_CLEARANCE = 28;
+const ANDROID_NAV_BAR_CLEARANCE = 14;
+const hexToRgba = (hex, alpha) => {
+    const normalized = hex.replace('#', '');
+    if (normalized.length !== 6) {
+        return alpha === 0 ? 'transparent' : hex;
+    }
+    const value = Number.parseInt(normalized, 16);
+    const red = (value >> 16) & 255;
+    const green = (value >> 8) & 255;
+    const blue = value & 255;
+    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+};
 // ─── DateSeparator ────────────────────────────────────────────────────────────
 function DateSeparator({ label }) {
     const { colors } = useTheme();
@@ -87,7 +103,13 @@ function ChatBubble({ message, isFromMe, onLongPress, replyToMessage, onReplyTap
     if (message.isDeleted) {
         return (<AppChatBubble fromMe={isFromMe} text="This message was deleted" deleted onLongPress={handleLongPress} groupedWithPrevious={groupedWithPrevious} groupedWithNext={groupedWithNext}/>);
     }
-    const displayStatus = message.status === 'failed' ? 'sent' : message.status;
+    const displayStatus = message.readAt
+        ? 'read'
+        : message.deliveredAt
+            ? 'delivered'
+            : message.status === 'failed'
+                ? 'sent'
+                : message.status;
     return (<AppChatBubble fromMe={isFromMe} text={message.body ?? ''} timestamp={formatMessageTime(message.sentAt)} onLongPress={handleLongPress} groupedWithPrevious={groupedWithPrevious} groupedWithNext={groupedWithNext} replyPreview={replyToMessage != null
             ? {
                 text: replyToMessage.body ?? '',
@@ -202,19 +224,36 @@ function NewMessagePill({ visible, onPress }) {
 }
 // ─── ChatScreen ───────────────────────────────────────────────────────────────
 export default function ChatScreen() {
-    const { peerId } = useLocalSearchParams();
+    const {
+        peerId,
+        conversationId: initialConversationId,
+        peerName: initialPeerName,
+        avatarUri: initialAvatarUri,
+    } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { height: windowHeight } = useWindowDimensions();
     const { colors } = useTheme();
     const { isDesktop, isTablet } = useResponsive();
     const identity = useIdentityStore((state) => state.identity);
     // ── State ─────────────────────────────────────────────────────────────────
-    const [conversationId, setConversationId] = useState(null);
-    const [peer, setPeer] = useState(null);
+    const [conversationId, setConversationId] = useState(typeof initialConversationId === 'string' ? initialConversationId : null);
+    const [peer, setPeer] = useState(() => {
+        if (typeof initialPeerName !== 'string') {
+            return null;
+        }
+        return {
+            id: peerId,
+            displayName: initialPeerName,
+            avatarUri: typeof initialAvatarUri === 'string' && initialAvatarUri.length > 0 ? initialAvatarUri : null,
+        };
+    });
     const [isSending, setIsSending] = useState(false);
     const [replyToMessage, setReplyToMessage] = useState(null);
     const [pendingAttachments, setPendingAttachments] = useState([]);
     const [showNewMessagePill, setShowNewMessagePill] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     const [lastSeenTimestamp, setLastSeenTimestamp] = useState(null);
     const [reactionTarget, setReactionTarget] = useState(null);
     const [reactionPosition] = useState({ x: 0, y: 0 });
@@ -229,22 +268,56 @@ export default function ChatScreen() {
     const flashListRef = useRef(null);
     const isAtBottomRef = useRef(true);
     const prevMsgCountRef = useRef(0);
+    const maxWindowHeightRef = useRef(windowHeight);
     // ── Data ──────────────────────────────────────────────────────────────────
     const { messages } = useMessages(conversationId);
-    const { isOnline, statusText } = usePresence(peerId);
+  const { isOnline, statusText } = usePresence(peerId);
     const { isTyping } = useTypingIndicator(peerId);
     const { onTypingStart } = useSendTypingIndicator(peerId);
+    useEffect(() => {
+        if (!keyboardVisible || windowHeight > maxWindowHeightRef.current) {
+            maxWindowHeightRef.current = windowHeight;
+        }
+    }, [keyboardVisible, windowHeight]);
+    useEffect(() => {
+        const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+        const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+        const showSub = Keyboard.addListener(showEvent, (event) => {
+            setKeyboardVisible(true);
+            setKeyboardHeight(event.endCoordinates?.height ?? 0);
+        });
+        const hideSub = Keyboard.addListener(hideEvent, () => {
+            setKeyboardVisible(false);
+            setKeyboardHeight(0);
+        });
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
     // ── Init conversation & peer ──────────────────────────────────────────────
     useEffect(() => {
         if (!peerId)
             return;
+        let isMounted = true;
         getOrCreateConversation(peerId)
-            .then((conv) => setConversationId(conv.id))
+            .then((conv) => {
+            if (isMounted) {
+                setConversationId(conv.id);
+            }
+        })
             .catch(console.error);
         db.query.peers
             .findFirst({ where: (p, { eq }) => eq(p.id, peerId) })
-            .then((p) => setPeer(p ?? null))
+            .then((p) => {
+            if (isMounted) {
+                setPeer(p ?? null);
+            }
+        })
             .catch(console.error);
+        return () => {
+            isMounted = false;
+        };
     }, [peerId]);
     // ── Mark messages as read on focus ────────────────────────────────────────
     useFocusEffect(useCallback(() => {
@@ -531,43 +604,104 @@ export default function ChatScreen() {
             styles.contentShell,
             { maxWidth: contentMaxWidth },
         ] : [styles.contentShell]), [contentMaxWidth]);
+  const isOffline = statusText === 'Connecting...';
+  const contactStatusText = useMemo(() => isOffline ? 'Offline' : statusText, [isOffline, statusText]);
+  const peerDisplayName = peer?.displayName ?? peerId ?? 'Chat';
+  const peerAvatarLabel = peer?.displayName ?? peerId ?? '?';
+    const headerPillHeight = 45;
+    const headerSidePillPadding = 10;
+  const headerCenterPillMaxWidth = '60%';
+    const headerContainerStyle = useMemo(() => ({
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        height: headerPillHeight,
+        minHeight: headerPillHeight,
+    }), [colors.border, colors.surface]);
+    const headerTitleStyle = useMemo(() => ({
+        color: colors.textPrimary,
+        fontFamily: typography.fontFamily.semiBold,
+        fontSize: typography.fontSize.md,
+    }), [colors.textPrimary]);
+  const headerStatusStyle = useMemo(() => ({
+    color: colors.textSecondary,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 10,
+    lineHeight: 12,
+    marginTop: 1,
+  }), [colors.textSecondary]);
+  const headerActionButtonStyle = useMemo(() => ({
+        width: 35,
+        height: 35,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+        borderRadius: 17.5,
+    }), [colors.border, colors.surface]);
     const headerSpacerStyle = useMemo(() => ({
         height: insets.top,
-        backgroundColor: colors.headerBackground,
-    }), [colors.headerBackground, insets.top]);
+        backgroundColor: 'transparent',
+    }), [insets.top]);
     const chatBackgroundStyle = useMemo(() => ({
-        backgroundColor: colors.chatBackground,
-    }), [colors.chatBackground]);
+        backgroundColor: colors.headerBackground,
+    }), [colors.headerBackground]);
+    const headerFadeColors = useMemo(() => [
+        hexToRgba(colors.headerBackground, 1),
+        hexToRgba(colors.headerBackground, 0),
+    ], [colors.headerBackground]);
+    const inputFadeColors = useMemo(() => [
+        hexToRgba(colors.headerBackground, 0),
+        hexToRgba(colors.headerBackground, 1),
+    ], [colors.headerBackground]);
     const keyboardAvoidingOffset = useMemo(() => (Platform.OS === 'ios'
         ? insets.top + HEADER_HEIGHT
         : 0), [insets.top]);
+    const androidKeyboardFallbackPadding = useMemo(() => {
+        if (Platform.OS !== 'android' || !keyboardVisible || keyboardHeight <= 0) {
+            return 0;
+        }
+        const resizedAmount = Math.max(maxWindowHeightRef.current - windowHeight, 0);
+        const nativeResizeActive = resizedAmount > Math.min(keyboardHeight * 0.4, 140);
+        return nativeResizeActive ? 0 : keyboardHeight + ANDROID_KEYBOARD_CLEARANCE;
+    }, [keyboardHeight, keyboardVisible, windowHeight]);
     const inputBarPaddingStyle = useMemo(() => ({
-        paddingBottom: insets.bottom,
-    }), [insets.bottom]);
+        paddingBottom: Platform.OS === 'ios'
+            ? insets.bottom + INPUT_BAR_EXTRA_BOTTOM_PADDING
+            : androidKeyboardFallbackPadding + INPUT_BAR_EXTRA_BOTTOM_PADDING + (keyboardVisible ? 0 : ANDROID_NAV_BAR_CLEARANCE),
+        backgroundColor: 'transparent',
+    }), [androidKeyboardFallbackPadding, insets.bottom, keyboardVisible]);
     // ── Render ────────────────────────────────────────────────────────────────
     return (<View style={[styles.screen, screenStyle]}>
       <View style={contentShellStyle}>
-        <View style={headerSpacerStyle}/>
+        <View style={styles.headerFadeArea}>
+          <LinearGradient pointerEvents="none" colors={headerFadeColors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill}/>
+          <View style={headerSpacerStyle}/>
 
-        <Header title={peer?.displayName ?? peerId ?? 'Chat'} subtitle={statusText} leftAccessory={<View style={styles.headerLead}>
-              <AnimatedPressable onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
+          <Header title="" style={styles.transparentHeader} leftAccessory={<View style={[styles.headerPill, headerContainerStyle, { paddingHorizontal: headerSidePillPadding }]}>
+              <AnimatedPressable onPress={() => router.back()} style={[styles.headerIconCircle, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityLabel="Go back">
                 <Ionicons name="chevron-back" size={22} color={colors.textPrimary}/>
               </AnimatedPressable>
-              <Avatar name={peer?.displayName ?? peerId ?? '?'} uri={peer?.avatarUri} size="xs" showOnlineBadge isOnline={isOnline}/>
-            </View>} rightActions={[
-            {
-                icon: 'videocam-outline',
-                onPress: () => router.push(`/call/${peerId}?video=true`),
-                accessibilityLabel: 'Video call',
-            },
-            {
-                icon: 'call-outline',
-                onPress: () => router.push(`/call/${peerId}`),
-                accessibilityLabel: 'Voice call',
-            },
-        ]}/>
+            </View>} centerAccessory={<View style={[styles.headerPill, styles.headerCenterPill, headerContainerStyle, { maxWidth: headerCenterPillMaxWidth }]}>
+              <Avatar name={peerAvatarLabel} uri={peer?.avatarUri} size="xs" showOnlineBadge={false} isOnline={isOnline} style={styles.headerAvatar}/>
+              <View style={styles.headerTextBlock}>
+                <Text style={headerTitleStyle} numberOfLines={1} ellipsizeMode="tail">{peerDisplayName}</Text>
+                <Text style={headerStatusStyle} numberOfLines={1} ellipsizeMode="tail">{contactStatusText}</Text>
+              </View>
+            </View>} rightAccessory={<View style={[styles.headerPill, styles.headerActionPill, headerContainerStyle, { paddingHorizontal: headerSidePillPadding + 8 }]}>
+              <View style={styles.headerActionGroup}>
+                <AnimatedPressable onPress={() => router.push(`/call/${peerId}?video=true`)} style={headerActionButtonStyle} accessibilityLabel="Video call">
+                  <Ionicons name="videocam-outline" size={20} color={colors.textPrimary}/>
+                </AnimatedPressable>
+                <View style={[styles.pillDivider, { backgroundColor: colors.border }]}/>
+                <AnimatedPressable onPress={() => router.push(`/call/${peerId}`)} style={headerActionButtonStyle} accessibilityLabel="Voice call">
+                  <Ionicons name="call-outline" size={20} color={colors.textPrimary}/>
+                </AnimatedPressable>
+              </View>
+            </View>}/>
+        </View>
 
-        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={keyboardAvoidingOffset}>
+        <KeyboardAvoidingView style={styles.flex} enabled={Platform.OS === 'ios'} behavior="padding" keyboardVerticalOffset={keyboardAvoidingOffset}>
           <View style={[styles.flex, chatBackgroundStyle]}>
             <FlatList ref={flashListRef} data={listItems} keyExtractor={keyExtractor} renderItem={renderItem} inverted overScrollMode="never" onScroll={handleScroll} scrollEventThrottle={16} contentContainerStyle={styles.listContent} ListEmptyComponent={EmptyComponent} ListFooterComponent={<TypingIndicator visible={isTyping}/>} removeClippedSubviews={Platform.OS === 'android'} maxToRenderPerBatch={20} windowSize={10}/>
 
@@ -576,7 +710,8 @@ export default function ChatScreen() {
 
           <AttachmentPreview attachments={pendingAttachments} onRemove={(id) => setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== id))}/>
 
-          <View style={inputBarPaddingStyle}>
+          <View style={[styles.inputFadeArea, inputBarPaddingStyle]}>
+            <LinearGradient pointerEvents="none" colors={inputFadeColors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill}/>
             <InputBar onSend={handleSend} onAttachmentPress={handleAttachmentPress} disabled={isSending || !conversationId} onTypingChange={onTypingStart} replyTo={replyToMessage} onCancelReply={() => setReplyToMessage(null)}/>
           </View>
         </KeyboardAvoidingView>
@@ -605,16 +740,83 @@ const styles = StyleSheet.create({
     flex: {
         flex: 1,
     },
+    headerFadeArea: {
+        marginBottom: -EDGE_FADE_HEIGHT,
+        paddingBottom: EDGE_FADE_HEIGHT,
+        overflow: 'visible',
+        zIndex: 2,
+    },
+    transparentHeader: {
+        backgroundColor: 'transparent',
+    },
+    inputFadeArea: {
+        marginTop: -EDGE_FADE_HEIGHT,
+        paddingTop: EDGE_FADE_HEIGHT,
+        overflow: 'visible',
+        zIndex: 2,
+    },
     headerLead: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.sm,
     },
-    backButton: {
-        width: 44,
-        height: 44,
+    headerPill: {
+        borderWidth: 1,
+        height: 45,
+        minHeight: 45,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: 30,
+        borderColor: 'transparent',
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 0,
+    },
+    headerIconCircle: {
+        width: 35,
+        height: 35,
+        borderRadius: 17.5,
+        borderWidth: StyleSheet.hairlineWidth,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerCenterPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        minWidth: 0,
+        paddingVertical: 0,
+        paddingRight: 20,
+        alignSelf: 'center',
+        gap: 10,
+    },
+    headerAvatar: {
+        marginTop: 0,
+        alignSelf: 'center',
+    },
+    headerTextBlock: {
+        minWidth: 0,
+        flexShrink: 1,
+        overflow: 'hidden',
+        minHeight: 30,
+        justifyContent: 'center',
+        gap: 1,
+    },
+    headerActionPill: {
+        paddingHorizontal: spacing.sm,
+        paddingRight: spacing.md,
+        paddingVertical: 0,
+    },
+    headerActionGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.xs,
+        paddingRight: 2,
+    },
+    pillDivider: {
+        width: StyleSheet.hairlineWidth,
+        height: 18,
+        marginHorizontal: spacing.xs,
     },
     listContent: {
         paddingHorizontal: spacing.md,

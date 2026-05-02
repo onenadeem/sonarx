@@ -11,9 +11,7 @@ import { sendGunMessage } from "@/lib/p2p/messaging";
 const SECRET_KEY_STORE_KEY = "sonarx-secret-keys";
 export function useMessages(conversationId) {
     const { data, error } = useLiveQuery(db.query.messages.findMany({
-        where: conversationId
-            ? eq(messages.conversationId, conversationId)
-            : undefined,
+        where: eq(messages.conversationId, conversationId ?? "__pending_conversation__"),
         orderBy: desc(messages.sentAt),
         limit: 50,
     }), [conversationId]);

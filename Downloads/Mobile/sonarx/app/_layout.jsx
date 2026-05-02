@@ -65,18 +65,19 @@ export const unstable_settings = {
 };
 SplashScreen.preventAutoHideAsync();
 // ─── Navigation theme builder ─────────────────────────────────────────────────
-function buildNavigationTheme(isDark) {
+function buildNavigationTheme(isDark, colors) {
     const base = isDark ? DarkTheme : DefaultTheme;
     return {
         ...base,
         dark: isDark,
         colors: {
-            primary: isDark ? '#FAF9F4' : '#25211E',
-            background: isDark ? '#25211E' : '#FAF9F4',
-            card: isDark ? '#302C29' : '#FFFFFF',
-            text: isDark ? '#FAF9F4' : '#25211E',
-            border: isDark ? '#3D3835' : '#E0DAD1',
-            notification: isDark ? '#f87171' : '#ef4444',
+            ...base.colors,
+            primary: colors.primary,
+            background: colors.background,
+            card: colors.headerBackground,
+            text: colors.textPrimary,
+            border: colors.border,
+            notification: colors.danger,
         },
     };
 }
@@ -220,7 +221,7 @@ function RootLayoutContent() {
 }
 function RootLayoutThemedNav({ isReady }) {
     const { isDark, colors } = useTheme();
-    const navTheme = buildNavigationTheme(isDark);
+    const navTheme = buildNavigationTheme(isDark, colors);
     const router = useRouter();
     const segments = useSegments();
     const isOnboarded = useIdentityStore((state) => state.isOnboarded);
@@ -256,14 +257,18 @@ function RootLayoutThemedNav({ isReady }) {
             sub.remove();
         };
     }, []);
-    return (<>
+    return (<View style={[rootLayoutStyles.fill, { backgroundColor: colors.background }]}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.headerBackground}/>
       <NavigationThemeProvider value={navTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
-          <Stack.Screen name="(onboarding)" options={{ headerShown: false }}/>
-          <Stack.Screen name="chat/[peerId]" options={{ headerShown: false }}/>
-          <Stack.Screen name="call/[peerId]" options={{ headerShown: false }}/>
+        <Stack screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+            navigationBarColor: colors.background,
+        }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}/>
+          <Stack.Screen name="(onboarding)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}/>
+          <Stack.Screen name="chat/[peerId]" options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}/>
+          <Stack.Screen name="call/[peerId]" options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}/>
           <Stack.Screen name="modal" options={{
             presentation: "transparentModal",
             animation: "slide_from_bottom",
@@ -282,6 +287,6 @@ function RootLayoutThemedNav({ isReady }) {
 
       {/* In-app toast overlay — rendered above the navigation stack */}
       <ToastLayer />
-    </>);
+    </View>);
 }
  

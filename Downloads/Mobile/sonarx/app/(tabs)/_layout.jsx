@@ -20,6 +20,7 @@ export default function TabLayout() {
             tabBarStyle: buildTabBarStyle(colors, insets.bottom),
             tabBarIconStyle: { marginBottom: 3 },
             headerShown: false,
+            sceneStyle: { backgroundColor: colors.background },
         }} initialRouteName="chats">
       {/* Hide template screens from tabs */}
       {TAB_BAR_HIDDEN_SCREENS.map(({ name, options }) => <Tabs.Screen key={`hidden-${name}`} name={name} options={options}/>)}

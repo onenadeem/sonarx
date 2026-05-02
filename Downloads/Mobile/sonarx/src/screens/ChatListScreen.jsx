@@ -172,7 +172,15 @@ function ChatListScreenInner() {
     const navigateToContacts = useCallback(() => {
         router.push('/(tabs)/contacts');
     }, [router]);
-    const renderItem = useCallback(({ item }) => (<ConversationRow item={item} onPress={() => router.push(`/chat/${item.peerId}`)}/>), [router]);
+    const renderItem = useCallback(({ item }) => (<ConversationRow item={item} onPress={() => router.push({
+            pathname: '/chat/[peerId]',
+            params: {
+                peerId: item.peerId,
+                conversationId: item.id,
+                peerName: item.peer?.displayName ?? item.peerId,
+                avatarUri: item.peer?.avatarUri ?? '',
+            },
+        })}/>), [router]);
     const listContentStyle = useMemo(() => ({
         paddingBottom: insets.bottom + spacing.xl,
     }), [insets.bottom]);

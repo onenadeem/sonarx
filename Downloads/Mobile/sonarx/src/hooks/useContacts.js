@@ -62,14 +62,28 @@ export function useContact(id) {
     useEffect(() => {
         if (storeContact)
             return;
+        let isMounted = true;
         setIsLoading(true);
         db.query.peers
             .findFirst({ where: (p, { eq }) => eq(p.id, id) })
             .then((peer) => {
-            setDbContact(peer ? peerToContact(peer) : null);
+            if (isMounted) {
+                setDbContact(peer ? peerToContact(peer) : null);
+            }
         })
-            .catch(() => setDbContact(null))
-            .finally(() => setIsLoading(false));
+            .catch(() => {
+            if (isMounted) {
+                setDbContact(null);
+            }
+        })
+            .finally(() => {
+            if (isMounted) {
+                setIsLoading(false);
+            }
+        });
+        return () => {
+            isMounted = false;
+        };
     }, [id, storeContact]);
     return {
         contact: storeContact ?? dbContact,
