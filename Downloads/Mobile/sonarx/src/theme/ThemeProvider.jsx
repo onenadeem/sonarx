@@ -9,11 +9,15 @@ export function ThemeProvider({ children, initialMode, }) {
     const [mode, setModeState] = useState(initialMode ?? 'system');
     // Load persisted preference async on mount
     useEffect(() => {
+        let mounted = true;
         AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
-            if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            if (mounted && (saved === 'light' || saved === 'dark' || saved === 'system')) {
                 setModeState(saved);
             }
         }).catch(() => { });
+        return () => {
+            mounted = false;
+        };
     }, []);
     const setMode = useCallback((newMode) => {
         AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(console.error);

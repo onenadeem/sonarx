@@ -6,11 +6,15 @@ import { HEADER_HEIGHT, HEADER_HEIGHT_LARGE } from '@/src/constants/layout';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { spacing, typography } from '@/src/theme/tokens';
 import AnimatedPressable from './Pressable';
-export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, centerAccessory, rightActions, rightAccessory, style, }) {
+export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, centerAccessory, rightActions, rightAccessory, style, titleAlign = 'center', titlePaddingHorizontal = 0, }) {
     const { colors } = useTheme();
     const { isTablet, isDesktop } = useResponsive();
     const height = isTablet || isDesktop ? HEADER_HEIGHT_LARGE : HEADER_HEIGHT;
     const hasLeftAction = Boolean(leftAccessory || leftIcon);
+    const computedTitleAlign = titleAlign === 'start' ? 'flex-start' : 'center';
+    const titlePadding = titleAlign === 'start' && titlePaddingHorizontal > 0
+        ? { paddingHorizontal: titlePaddingHorizontal }
+        : null;
     const iconColor = colors.textPrimary;
     const titleColor = colors.textPrimary;
     const subtitleColor = colors.textSecondary;
@@ -31,17 +35,29 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
         {hasLeftAction && renderedLeft}
       </View>
 
-      <View style={styles.centerSection}>
-        {hasCenterAccessory ? (centerAccessory) : <View style={styles.titleBlock}>
+      <View style={[
+            styles.centerSection,
+            { alignItems: computedTitleAlign },
+        ]}>
+        {hasCenterAccessory ? (centerAccessory) : <View style={[styles.titleBlock, titlePadding]}>
             <Text style={[
                 styles.title,
-                { color: titleColor, fontFamily: typography.fontFamily.bold },
+                {
+                    color: titleColor,
+                    fontFamily: typography.fontFamily.bold,
+                    textAlign: computedTitleAlign === 'flex-start' ? 'left' : 'center',
+                },
             ]} numberOfLines={1}>
               {title}
             </Text>
             {subtitle ? (<Text style={[
                     styles.subtitle,
-                    { color: subtitleColor, fontFamily: typography.fontFamily.regular, paddingBottom: spacing.md },
+                {
+                    color: subtitleColor,
+                    fontFamily: typography.fontFamily.regular,
+                    paddingBottom: spacing.md,
+                    textAlign: computedTitleAlign === 'flex-start' ? 'left' : 'center',
+                },
                 ]} numberOfLines={1}>
                 {subtitle}
               </Text>) : null}

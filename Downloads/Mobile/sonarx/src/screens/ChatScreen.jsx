@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, } from 'react'
 import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable as RNPressable, StyleSheet, Text, TouchableWithoutFeedback, useWindowDimensions, View, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -42,17 +41,6 @@ const INPUT_BAR_EXTRA_BOTTOM_PADDING = 10;
 const EDGE_FADE_HEIGHT = 36;
 const ANDROID_KEYBOARD_CLEARANCE = 28;
 const ANDROID_NAV_BAR_CLEARANCE = 14;
-const hexToRgba = (hex, alpha) => {
-    const normalized = hex.replace('#', '');
-    if (normalized.length !== 6) {
-        return alpha === 0 ? 'transparent' : hex;
-    }
-    const value = Number.parseInt(normalized, 16);
-    const red = (value >> 16) & 255;
-    const green = (value >> 8) & 255;
-    const blue = value & 255;
-    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-};
 // ─── DateSeparator ────────────────────────────────────────────────────────────
 function DateSeparator({ label }) {
     const { colors } = useTheme();
@@ -646,14 +634,6 @@ export default function ChatScreen() {
     const chatBackgroundStyle = useMemo(() => ({
         backgroundColor: colors.headerBackground,
     }), [colors.headerBackground]);
-    const headerFadeColors = useMemo(() => [
-        hexToRgba(colors.headerBackground, 1),
-        hexToRgba(colors.headerBackground, 0),
-    ], [colors.headerBackground]);
-    const inputFadeColors = useMemo(() => [
-        hexToRgba(colors.headerBackground, 0),
-        hexToRgba(colors.headerBackground, 1),
-    ], [colors.headerBackground]);
     const keyboardAvoidingOffset = useMemo(() => (Platform.OS === 'ios'
         ? insets.top + HEADER_HEIGHT
         : 0), [insets.top]);
@@ -669,13 +649,12 @@ export default function ChatScreen() {
         paddingBottom: Platform.OS === 'ios'
             ? insets.bottom + INPUT_BAR_EXTRA_BOTTOM_PADDING
             : androidKeyboardFallbackPadding + INPUT_BAR_EXTRA_BOTTOM_PADDING + (keyboardVisible ? 0 : ANDROID_NAV_BAR_CLEARANCE),
-        backgroundColor: 'transparent',
-    }), [androidKeyboardFallbackPadding, insets.bottom, keyboardVisible]);
+        backgroundColor: colors.background,
+    }), [androidKeyboardFallbackPadding, colors.background, insets.bottom, keyboardVisible]);
     // ── Render ────────────────────────────────────────────────────────────────
     return (<View style={[styles.screen, screenStyle]}>
       <View style={contentShellStyle}>
         <View style={styles.headerFadeArea}>
-          <LinearGradient pointerEvents="none" colors={headerFadeColors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill}/>
           <View style={headerSpacerStyle}/>
 
           <Header title="" style={styles.transparentHeader} leftAccessory={<View style={[styles.headerPill, headerContainerStyle, { paddingHorizontal: headerSidePillPadding }]}>
@@ -695,7 +674,7 @@ export default function ChatScreen() {
                 </AnimatedPressable>
                 <View style={[styles.pillDivider, { backgroundColor: colors.border }]}/>
                 <AnimatedPressable onPress={() => router.push(`/call/${peerId}`)} style={headerActionButtonStyle} accessibilityLabel="Voice call">
-                  <Ionicons name="call-outline" size={20} color={colors.textPrimary}/>
+                  <Ionicons name="call-outline" size={17} color={colors.textPrimary}/>
                 </AnimatedPressable>
               </View>
             </View>}/>
@@ -711,7 +690,6 @@ export default function ChatScreen() {
           <AttachmentPreview attachments={pendingAttachments} onRemove={(id) => setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== id))}/>
 
           <View style={[styles.inputFadeArea, inputBarPaddingStyle]}>
-            <LinearGradient pointerEvents="none" colors={inputFadeColors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill}/>
             <InputBar onSend={handleSend} onAttachmentPress={handleAttachmentPress} disabled={isSending || !conversationId} onTypingChange={onTypingStart} replyTo={replyToMessage} onCancelReply={() => setReplyToMessage(null)}/>
           </View>
         </KeyboardAvoidingView>
@@ -750,10 +728,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     inputFadeArea: {
-        marginTop: -EDGE_FADE_HEIGHT,
-        paddingTop: EDGE_FADE_HEIGHT,
-        overflow: 'visible',
+        marginTop: 0,
+        marginBottom: 4,
+        paddingTop: 0,
+        overflow: 'hidden',
         zIndex: 2,
+        backgroundColor: 'transparent',
     },
     headerLead: {
         flexDirection: 'row',
@@ -814,9 +794,9 @@ const styles = StyleSheet.create({
         paddingRight: 2,
     },
     pillDivider: {
-        width: StyleSheet.hairlineWidth,
+        width: StyleSheet.hairlineWidth + 1,
         height: 18,
-        marginHorizontal: spacing.xs,
+        marginHorizontal: spacing.sm,
     },
     listContent: {
         paddingHorizontal: spacing.md,

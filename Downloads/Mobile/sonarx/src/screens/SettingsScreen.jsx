@@ -275,7 +275,7 @@ function SettingsScreenInner() {
             screenStyle,
         ]}>
       <View style={contentShellStyle}>
-        <Header title="Settings" subtitle="Manage your account and preferences"/>
+        <Header title="Settings" subtitle="Manage your account and preferences" titleAlign="start" titlePaddingHorizontal={spacing.lg} style={{ paddingHorizontal: 3 }}/>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
           <View>
