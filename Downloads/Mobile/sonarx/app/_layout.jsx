@@ -21,6 +21,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import Constants from "expo-constants";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -236,7 +237,9 @@ function RootLayoutContent() {
       <GestureHandlerRootView style={rootLayoutStyles.fill}>
         <DatabaseProvider>
           <ThemeProvider>
-            <RootLayoutThemedNav isReady={isReady} />
+            <BottomSheetModalProvider>
+              <RootLayoutThemedNav isReady={isReady} />
+            </BottomSheetModalProvider>
           </ThemeProvider>
         </DatabaseProvider>
       </GestureHandlerRootView>
@@ -249,16 +252,20 @@ function RootLayoutThemedNav({ isReady }) {
   const router = useRouter();
   const segments = useSegments();
   const isOnboarded = useIdentityStore((state) => state.isOnboarded);
+  const inOnboarding = segments[0] === "(onboarding)";
+  const isRedirecting = isReady && (
+    (!isOnboarded && !inOnboarding) ||
+    (isOnboarded && inOnboarding)
+  );
   // Navigation guard — runs only after the Stack is mounted (isReady)
   useEffect(() => {
     if (!isReady) return;
-    const inOnboarding = segments[0] === "(onboarding)";
     if (!isOnboarded && !inOnboarding) {
       router.replace("/(onboarding)/welcome");
     } else if (isOnboarded && inOnboarding) {
       router.replace("/(tabs)/chats");
     }
-  }, [isReady, isOnboarded, segments]);
+  }, [isReady, isOnboarded, inOnboarding]);
   // Register for push notifications and set up deep-link handler
   useEffect(() => {
     if (_isExpoGo) return;
@@ -334,8 +341,8 @@ function RootLayoutThemedNav({ isReady }) {
         </Stack>
       </NavigationThemeProvider>
 
-      {/* Branded splash overlay — shown until fonts & identity are ready */}
-      {!isReady && (
+      {/* Branded splash overlay — shown until fonts, identity, and initial redirect are ready */}
+      {(!isReady || isRedirecting) && (
         <View
           style={[
             rootLayoutStyles.loadingOverlay,

@@ -1,15 +1,17 @@
-import { Component, useCallback, useMemo, useState, } from 'react'
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { Component, useCallback, useMemo, useRef, useState } from 'react'
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
+import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import Button from '@/src/components/ui/Button';
 import Header from '@/src/components/ui/Header';
 import ListItem from '@/src/components/ui/ListItem';
 import TextInput from '@/src/components/ui/TextInput';
 import ToggleSwitch from '@/src/components/ui/ToggleSwitch';
 import AnimatedPressable from '@/src/components/ui/Pressable';
-import { useLocalNotification } from '@/src/hooks/useLocalNotification';
+import Avatar from '@/src/components/ui/Avatar';
+import AvatarPickerSheet from '@/components/AvatarPickerSheet';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { borderRadius, spacing, typography } from '@/src/theme/tokens';
@@ -22,8 +24,10 @@ const THEME_OPTIONS = [
     { mode: 'dark', icon: 'moon-outline', label: 'Dark' },
     { mode: 'system', icon: 'phone-portrait-outline', label: 'System' },
 ];
+
 const PROFILE_DARK_IMAGE = require('../../assets/images/profile-dark.png');
 const PROFILE_LIGHT_IMAGE = require('../../assets/images/profile-light.png');
+
 class SettingsErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -41,7 +45,8 @@ class SettingsErrorBoundary extends Component {
         return this.props.children;
     }
 }
-function Section({ title, subtitle, children, style, }) {
+
+function Section({ title, subtitle, children, style }) {
     const { colors } = useTheme();
     const titleStyle = useMemo(() => ([
         styles.sectionTitle,
@@ -82,109 +87,98 @@ function Section({ title, subtitle, children, style, }) {
       </View>
     </View>);
 }
-function ThemePicker({ currentMode, onSelect, }) {
+
+function ThemePicker({ currentMode, onSelect }) {
     const { colors } = useTheme();
-    const [visible, setVisible] = useState(false);
+    const insets = useSafeAreaInsets();
+    const bottomSheetModalRef = useRef(null);
     const currentLabel = THEME_OPTIONS.find((o) => o.mode === currentMode)?.label ?? 'System';
-    const modalSheetStyle = useMemo(() => ([
-        styles.modalSheet,
-        {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-        },
-    ]), [colors.border, colors.surface]);
-    const modalTitleStyle = useMemo(() => ([
-        styles.modalTitle,
-        {
-            color: colors.textPrimary,
-            fontFamily: typography.fontFamily.bold,
-        },
-    ]), [colors.textPrimary]);
-    const modalSubtitleStyle = useMemo(() => ([
-        styles.modalSubtitle,
-        {
-            color: colors.textSecondary,
-            fontFamily: typography.fontFamily.regular,
-        },
-    ]), [colors.textSecondary]);
+
+    const handleOpen = useCallback(() => {
+        bottomSheetModalRef.current?.present();
+    }, []);
+
+    const handleSelect = useCallback((mode) => {
+        onSelect(mode);
+        bottomSheetModalRef.current?.dismiss();
+    }, [onSelect]);
+
     return (<>
-            <ListItem title="Appearance" subtitle={`${currentLabel} mode`} trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} onPress={() => setVisible(true)} dividerInset={0}/>
-
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setVisible(false)}>
-          <Pressable style={modalSheetStyle}>
-            <View style={styles.modalHandle}/>
-            <Text style={modalTitleStyle}>
-              Appearance
-            </Text>
-            <Text style={modalSubtitleStyle}>
-              Choose how resonar looks to you
-            </Text>
-
-            <View style={styles.pillRow}>
-              {THEME_OPTIONS.map(({ mode, icon, label }) => {
-            const active = mode === currentMode;
-            const itemStyle = active
-                ? {
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                }
-                : {
-                    backgroundColor: colors.surfaceMuted,
-                    borderColor: colors.border,
-                };
-            const labelStyle = active
-                ? {
-                    color: colors.background,
-                    fontFamily: typography.fontFamily.semiBold,
-                }
-                : {
+        <ListItem title="Appearance" subtitle={`${currentLabel} mode`} trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} onPress={handleOpen} dividerInset={0}/>
+        <BottomSheetModal
+            ref={bottomSheetModalRef}
+            snapPoints={['42%']}
+            enablePanDownToClose
+            backgroundStyle={{ backgroundColor: colors.surface }}
+            handleIndicatorStyle={{ backgroundColor: colors.textDisabled }}
+            backdropComponent={(props) => (
+                <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+            )}
+        >
+            <BottomSheetView style={{ flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: insets.bottom + spacing.md }}>
+                <Text style={{
+                    fontFamily: typography.fontFamily.bold,
+                    fontSize: typography.fontSize.lg,
                     color: colors.textPrimary,
+                    marginBottom: spacing.xs,
+                }}>
+                    Appearance
+                </Text>
+                <Text style={{
                     fontFamily: typography.fontFamily.regular,
-                };
-            const iconColor = active ? colors.background : colors.textSecondary;
-            const pillStyle = [
-                styles.pill,
-                itemStyle,
-            ];
-            const activeTextStyle = [
-                styles.pillLabel,
-                labelStyle,
-            ];
-            return (<AnimatedPressable key={mode} onPress={() => {
-                    onSelect(mode);
-                    setVisible(false);
-                }} accessibilityLabel={`Set ${mode} theme`} style={pillStyle}>
-                    <Ionicons name={icon} size={20} color={iconColor}/>
-                    <Text style={activeTextStyle}>
-                      {label}
-                    </Text>
-                    {active && (<Ionicons name="checkmark" size={16} color={iconColor} style={styles.pillCheck}/>)}
-                  </AnimatedPressable>);
-        })}
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+                    fontSize: typography.fontSize.sm,
+                    color: colors.textSecondary,
+                    marginBottom: spacing.lg,
+                }}>
+                    Choose how resonar looks to you
+                </Text>
+                <View style={{ gap: spacing.sm }}>
+                    {THEME_OPTIONS.map(({ mode, icon, label }) => {
+                        const active = mode === currentMode;
+                        const bg = active ? colors.primary : colors.surface;
+                        const border = active ? colors.primary : colors.border;
+                        const fg = active ? colors.primaryForeground : colors.textPrimary;
+                        return (<AnimatedPressable key={mode} onPress={() => handleSelect(mode)} accessibilityLabel={`Set ${mode} theme`} style={[
+                                styles.themeOption,
+                                { backgroundColor: bg, borderColor: border },
+                            ]}>
+                            <View style={{                                     backgroundColor: active ? bg : 'transparent',
+flexDirection: 'row', alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: spacing.md, borderRadius: borderRadius.md }}>
+                                <Ionicons name={icon} size={18} color={fg} />
+                                <Text style={{
+                                    marginLeft: spacing.sm,
+                                    color: fg,
+                                    fontFamily: typography.fontFamily.semiBold,
+                                    fontSize: typography.fontSize.md,
+                                }}>
+                                    {label}
+                                </Text>
+                            </View>
+                        </AnimatedPressable>);
+                    })}
+                </View>
+            </BottomSheetView>
+        </BottomSheetModal>
     </>);
 }
+
 function SettingsScreenInner() {
     const { colors, isDark, mode, setMode } = useTheme();
-    const insets = useSafeAreaInsets();
     const { isDesktop } = useResponsive();
     const identity = useIdentityStore((state) => state.identity);
     const updateProfile = useIdentityStore((state) => state.updateProfile);
-    const { isPermissionGranted } = useLocalNotification();
-    const [notificationsEnabled, setNotificationsEnabled] = useState(isPermissionGranted);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [vibrationEnabled, setVibrationEnabled] = useState(true);
     const [messagePreview, setMessagePreview] = useState(true);
-    const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
+    const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
     const [editingName, setEditingName] = useState(false);
     const [displayName, setDisplayName] = useState(identity?.displayName ?? '');
+    const avatarSheetRef = useRef(null);
     const appVersion = Constants.expoConfig?.version ?? '1.0.0';
     const contentMaxWidth = isDesktop ? SETTINGS_SCREEN_MAX_WIDTH : undefined;
     const profileImageSource = useMemo(() => (isDark ? PROFILE_LIGHT_IMAGE : PROFILE_DARK_IMAGE), [isDark]);
+
     const handleSaveName = useCallback(() => {
         const trimmed = displayName.trim();
         if (trimmed.length > 0) {
@@ -192,29 +186,42 @@ function SettingsScreenInner() {
         }
         setEditingName(false);
     }, [displayName, updateProfile]);
+
     const handleStartEditName = useCallback(() => {
         setDisplayName(identity?.displayName ?? '');
         setEditingName(true);
     }, [identity?.displayName]);
+
     const handleClearCache = useCallback(() => {
         Alert.alert(Strings.settings.clearCache, Strings.settings.clearCacheConfirm, [
             { text: Strings.settings.cancel, style: 'cancel' },
             { text: Strings.settings.clearCacheConfirmBtn, style: 'destructive' },
         ]);
     }, []);
+
+    const handleAvatarPicked = useCallback((uri) => {
+        updateProfile({ avatarUri: uri });
+    }, [updateProfile]);
+
+    const handleOpenAvatarSheet = useCallback(() => {
+        avatarSheetRef.current?.present();
+    }, []);
+
     const storageValue = 'Encrypted cache';
     const screenStyle = useMemo(() => ({
         backgroundColor: colors.background,
-        paddingTop: insets.top,
-    }), [colors.background, insets.top]);
+    }), [colors.background]);
+
     const contentShellStyle = useMemo(() => (contentMaxWidth
         ? [styles.contentShell, { maxWidth: contentMaxWidth }]
         : [styles.contentShell]), [contentMaxWidth]);
+
     const scrollContentStyle = useMemo(() => ({
-        paddingBottom: insets.bottom + spacing.sm,
+        paddingBottom: spacing.sm,
         paddingHorizontal: spacing.lg,
         paddingTop: spacing.lg,
-    }), [insets.bottom]);
+    }), []);
+
     const accountSectionBodyStyle = useMemo(() => ([
         styles.sectionBody,
         {
@@ -223,6 +230,7 @@ function SettingsScreenInner() {
             borderRadius: borderRadius.lg,
         },
     ]), [colors.border, colors.surface]);
+
     const accountLabelStyle = useMemo(() => ([
         styles.sectionTitle,
         {
@@ -231,8 +239,10 @@ function SettingsScreenInner() {
             marginBottom: spacing.md,
         },
     ]), [colors.textPrimary]);
+
     const accountProfileName = identity?.displayName?.trim() || 'Your profile';
     const accountPhoneNumber = identity?.phoneNumber || 'No phone linked';
+
     const accountBubbleStyle = useMemo(() => ([
         styles.accountBubble,
         {
@@ -240,6 +250,7 @@ function SettingsScreenInner() {
             borderColor: colors.border,
         },
     ]), [colors.surface, colors.border]);
+
     const accountBubbleNameStyle = useMemo(() => ([
         styles.accountBubbleText,
         {
@@ -247,6 +258,7 @@ function SettingsScreenInner() {
             fontFamily: typography.fontFamily.semiBold,
         },
     ]), [colors.textPrimary]);
+
     const accountBubbleLabelStyle = useMemo(() => ([
         styles.accountBubbleLabel,
         {
@@ -254,6 +266,7 @@ function SettingsScreenInner() {
             fontFamily: typography.fontFamily.regular,
         },
     ]), [colors.textSecondary]);
+
     const accountBubblePhoneStyle = useMemo(() => ([
         styles.accountBubbleText,
         {
@@ -261,16 +274,19 @@ function SettingsScreenInner() {
             fontFamily: typography.fontFamily.semiBold,
         },
     ]), [colors.textPrimary]);
+
     const editNameSectionStyle = useMemo(() => ([
         styles.editNameSection,
         {
             borderColor: colors.border,
         },
     ]), [colors.border]);
+
     const deleteAccountTitleStyle = useMemo(() => ({
         color: colors.danger,
     }), [colors.danger]);
-    return (<View style={[
+
+    return (<SafeAreaView edges={['top', 'left', 'right']} style={[
             styles.screen,
             screenStyle,
         ]}>
@@ -278,10 +294,16 @@ function SettingsScreenInner() {
         <Header title="Settings" subtitle="Manage your account and preferences" titleAlign="start" titlePaddingHorizontal={spacing.lg} style={{ paddingHorizontal: 3 }}/>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
-          <View>
-            <Text style={accountLabelStyle}>ACCOUNT DETAILS</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Profile image, display name, and phone details</Text>
+          <View style={styles.accountHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={accountLabelStyle}>ACCOUNT DETAILS</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Profile image, display name, and phone details</Text>
+            </View>
+            <Pressable onPress={handleOpenAvatarSheet} style={styles.avatarPressable}>
+              <Avatar uri={identity?.avatarUri} name={accountProfileName} size={44} />
+            </Pressable>
           </View>
+
           <View style={styles.profileCard}>
             <View style={styles.profileImageColumn}>
               <Image source={profileImageSource} style={styles.profileImage} resizeMode="contain"/>
@@ -345,13 +367,16 @@ function SettingsScreenInner() {
           </Section>
         </ScrollView>
       </View>
-    </View>);
+      <AvatarPickerSheet ref={avatarSheetRef} onImagePicked={handleAvatarPicked} />
+    </SafeAreaView>);
 }
+
 export default function SettingsScreen() {
     return (<SettingsErrorBoundary>
       <SettingsScreenInner />
     </SettingsErrorBoundary>);
 }
+
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
@@ -360,6 +385,15 @@ const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
         alignSelf: 'center',
+    },
+    accountHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.sm,
+    },
+    avatarPressable: {
+        marginLeft: spacing.sm,
     },
     profileCard: {
         flexDirection: 'row',
@@ -428,59 +462,16 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: StyleSheet.hairlineWidth,
     },
-    modalBackdrop: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        justifyContent: 'flex-end',
-    },
-    modalSheet: {
-        borderTopLeftRadius: borderRadius.xl ?? 24,
-        borderTopRightRadius: borderRadius.xl ?? 24,
-        borderWidth: StyleSheet.hairlineWidth,
-        paddingBottom: spacing.xxl,
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.sm,
-    },
-    modalHandle: {
-        width: 36,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: 'rgba(128,128,128,0.35)',
-        alignSelf: 'center',
-        marginBottom: spacing.lg,
-        marginTop: spacing.xs,
-    },
-    modalTitle: {
-        fontSize: 18,
-        marginBottom: spacing.xs,
-    },
-    modalSubtitle: {
-        fontSize: typography.fontSize.sm,
-        marginBottom: spacing.xl,
-    },
-    pillRow: {
+    themeOption: {
         flexDirection: 'row',
-        gap: spacing.sm,
-    },
-    pill: {
-        flex: 1,
-        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.xs,
+        borderWidth: 1,
         borderRadius: borderRadius.lg,
-        borderWidth: 1.5,
-        paddingVertical: spacing.lg,
-        paddingHorizontal: spacing.sm,
-        position: 'relative',
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.md,
     },
-    pillLabel: {
-        fontSize: typography.fontSize.sm,
-    },
-    pillCheck: {
-        position: 'absolute',
-        top: spacing.xs,
-        right: spacing.xs,
+    themeOptionLabel: {
+        fontSize: typography.fontSize.md,
     },
     errorContainer: {
         flex: 1,

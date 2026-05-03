@@ -1,4 +1,4 @@
-import { Image, Platform, View, SafeAreaView } from "react-native";
+import { Image, View, SafeAreaView } from "react-native";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Text } from "@/components/ui/text";
@@ -37,15 +37,10 @@ export default function WelcomeScreen() {
     return (<SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="flex-1 justify-start items-start pt-10" style={{
         backgroundColor: colors.background,
-        alignSelf: "start",
         width: "100%",
         marginTop: spacing.xl,
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: spacing.md,
       }}>
-        {/* Greetings Illustration */}
-
-
-        {/* Logo and Brand */}
         <View className="flex-row items-center justify-center" style={{ gap: 6 }}>
           <SonarXLogo size={32} />
           <Text style={{
@@ -55,14 +50,13 @@ export default function WelcomeScreen() {
             marginTop: -spacing.xs,
           }}>resonar</Text>
         </View>
-        <Text className="text-sm text-start mt-1 px-2" style={{
-            color: colors.textSecondary,
-            fontFamily: bodyFont,
-            fontSize: typography.fontSize.sm,
+        <Text className="text-sm text-start mt-1" style={{
+          color: colors.textSecondary,
+          fontFamily: bodyFont,
+          fontSize: typography.fontSize.sm,
         }}>
           Your chats and calls are direct, encrypted, and controlled by your device.
           No data is sold or copied. Your privacy your choice
-
         </Text>
         <Image
           source={isDark ? greetingsDark : greetingsLight}
@@ -76,9 +70,7 @@ export default function WelcomeScreen() {
         />
       </View>
 
-      {/* Bottom CTA */}
-      <View className="px-6 pb-8">
-        {/* Feature highlights */}
+      <View className="pb-8" style={{ paddingHorizontal: spacing.md }}>
         <View className="w-full mb-4">
           {featureHighlights.map((feature, index) => (<WelcomeFeature key={feature.title} icon={feature.icon} title={feature.title} description={feature.description} iconColor={colors.textPrimary} colors={colors} isLast={index === featureHighlights.length - 1}/>))}
         </View>
@@ -100,7 +92,7 @@ export default function WelcomeScreen() {
 
         <View style={{ height: 13 }} />
         <Muted
-          className="text-center text-xs px-4"
+          className="text-center text-xs"
           style={{
             color: colors.textSecondary,
             fontFamily: typography.fontFamily.regular,
@@ -115,7 +107,7 @@ export default function WelcomeScreen() {
 }
 
 function WelcomeFeature({ icon, title, description, iconColor, colors, isLast }) {
-    return <View className="flex-row items-center px-4 py-3 rounded-xl border"
+    return <View className="flex-row items-center px-3 py-3 rounded-xl border"
       style={{
         backgroundColor: colors.surface,
         borderColor: colors.border,

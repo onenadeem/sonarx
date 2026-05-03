@@ -98,7 +98,7 @@ export default function PhoneScreen() {
           className="flex-1"
           contentContainerStyle={{
             flexGrow: 1,
-            paddingHorizontal: spacing.lg,
+            paddingHorizontal: spacing.md,
           }}
           showsVerticalScrollIndicator={false}
           bounces={false}
@@ -232,7 +232,7 @@ export default function PhoneScreen() {
                 </View>
               </Button>
               <View style={{ height: 13 }} />
-              <Muted className="text-center text-xs px-4" style={{
+              <Muted className="text-center text-xs" style={{
                 color: colors.textSecondary,
                 fontFamily: typography.fontFamily.regular,
                 marginBottom: 5,
