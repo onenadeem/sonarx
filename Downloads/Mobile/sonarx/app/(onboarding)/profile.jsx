@@ -10,12 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Avatar } from "@/components/ui/avatar";
 import { createIdentity } from "@/lib/identity";
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
+import SonarXLogo from "@/components/SonarXLogo";
+import { useTheme } from "@/src/theme/ThemeProvider";
+import { spacing, typography } from "@/src/theme/tokens";
 export default function ProfileScreen() {
     const router = useRouter();
     const { phoneNumber } = useLocalSearchParams();
-    const colorScheme = useColorScheme();
+    const { colors, isDark } = useTheme();
+    const buttonBackground = isDark ? colors.primary : colors.secondary;
+    const buttonTextColor = isDark ? colors.background : colors.textPrimary;
+    const buttonFont = typography.fontFamily.semiBold;
     const [displayName, setDisplayName] = useState("");
     const [avatarUri, setAvatarUri] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -72,52 +76,161 @@ export default function ProfileScreen() {
             setIsLoading(false);
         }
     };
-    return (<SafeAreaView className="flex-1 bg-background">
+    return (<SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
-        <ScrollView className="flex-1 px-6 py-8" contentContainerStyle={{ flexGrow: 1 }}>
-          <View className="items-center mb-8">
-            <Text className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-              Step 2 of 2
-            </Text>
-            <H1 className="text-center mt-2">Create Your Profile</H1>
-            <Muted className="text-center mt-2">
-              Choose a display name and optional profile photo
-            </Muted>
-          </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+          }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+        >
+          <View className="flex-1 justify-between pt-4">
+            <View className="space-y-8">
+              <View className="items-start">
+                <View className="flex-row items-center" style={{ gap: 6 }}>
+                  <SonarXLogo size={32}/>
+                  <Text style={{
+                    color: colors.textPrimary,
+                    fontFamily: typography.fontFamily.bold,
+                    fontSize: typography.fontSize.xxl,
+                    marginTop: -spacing.xs,
+                  }}>resonar</Text>
+                </View>
+                <Text className="text-xs my-2" style={{
+                  color: colors.textSecondary,
+                  fontFamily: typography.fontFamily.medium,
+                }}>
+                  Step 2 of 2
+                </Text>
+                <H1 style={{
+                  color: colors.textPrimary,
+                  fontFamily: typography.fontFamily.bold,
+                }}>Create Your Profile</H1>
+                <Muted className="mt-2" style={{
+                  color: colors.textSecondary,
+                  fontFamily: typography.fontFamily.regular,
+                  fontSize: typography.fontSize.sm,
+                  marginBottom: spacing.lg,
+                }}>
+                  Choose a display name and optional profile photo
+                </Muted>
+              </View>
 
-          <View className="items-center mb-8">
-            <View className="relative">
-              <Avatar uri={avatarUri} name={displayName || "?"} size="lg"/>
-              {avatarUri && (<Button variant="destructive" size="icon" onPress={() => setAvatarUri(null)} className="absolute -top-1 -right-1 w-6 h-6">
-                  <Text className="text-xs text-destructive-foreground">×</Text>
-                </Button>)}
+              <View className="items-center mb-8">
+                <View className="relative">
+                  <Avatar uri={avatarUri} name={displayName || "?"} size={180} color={colors}/>
+                  {avatarUri && (<Button variant="ghost" size="icon" onPress={() => setAvatarUri(null)} className="absolute -top-1 -right-1 w-6 h-6">
+                      <Text style={{
+                      color: colors.textPrimary,
+                      fontFamily: typography.fontFamily.semiBold,
+                    }}>×</Text>
+                    </Button>)}
+                </View>
+                <View className="flex-row mt-4" style={{ gap: spacing.sm, paddingVertical: spacing.sm }}>
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    size="md"
+                    onPress={handlePickImage}
+                    style={{ backgroundColor: colors.surface, borderColor: colors.border, height: 42 }}
+                  >
+                    <Ionicons name="folder-outline" size={16} color={colors.textPrimary}/>
+                    <Text style={{
+                      marginLeft: 8,
+                      color: colors.textPrimary,
+                      fontFamily: typography.fontFamily.semiBold,
+                    }}>Gallery</Text>
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    size="md"
+                    onPress={handleTakePhoto}
+                    style={{ backgroundColor: colors.surface, borderColor: colors.border, height: 42 }}
+                  >
+                    <Ionicons name="camera-outline" size={16} color={colors.textPrimary}/>
+                    <Text style={{
+                      marginLeft: 8,
+                      color: colors.textPrimary,
+                      fontFamily: typography.fontFamily.semiBold,
+                    }}>Camera</Text>
+                  </Button>
+                </View>
+              </View>
+
+              <View className="space-y-4">
+                <Text style={{
+                  color: colors.textSecondary,
+                  fontFamily: typography.fontFamily.semiBold,
+                  fontSize: typography.fontSize.sm,
+                  marginBottom: 8,
+                }}>
+                  Display Name
+                </Text>
+                <Input
+                  label=""
+                  containerClassName="w-full"
+                  placeholder="Enter your name"
+                  value={displayName}
+                  onChangeText={(value) => {
+                    setDisplayName(value);
+                    setError(null);
+                  }}
+                  maxLength={50}
+                  error={error || undefined}
+                  style={{
+                    color: colors.textPrimary,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    marginBottom: 10,
+                    fontFamily: typography.fontFamily.regular,
+                    fontSize: typography.fontSize.md,
+                  }}
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <Muted className="text-xs" style={{
+                  color: colors.textSecondary,
+                  fontFamily: typography.fontFamily.regular,
+                }}>
+                  This name will be visible to your contacts. You can change it
+                  later in settings.
+                </Muted>
+              </View>
             </View>
-            <View className="flex-row mt-4 space-x-2">
-              <Button variant="outline" size="sm" onPress={handlePickImage}>
-                <Ionicons name="folder-outline" size={16} color={Colors[colorScheme].text}/>
-                <Text className="ml-2">Gallery</Text>
+
+            <View>
+              <Button
+                size="lg"
+                variant="ghost"
+                style={{ backgroundColor: buttonBackground }}
+                onPress={handleCreateIdentity}
+                isLoading={isLoading}
+                disabled={!displayName.trim()}
+                className="w-full"
+              >
+                <View className="flex-row justify-between items-center w-full">
+                  <Text style={{
+                    color: buttonTextColor,
+                    fontFamily: buttonFont,
+                    fontSize: typography.fontSize.md,
+                  }}>Create Identity</Text>
+                  <Ionicons name="arrow-forward-outline" size={18} color={buttonTextColor}/>
+                </View>
               </Button>
-              <Button variant="outline" size="sm" onPress={handleTakePhoto}>
-                <Ionicons name="camera-outline" size={16} color={Colors[colorScheme].text}/>
-                <Text className="ml-2">Camera</Text>
-              </Button>
+              <View style={{ height: 13 }} />
+              <Muted className="text-center text-xs px-4" style={{
+                color: colors.textSecondary,
+                fontFamily: typography.fontFamily.regular,
+                marginBottom: 5,
+              }}>
+                Your profile is created and stored on your device only.
+              </Muted>
             </View>
           </View>
-
-          <View className="space-y-4">
-            <Input label="Display Name" placeholder="Enter your name" value={displayName} onChangeText={setDisplayName} maxLength={50} error={error || undefined}/>
-
-            <Muted className="text-xs">
-              This name will be visible to your contacts. You can change it
-              later in settings.
-            </Muted>
-          </View>
-
-          <View className="flex-1"/>
-
-          <Button size="lg" onPress={handleCreateIdentity} isLoading={isLoading} disabled={!displayName.trim()} className="w-full">
-            Create Identity
-          </Button>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>);

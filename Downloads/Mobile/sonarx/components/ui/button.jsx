@@ -9,12 +9,12 @@ import {
   BUTTON_VARIANTS,
   getButtonSpinnerColor,
 } from "./styleTokens";
-const Button = React.forwardRef(({ className, variant = "default", size = "default", isLoading = false, disabled, children, textClassName, ...props }, ref) => {
+const Button = React.forwardRef(({ className, variant = "default", size = "default", isLoading = false, disabled, children, textClassName, style, ...props }, ref) => {
     const isDisabled = disabled || isLoading;
     const colorScheme = useColorScheme();
     const resolvedVariant = BUTTON_VARIANTS[variant] ? variant : "default";
     const resolvedSize = BUTTON_SIZES[size] ? size : "default";
-    return (<TouchableOpacity ref={ref} className={cn("flex-row items-center justify-center rounded-xl", BUTTON_VARIANTS[resolvedVariant], BUTTON_SIZES[resolvedSize], className)} style={{ opacity: isDisabled ? 0.6 : 1 }} disabled={isDisabled} {...props}>
+    return (<TouchableOpacity ref={ref} className={cn("flex-row items-center justify-center rounded-xl", BUTTON_VARIANTS[resolvedVariant], BUTTON_SIZES[resolvedSize], className)} style={[{ opacity: isDisabled ? 0.55 : 1 }, style]} disabled={isDisabled} {...props}>
         {isLoading ? (<ActivityIndicator size="small" color={getButtonSpinnerColor({
                 variant: resolvedVariant,
                 colorScheme,
