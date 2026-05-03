@@ -49,7 +49,7 @@ function Section({ title, subtitle, children, style, }) {
             color: colors.textPrimary,
             fontFamily: typography.fontFamily.semiBold,
         },
-    ]), [colors.textSecondary]);
+    ]), [colors.textPrimary]);
     const subtitleStyle = useMemo(() => ([
         styles.sectionSubtitle,
         {
@@ -118,7 +118,7 @@ function ThemePicker({ currentMode, onSelect, }) {
               Appearance
             </Text>
             <Text style={modalSubtitleStyle}>
-              Choose how sonarx looks to you
+              Choose how sonarance looks to you
             </Text>
 
             <View style={styles.pillRow}>
@@ -230,7 +230,7 @@ function SettingsScreenInner() {
             fontFamily: typography.fontFamily.semiBold,
             marginBottom: spacing.md,
         },
-    ]), [colors.textSecondary]);
+    ]), [colors.textPrimary]);
     const accountProfileName = identity?.displayName?.trim() || 'Your profile';
     const accountPhoneNumber = identity?.phoneNumber || 'No phone linked';
     const accountBubbleStyle = useMemo(() => ([
@@ -327,7 +327,7 @@ function SettingsScreenInner() {
           </Section>
 
           <Section title="Privacy & Security" subtitle="Control how your account and messages stay secure">
-            <ListItem title="Encryption" subtitle="All messages are end-to-end encrypted" trailing={<Ionicons name="lock-closed-outline" size={18} color={colors.accent}/>} dividerInset={0}/>
+            <ListItem title="Encryption" subtitle="All messages are end-to-end encrypted" trailing={<Ionicons name="lock-closed-outline" size={18} color={colors.textSecondary}/>} dividerInset={0}/>
             <ListItem title="Blocked contacts" subtitle="Manage people you've blocked" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} dividerInset={0}/>
             <ListItem title="Data deletion" subtitle="Request removal of your stored data" trailing={<Ionicons name="chevron-forward" size={18} color={colors.textDisabled}/>} divider={false} dividerInset={0}/>
           </Section>

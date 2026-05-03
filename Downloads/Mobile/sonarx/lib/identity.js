@@ -5,8 +5,8 @@ import { useIdentityStore } from "@/stores/identity.store";
 import { eq } from "drizzle-orm";
 import { generateBoxKeypair, generateSignKeypair } from "./crypto/identity";
 import { encodeBase64 } from "tweetnacl-util";
-const SECRET_KEY_STORE_KEY = "sonarx-secret-keys";
-const SIGNING_KEY_STORE_KEY = "sonarx-signing-keys";
+const SECRET_KEY_STORE_KEY = "sonarance-secret-keys";
+const SIGNING_KEY_STORE_KEY = "sonarance-signing-keys";
 const LOCAL_USER_ID = "local_user";
 const STORED_KEY_PLACEHOLDER = "[STORED_IN_SECURE_STORAGE]";
 const getLocalIdentityQuery = () => {

@@ -6,7 +6,7 @@ import { HEADER_HEIGHT, HEADER_HEIGHT_LARGE } from '@/src/constants/layout';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { spacing, typography } from '@/src/theme/tokens';
 import AnimatedPressable from './Pressable';
-export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, centerAccessory, rightActions, rightAccessory, style, titleAlign = 'center', titlePaddingHorizontal = 0, }) {
+export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAccessory, centerAccessory, rightActions, rightAccessory, style, titleAlign = 'center', titlePaddingHorizontal = 0, centerPillCentered = false, }) {
     const { colors } = useTheme();
     const { isTablet, isDesktop } = useResponsive();
     const height = isTablet || isDesktop ? HEADER_HEIGHT_LARGE : HEADER_HEIGHT;
@@ -25,18 +25,26 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
           </AnimatedPressable>) : null;
     return (<View style={[
             styles.container,
+            centerPillCentered ? styles.centerPillContainer : null,
             {
                 height,
                 backgroundColor: colors.headerBackground,
             },
             style,
         ]}>
-      <View style={styles.leftSection}>
+      <View style={[
+            styles.leftSection,
+            centerPillCentered ? [
+                styles.centerPillSideSection,
+                styles.centerPillLeftSection,
+            ] : null,
+        ]}>
         {hasLeftAction && renderedLeft}
       </View>
 
       <View style={[
             styles.centerSection,
+            centerPillCentered ? styles.centerPillCenterSection : null,
             { alignItems: computedTitleAlign },
         ]}>
         {hasCenterAccessory ? (centerAccessory) : <View style={[styles.titleBlock, titlePadding]}>
@@ -64,7 +72,13 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
           </View>}
       </View>
 
-      <View style={styles.rightSection}>
+      <View style={[
+            styles.rightSection,
+            centerPillCentered ? [
+                styles.centerPillSideSection,
+                styles.centerPillRightSection,
+            ] : null,
+        ]}>
         {rightButtons.map((action) => (<AnimatedPressable key={action.accessibilityLabel} onPress={action.onPress} accessibilityLabel={action.accessibilityLabel} style={styles.iconButton}>
             <Ionicons name={action.icon} size={22} color={iconColor}/>
           </AnimatedPressable>))}
@@ -80,6 +94,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
     },
+    centerPillContainer: {
+        position: 'relative',
+        justifyContent: 'flex-start',
+    },
     leftSection: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -89,12 +107,30 @@ const styles = StyleSheet.create({
         minHeight: 45,
         justifyContent: 'center',
     },
+    centerPillSideSection: {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    centerPillLeftSection: {
+        left: spacing.sm,
+    },
+    centerPillRightSection: {
+        right: spacing.sm,
+    },
     centerSection: {
         flex: 1,
         alignItems: 'center',
         minWidth: 0,
         minHeight: 45,
         justifyContent: 'center',
+    },
+    centerPillCenterSection: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
     },
     titleBlock: {
         minWidth: 0,

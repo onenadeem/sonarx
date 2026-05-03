@@ -20,6 +20,10 @@ export function formatMessageTime(date) {
         return format(d, 'MMM d');
     return format(d, 'MMM d, yyyy');
 }
+export function formatChatBubbleTimestamp(date) {
+    const d = toDate(date);
+    return format(d, 'MMM d \u2022 HH:mm');
+}
 export function formatDateSeparator(date) {
     const d = toDate(date);
     if (isToday(d))

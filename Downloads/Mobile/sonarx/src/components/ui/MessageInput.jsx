@@ -69,12 +69,11 @@ export default function MessageInput({ value, onChangeText, onSend, onAttachment
         <Pressable onPress={handleSendPress} disabled={!canSend} style={[
                 styles.actionPill,
                 {
-                    backgroundColor: canSend ? colors.primary : colors.surface,
-                    borderColor: canSend ? colors.primary : colors.border,
+                    backgroundColor: colors.primary,
                     opacity: canSend ? 1 : 0.55,
                 },
             ]} accessibilityLabel="Send message">
-          <Ionicons name="arrow-up" size={18} color={canSend ? colors.primaryForeground : colors.textSecondary}/>
+          <Ionicons name="arrow-up" size={18} color={colors.primaryForeground}/>
         </Pressable>
       </View>
     </View>);

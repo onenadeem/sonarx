@@ -8,7 +8,7 @@ import { db } from "@/db/client";
 import { messages } from "@/db/schema";
 import { getOrCreateConversation, insertMessage } from "@/db/queries";
 import { eq } from "drizzle-orm";
-const SECRET_KEY_STORE_KEY = "sonarx-secret-keys";
+const SECRET_KEY_STORE_KEY = "sonarance-secret-keys";
 /**
  * Subscribe to the GUN inbox for the current user.
  * Decrypts incoming messages and saves them to the local SQLite DB.

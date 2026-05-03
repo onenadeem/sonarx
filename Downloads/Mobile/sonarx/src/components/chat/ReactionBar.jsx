@@ -1,83 +1,125 @@
-import { useEffect } from 'react'
-import { Modal, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View, } from 'react-native';
-import Animated, { useSharedValue, withSpring, useAnimatedStyle, } from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
+import { Modal, Pressable, StyleSheet, TouchableWithoutFeedback, View, Animated, Easing, Dimensions } from 'react-native';
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useTheme } from '@/src/theme/ThemeProvider';
-import { borderRadius, shadows, spacing, typography } from '@/src/theme/tokens';
-const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
-const DEFAULT_POSITION = { x: '10%', y: '40%' };
-const getPositionValue = (position, axis, fallback) => position?.[axis] ?? fallback;
-function ReactionButton({ emoji, onPress }) {
-    return <Pressable onPress={onPress} style={({ pressed }) => [
-        styles.emojiBtn,
-        pressed && styles.emojiPressed,
-    ]}>
-        <Text style={styles.emoji}>{emoji}</Text>
-      </Pressable>;
-}
-export default function ReactionBar({ visible, onReact, onDismiss, position, }) {
+import { borderRadius, shadows, spacing } from '@/src/theme/tokens';
+
+const PILL_WIDTH_ESTIMATE = 140;
+const PILL_HEIGHT_ESTIMATE = 50;
+const ABOVE_OFFSET = 16;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+export default function ReactionBar({
+    visible,
+    messageId,
+    isLiked,
+    isDisliked,
+    onLike,
+    onDislike,
+    onDismiss,
+    position,
+}) {
     const { colors } = useTheme();
-    const scale = useSharedValue(0);
+    const opacityAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(0.95)).current;
+
     useEffect(() => {
-        scale.value = withSpring(visible ? 1 : 0, { damping: 14, stiffness: 200 });
+        if (visible) {
+            Animated.parallel([
+                Animated.timing(opacityAnim, {
+                    toValue: 1,
+                    duration: 150,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                    toValue: 1,
+                    duration: 150,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(opacityAnim, {
+                    toValue: 0,
+                    duration: 100,
+                    easing: Easing.in(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                    toValue: 0.95,
+                    duration: 100,
+                    easing: Easing.in(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
     }, [visible]);
-    const animStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
-    if (!visible)
-        return null;
-    return (<Modal transparent animationType="none" visible={visible} onRequestClose={onDismiss}>
-      <TouchableWithoutFeedback onPress={onDismiss}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <Animated.View style={[
-            styles.pill,
-            {
-                backgroundColor: colors.surfaceElevated,
-                borderColor: colors.border,
-                top: getPositionValue(position, 'y', DEFAULT_POSITION.y),
-                left: getPositionValue(position, 'x', DEFAULT_POSITION.x),
-            },
-            shadows.lg,
-            animStyle,
-        ]}>
-            {EMOJIS.map((emoji) => (
-              <ReactionButton
-                key={emoji}
-                emoji={emoji}
-                onPress={() => {
-                  onReact(emoji);
-                  onDismiss();
-                }}
-              />
-            ))}
-            </Animated.View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>);
+
+    if (!visible) return null;
+
+    const touchX = position?.x ?? SCREEN_WIDTH / 2;
+    const touchY = position?.y ?? 200;
+    let left = touchX - PILL_WIDTH_ESTIMATE / 2;
+    let top = touchY - PILL_HEIGHT_ESTIMATE - ABOVE_OFFSET;
+
+    // Clamp to screen bounds
+    if (left < spacing.md) left = spacing.md;
+    if (left + PILL_WIDTH_ESTIMATE > SCREEN_WIDTH - spacing.md) {
+        left = SCREEN_WIDTH - spacing.md - PILL_WIDTH_ESTIMATE;
+    }
+    if (top < spacing.xl) top = touchY + ABOVE_OFFSET; // show below if not enough room above
+
+    return (
+        <Modal transparent animationType="none" visible={visible} onRequestClose={onDismiss}>
+            <TouchableWithoutFeedback onPress={onDismiss}>
+                <View style={styles.overlay}>
+                    <TouchableWithoutFeedback>
+                        <Animated.View style={[
+                            styles.pill,
+                            {
+                                backgroundColor: colors.surface,
+                                borderColor: colors.border,
+                                top,
+                                left,
+                                opacity: opacityAnim,
+                                transform: [{ scale: scaleAnim }],
+                            },
+                            shadows.md,
+                        ]}>
+                            <Pressable onPress={() => { onLike?.(messageId); onDismiss(); }} style={styles.actionBtn}>
+                                <Ionicons name={isLiked ? "thumbs-up" : "thumbs-up-outline"} size={20} color={isLiked ? colors.accent : colors.textSecondary} />
+                            </Pressable>
+                            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                            <Pressable onPress={() => { onDislike?.(messageId); onDismiss(); }} style={styles.actionBtn}>
+                                <Ionicons name={isDisliked ? "thumbs-down" : "thumbs-down-outline"} size={20} color={isDisliked ? colors.danger : colors.textSecondary} />
+                            </Pressable>
+                        </Animated.View>
+                    </TouchableWithoutFeedback>
+                </View>
+            </TouchableWithoutFeedback>
+        </Modal>
+    );
 }
+
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-    },
+    overlay: { flex: 1 },
     pill: {
         position: 'absolute',
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: borderRadius.pill,
-        borderWidth: StyleSheet.hairlineWidth,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        gap: spacing.xxs,
+        borderWidth: 1,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        gap: spacing.sm,
     },
-    emojiBtn: {
-        padding: spacing.xxs,
+    actionBtn: {
+        padding: spacing.xs,
     },
-    emojiPressed: {
-        transform: [{ scale: 1.3 }],
-    },
-    emoji: {
-        fontSize: typography.fontSize.xl,
-        lineHeight: 32,
+    divider: {
+        width: StyleSheet.hairlineWidth + 1,
+        height: 20,
     },
 });

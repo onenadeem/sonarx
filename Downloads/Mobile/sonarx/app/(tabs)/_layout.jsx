@@ -18,7 +18,7 @@ export default function TabLayout() {
             tabBarInactiveTintColor: colors.tabBarInactive,
             tabBarShowLabel: false,
             tabBarStyle: buildTabBarStyle(colors, insets.bottom),
-            tabBarIconStyle: { marginBottom: 3 },
+            tabBarIconStyle: { marginTop: -3 },
             headerShown: false,
             sceneStyle: { backgroundColor: colors.background },
         }} initialRouteName="chats">

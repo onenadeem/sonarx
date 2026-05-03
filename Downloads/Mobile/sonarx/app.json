@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "sonarx",
-    "slug": "sonarx",
+    "name": "sonarance",
+    "slug": "sonarance",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sonarx",
+    "scheme": "sonarance",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -60,7 +60,7 @@
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO"
       ],
-      "package": "com.anonymous.sonarx"
+      "package": "com.anonymous.sonarance"
     },
     "web": {
       "bundler": "metro",
@@ -72,8 +72,8 @@
       [
         "@config-plugins/react-native-webrtc",
         {
-          "cameraPermission": "SonarX needs camera for video calls",
-          "microphonePermission": "SonarX needs microphone for calls"
+          "cameraPermission": "sonarance needs camera for video calls",
+          "microphonePermission": "sonarance needs microphone for calls"
         }
       ],
       [
@@ -85,7 +85,7 @@
       [
         "expo-contacts",
         {
-          "contactsPermission": "To find your friends on SonarX"
+          "contactsPermission": "To find your friends on sonarance"
         }
       ],
       [

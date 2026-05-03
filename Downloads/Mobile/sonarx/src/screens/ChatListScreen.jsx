@@ -196,7 +196,7 @@ function ChatListScreenInner() {
             screenStyle,
         ]}>
       <View style={contentShellStyle}>
-        <Header title="sonarx" leftAccessory={<SonarXLogo size={33}/>} rightActions={[
+        <Header title="sonarance" leftAccessory={<SonarXLogo size={33}/>} rightActions={[
             {
                 icon: showSearch ? 'close-outline' : 'search-outline',
                 onPress: () => {

@@ -68,6 +68,14 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         borderTopWidth: StyleSheet.hairlineWidth,
+        elevation: 0,
+        shadowColor: "transparent",
+        shadowOpacity: 0,
+        shadowOffset: {
+            width: 0,
+            height: 0,
+        },
+        shadowRadius: 0,
     },
     tab: {
         flex: 1,
