@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, }
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors } from './tokens';
-export const THEME_STORAGE_KEY = 'sonarance-theme-mode';
+export const THEME_STORAGE_KEY = 'resonar-theme-mode';
 const ThemeContext = createContext(undefined);
 export function ThemeProvider({ children, initialMode, }) {
     const systemScheme = useColorScheme();

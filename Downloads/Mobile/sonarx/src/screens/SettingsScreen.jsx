@@ -118,7 +118,7 @@ function ThemePicker({ currentMode, onSelect, }) {
               Appearance
             </Text>
             <Text style={modalSubtitleStyle}>
-              Choose how sonarance looks to you
+              Choose how resonar looks to you
             </Text>
 
             <View style={styles.pillRow}>

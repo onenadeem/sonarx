@@ -1,5 +1,5 @@
 /**
- * Simple WebSocket client for the sonarance message relay.
+ * Simple WebSocket client for the resonar message relay.
  *
  * The relay server (gun-server.js, port 8766) implements a minimal pub/sub
  * protocol so messages reliably reach the recipient even when GUN's complex

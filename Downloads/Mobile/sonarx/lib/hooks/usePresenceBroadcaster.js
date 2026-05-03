@@ -3,7 +3,7 @@ import { useIdentityStore } from "@/stores/identity.store";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect } from "react";
 import { decodeBase64 } from "tweetnacl-util";
-const SIGNING_KEY_STORE_KEY = "sonarance-signing-keys";
+const SIGNING_KEY_STORE_KEY = "resonar-signing-keys";
 const ANNOUNCE_INTERVAL_MS = 30 * 1000;
 export function usePresenceBroadcaster() {
     const identity = useIdentityStore((state) => state.identity);

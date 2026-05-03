@@ -1,5 +1,5 @@
 /**
- * Local development relay server for sonarance.
+ * Local development relay server for resonar.
  *
  * Run this on the SAME machine as your Metro bundler:
  *   npm run relay

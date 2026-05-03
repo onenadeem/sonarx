@@ -46,7 +46,7 @@ function buildPeers() {
     }
     return peers;
 }
-export const SL_NAMESPACE = "sonarance/v1";
+export const SL_NAMESPACE = "resonar/v1";
 let gunInstance = null;
 export function getGun() {
     if (!gunInstance) {

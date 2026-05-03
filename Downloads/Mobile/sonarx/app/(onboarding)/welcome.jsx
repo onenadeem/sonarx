@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
         </View>
 
         {/* Title */}
-        <H1 className="text-center mb-2">Welcome to sonarance</H1>
+        <H1 className="text-center mb-2">Welcome to resonar</H1>
         <Text className="text-muted-foreground text-sm text-center mt-1">
           Secure peer-to-peer communication
         </Text>

@@ -8,7 +8,7 @@ import { useIdentityStore } from "@/stores/identity.store";
 import * as SecureStore from "expo-secure-store";
 import { decodeBase64 } from "tweetnacl-util";
 import { sendGunMessage } from "@/lib/p2p/messaging";
-const SECRET_KEY_STORE_KEY = "sonarance-secret-keys";
+const SECRET_KEY_STORE_KEY = "resonar-secret-keys";
 export function useMessages(conversationId) {
     const { data, error } = useLiveQuery(db.query.messages.findMany({
         where: eq(messages.conversationId, conversationId ?? "__pending_conversation__"),

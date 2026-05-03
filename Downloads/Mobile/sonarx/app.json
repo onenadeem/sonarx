@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "sonarance",
-    "slug": "sonarance",
+    "name": "resonar",
+    "slug": "resonar",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sonarance",
+    "scheme": "resonar",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -60,7 +60,7 @@
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO"
       ],
-      "package": "com.anonymous.sonarance"
+      "package": "com.anonymous.resonar"
     },
     "web": {
       "bundler": "metro",
@@ -72,8 +72,8 @@
       [
         "@config-plugins/react-native-webrtc",
         {
-          "cameraPermission": "sonarance needs camera for video calls",
-          "microphonePermission": "sonarance needs microphone for calls"
+          "cameraPermission": "resonar needs camera for video calls",
+          "microphonePermission": "resonar needs microphone for calls"
         }
       ],
       [
@@ -85,7 +85,7 @@
       [
         "expo-contacts",
         {
-          "contactsPermission": "To find your friends on sonarance"
+          "contactsPermission": "To find your friends on resonar"
         }
       ],
       [

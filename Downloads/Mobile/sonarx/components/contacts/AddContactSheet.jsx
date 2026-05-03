@@ -50,7 +50,7 @@ function AddContactSheet({ isOpen, onClose, onAddContact, }) {
                 setFoundPeer(presence);
             }
             else {
-                setError("This person isn't on sonarance yet. Invite them?");
+                setError("This person isn't on resonar yet. Invite them?");
             }
         }
         catch (err) {
@@ -92,7 +92,7 @@ function AddContactSheet({ isOpen, onClose, onAddContact, }) {
           <H1 className="text-xl mb-2">Add Contact</H1>
           <Muted className="mb-4">
             {mode === "phone"
-            ? "Enter a phone number to find someone on sonarance"
+            ? "Enter a phone number to find someone on resonar"
             : "Share or scan a QR code to add contacts directly"}
           </Muted>
 

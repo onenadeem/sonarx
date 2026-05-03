@@ -58,7 +58,7 @@ import {
   useTypingIndicator,
 } from "@/src/hooks/useTypingIndicator";
 // ─── Constants ────────────────────────────────────────────────────────────────
-const SECRET_KEY_STORE_KEY = "sonarance-secret-keys";
+const SECRET_KEY_STORE_KEY = "resonar-secret-keys";
 const INPUT_BAR_EXTRA_BOTTOM_PADDING = 10;
 const EDGE_FADE_HEIGHT = 36;
 const ANDROID_KEYBOARD_CLEARANCE = 28;
