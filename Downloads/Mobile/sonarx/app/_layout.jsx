@@ -52,12 +52,8 @@ if (!("randomUUID" in crypto)) {
     return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
   };
 }
-// ─── Notification handler (module level) ─────────────────────────────────────
-// expo-notifications remote push is removed from Expo Go SDK 53+.
-// Guard with executionEnvironment before require() to avoid the native crash.
 const _isExpoGo = Constants.executionEnvironment === "storeClient";
 if (!_isExpoGo) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Notifications = require("expo-notifications");
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -266,11 +262,9 @@ function RootLayoutThemedNav({ isReady }) {
       router.replace(ROUTES.TABS_CHATS);
     }
   }, [isReady, isOnboarded, inOnboarding]);
-  // Register for push notifications and set up deep-link handler
   useEffect(() => {
     if (_isExpoGo) return;
     let mounted = true;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Notifications = require("expo-notifications");
     Notifications.requestPermissionsAsync().catch(console.error);
     const sub = Notifications.addNotificationResponseReceivedListener(
