@@ -29,6 +29,8 @@ export default function Header({ title, subtitle, leftIcon, onLeftPress, leftAcc
             {
                 height,
                 backgroundColor: colors.headerBackground,
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: `${colors.border}80`,
             },
             style,
         ]}>

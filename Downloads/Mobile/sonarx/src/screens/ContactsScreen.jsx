@@ -11,6 +11,7 @@ import Avatar from '@/src/components/ui/Avatar';
 import StatePlaceholder from '@/src/components/layout/StatePlaceholder';
 import { useContacts } from '@/src/hooks/useContacts';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { useScrollToTop } from '@/src/hooks/useScrollToTop';
 import { usePresenceStore } from '@/src/store/presenceStore';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { spacing, typography } from '@/src/theme/tokens';
@@ -103,6 +104,7 @@ function ContactsScreenInner() {
     const { isDesktop, isTablet } = useResponsive();
     const [searchQuery, setSearchQuery] = useState('');
     const [isNavigating, setIsNavigating] = useState(false);
+    const listRef = useScrollToTop();
     const { contacts } = useContacts();
     const filteredContacts = useMemo(() => {
         if (!searchQuery.trim()) {
@@ -163,7 +165,7 @@ function ContactsScreenInner() {
 
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} onClear={() => setSearchQuery('')}/>
 
-        {sections.length === 0 ? (<EmptyState />) : (<SectionList sections={sections} keyExtractor={(item) => item.id} stickySectionHeadersEnabled renderSectionHeader={({ section }) => (<View style={[
+        {sections.length === 0 ? (<EmptyState />) : (<SectionList ref={listRef} sections={sections} keyExtractor={(item) => item.id} stickySectionHeadersEnabled renderSectionHeader={({ section }) => (<View style={[
                     styles.sectionHeader,
                     {
                         backgroundColor: colors.surface,

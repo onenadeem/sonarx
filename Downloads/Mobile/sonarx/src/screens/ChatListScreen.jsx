@@ -14,6 +14,7 @@ import TextInput from '@/src/components/ui/TextInput';
 import Avatar from '@/src/components/ui/Avatar';
 import Badge from '@/src/components/ui/Badge';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { useScrollToTop } from '@/src/hooks/useScrollToTop';
 import { useMessagesStore } from '@/src/store/messagesStore';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { spacing, typography } from '@/src/theme/tokens';
@@ -123,6 +124,7 @@ function ChatListScreenInner() {
     const { isDesktop, isTablet } = useResponsive();
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
+    const listRef = useScrollToTop();
     const { data: liveConversations } = useLiveQuery(db.query.conversations.findMany({
         orderBy: desc(conversations.lastMessageAt),
         with: { peer: true },
@@ -211,7 +213,7 @@ function ChatListScreenInner() {
 
         {showSearch ? (<SearchBar value={searchQuery} onChangeText={setSearchQuery} onClear={() => setSearchQuery('')}/>) : null}
 
-        {filteredConversations.length === 0 ? (<EmptyState onPress={navigateToContacts}/>) : (<FlatList data={filteredConversations} keyExtractor={(item) => item.id} renderItem={renderItem} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={listContentStyle}/>)}
+        {filteredConversations.length === 0 ? (<EmptyState onPress={navigateToContacts}/>) : (<FlatList ref={listRef} data={filteredConversations} keyExtractor={(item) => item.id} renderItem={renderItem} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={listContentStyle}/>)}
       </View>
     </View>);
 }

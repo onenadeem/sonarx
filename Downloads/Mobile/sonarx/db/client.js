@@ -4,11 +4,44 @@ import * as schema from "./schema";
 
 const DATABASE_NAME = "resonar.db";
 
+let nativeDatabase;
+let drizzleDb;
+
 function createDatabase(name) {
-    const database = openDatabaseSync(name, {
+    nativeDatabase = openDatabaseSync(name, {
         enableChangeListener: true,
     });
-    return drizzle(database, { schema });
+    drizzleDb = drizzle(nativeDatabase, { schema });
+    return drizzleDb;
 }
 
-export const db = createDatabase(DATABASE_NAME);
+function ensureOpen() {
+    if (!nativeDatabase) {
+        createDatabase(DATABASE_NAME);
+        return;
+    }
+    try {
+        nativeDatabase.execSync('SELECT 1');
+    } catch {
+        createDatabase(DATABASE_NAME);
+    }
+}
+
+// Initialize on first load
+createDatabase(DATABASE_NAME);
+
+// Proxy ensures the connection is alive before any query
+export const db = new Proxy({}, {
+    get(_target, prop) {
+        ensureOpen();
+        return drizzleDb[prop];
+    },
+});
+
+export function closeDatabase() {
+    try {
+        nativeDatabase?.closeSync();
+    } catch {}
+    nativeDatabase = null;
+    drizzleDb = null;
+}
