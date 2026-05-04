@@ -71,7 +71,9 @@ export default function ProfileScreen() {
       });
       router.replace(ROUTES.TABS_CHATS);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create identity");
+      setError(
+        err instanceof Error ? err.message : "Failed to create identity",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -79,10 +81,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={styles.flex}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.flex}>
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.scrollContent}
@@ -94,13 +93,27 @@ export default function ProfileScreen() {
             <View style={styles.headerArea}>
               <View style={styles.logoRow}>
                 <SonarXLogo size={32} />
-                <Text style={[styles.appName, { color: colors.textPrimary }]}>resonar</Text>
+                <Text style={[styles.appName, { color: colors.textPrimary }]}>
+                  resonar
+                </Text>
               </View>
-              <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>Step 2 of 2</Text>
-              <H1 style={{ color: colors.textPrimary, fontFamily: typography.fontFamily.bold }}>
+              <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>
+                Step 2 of 2
+              </Text>
+              <H1
+                style={{
+                  color: colors.textPrimary,
+                  fontFamily: typography.fontFamily.bold,
+                }}
+              >
                 Create Your Profile
               </H1>
-              <Muted style={{ marginTop: spacing.xs, fontSize: typography.fontSize.sm }}>
+              <Muted
+                style={{
+                  marginTop: spacing.xs,
+                  fontSize: typography.fontSize.sm,
+                }}
+              >
                 Choose a display name and optional profile photo
               </Muted>
             </View>
@@ -108,36 +121,112 @@ export default function ProfileScreen() {
             <View style={styles.avatarSection}>
               <View style={styles.avatarWrapper}>
                 {avatarUri ? (
-                  <Avatar uri={avatarUri} name={displayName || "?"} size={180} />
+                  <Avatar
+                    uri={avatarUri}
+                    name={displayName || "?"}
+                    size={180}
+                  />
                 ) : (
-                  <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="person-outline" size={60} color={colors.textSecondary} />
+                  <View
+                    style={[
+                      styles.avatarPlaceholder,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="person-outline"
+                      size={60}
+                      color={colors.textSecondary}
+                    />
                   </View>
                 )}
                 {avatarUri && (
-                  <Button variant="ghost" size="sm" onPress={() => setAvatarUri(null)} style={styles.removeAvatarBtn}>
-                    <Text style={[styles.removeAvatarText, { color: colors.textPrimary }]}>X</Text>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => setAvatarUri(null)}
+                    style={styles.removeAvatarBtn}
+                  >
+                    <Text
+                      style={[
+                        styles.removeAvatarText,
+                        { color: colors.textPrimary },
+                      ]}
+                    >
+                      X
+                    </Text>
                   </Button>
                 )}
               </View>
               <View style={styles.imageButtons}>
-                <Button variant="secondary" size="md" onPress={handlePickImage} style={styles.imageBtn}>
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name="folder-outline" size={16} color={colors.textPrimary} style={{ marginRight: spacing.xs }} />
-                    <Text style={[styles.imageBtnText, { color: colors.textPrimary }]}>Gallery</Text>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onPress={handlePickImage}
+                  style={styles.imageBtn}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="folder-outline"
+                      size={16}
+                      color={colors.textPrimary}
+                      style={{ marginRight: spacing.xs }}
+                    />
+                    <Text
+                      style={[
+                        styles.imageBtnText,
+                        { color: colors.textPrimary },
+                      ]}
+                    >
+                      Gallery
+                    </Text>
                   </View>
                 </Button>
-                <Button variant="secondary" size="md" onPress={handleTakePhoto} style={styles.imageBtn}>
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name="camera-outline" size={16} color={colors.textPrimary} style={{ marginRight: spacing.xs }} />
-                    <Text style={[styles.imageBtnText, { color: colors.textPrimary }]}>Camera</Text>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onPress={handleTakePhoto}
+                  style={styles.imageBtn}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="camera-outline"
+                      size={16}
+                      color={colors.textPrimary}
+                      style={{ marginRight: spacing.xs }}
+                    />
+                    <Text
+                      style={[
+                        styles.imageBtnText,
+                        { color: colors.textPrimary },
+                      ]}
+                    >
+                      Camera
+                    </Text>
                   </View>
                 </Button>
               </View>
             </View>
 
             <View style={styles.fieldSection}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Display Name</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
+                Display Name
+              </Text>
               <TextInput
                 placeholder="Enter your name"
                 value={displayName}
@@ -159,7 +248,8 @@ export default function ProfileScreen() {
                 placeholderTextColor={colors.textSecondary}
               />
               <Muted style={styles.hint}>
-                This name will be visible to your contacts. You can change it later in settings.
+                This name will be visible to your contacts. You can change it
+                later in settings.
               </Muted>
             </View>
           </View>
@@ -178,7 +268,8 @@ export default function ProfileScreen() {
           disabled={!displayName.trim()}
         />
         <Text style={[styles.disclaimer, { color: colors.textSecondary }]}>
-          Your profile is created and stored on your device only. Number is used to connect you with others.
+          Your profile is created and stored on your device only. Number is used
+          to connect you with others.
         </Text>
       </View>
     </SafeAreaView>
@@ -213,8 +304,18 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
   },
-  removeAvatarBtn: { position: "absolute", top: -4, right: -4, minHeight: 0, paddingHorizontal: 4, paddingVertical: 2 },
-  removeAvatarText: { fontFamily: typography.fontFamily.semiBold, fontSize: typography.fontSize.md },
+  removeAvatarBtn: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minHeight: 0,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  removeAvatarText: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.md,
+  },
   imageButtons: {
     flexDirection: "row",
     marginTop: spacing.md,

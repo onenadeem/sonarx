@@ -81,8 +81,7 @@ function normalizePeerId(peerId) {
 function parseIncomingMessage(raw) {
   try {
     return JSON.parse(raw);
-  }
-  catch {
+  } catch {
     return null;
   }
 }
@@ -135,7 +134,6 @@ msgWss.on("connection", (ws) => {
 
       // Deliver any pending messages
       deliverPendingMessages(myId, ws);
-
     } else if (msg.type === "send" && msg.to && msg.id && msg.data) {
       const recipientId = normalizePeerId(msg.to);
       const subscriber = subscribers.get(recipientId);
@@ -174,5 +172,7 @@ msgWss.on("listening", () => {
   const ips = getLanIPs();
   console.log("\n✅  Message relay (WebSocket) running!");
   ips.forEach((ip) => console.log(`   ws://${ip}:${MSG_PORT}`));
-  console.log("\nKeep this running while testing. Both devices must be on the same WiFi.\n");
+  console.log(
+    "\nKeep this running while testing. Both devices must be on the same WiFi.\n",
+  );
 });

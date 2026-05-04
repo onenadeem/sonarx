@@ -1,2 +1,2 @@
-import ChatListScreen from '@/src/screens/ChatListScreen';
+import ChatListScreen from "@/src/screens/ChatListScreen";
 export default ChatListScreen;

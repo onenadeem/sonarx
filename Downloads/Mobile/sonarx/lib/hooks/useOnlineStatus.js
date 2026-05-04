@@ -9,13 +9,11 @@ const createEmptyStatus = () => ({
 const sortedPeerIdsKey = (peerIds) => peerIds.filter(Boolean).sort().join(",");
 
 function subscribePeers(peerIds, onStatus) {
-  const unsubscribers = peerIds
-    .filter(Boolean)
-    .map((peerId) =>
-      subscribeToPeerPresence(peerId, (status) => {
-        onStatus(peerId, status);
-      }),
-    );
+  const unsubscribers = peerIds.filter(Boolean).map((peerId) =>
+    subscribeToPeerPresence(peerId, (status) => {
+      onStatus(peerId, status);
+    }),
+  );
 
   return () => {
     unsubscribers.forEach((unsubscribe) => {

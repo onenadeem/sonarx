@@ -11,27 +11,30 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./attachments";
 export * from "./keys";
-export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+export const conversationsRelations = relations(
+  conversations,
+  ({ one, many }) => ({
     peer: one(peers, {
-        fields: [conversations.peerId],
-        references: [peers.id],
+      fields: [conversations.peerId],
+      references: [peers.id],
     }),
     messages: many(messages),
-}));
+  }),
+);
 export const messagesRelations = relations(messages, ({ one }) => ({
-    conversation: one(conversations, {
-        fields: [messages.conversationId],
-        references: [conversations.id],
-    }),
-    attachment: one(attachments, {
-        fields: [messages.attachmentId],
-        references: [attachments.id],
-    }),
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+  attachment: one(attachments, {
+    fields: [messages.attachmentId],
+    references: [attachments.id],
+  }),
 }));
 export const peersRelations = relations(peers, ({ one, many }) => ({
-    key: one(peerKeys, {
-        fields: [peers.id],
-        references: [peerKeys.peerId],
-    }),
-    conversations: many(conversations),
+  key: one(peerKeys, {
+    fields: [peers.id],
+    references: [peerKeys.peerId],
+  }),
+  conversations: many(conversations),
 }));

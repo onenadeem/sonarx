@@ -11,61 +11,76 @@ import { sendGunMessage } from "@/lib/p2p/messaging";
 import logger from "@/src/utils/logger";
 const SECRET_KEY_STORE_KEY = "resonar-secret-keys";
 export function useMessages(conversationId) {
-    const { data, error } = useLiveQuery(db.query.messages.findMany({
-        where: eq(messages.conversationId, conversationId ?? "__pending_conversation__"),
-        orderBy: desc(messages.sentAt),
-        limit: 50,
-    }), [conversationId]);
-    return {
-        messages: data || [],
-        isLoading: !data && !error,
-        error,
-    };
+  const { data, error } = useLiveQuery(
+    db.query.messages.findMany({
+      where: eq(
+        messages.conversationId,
+        conversationId ?? "__pending_conversation__",
+      ),
+      orderBy: desc(messages.sentAt),
+      limit: 50,
+    }),
+    [conversationId],
+  );
+  return {
+    messages: data || [],
+    isLoading: !data && !error,
+    error,
+  };
 }
 export function useSendMessage(peerId) {
-    const identity = useIdentityStore((state) => state.identity);
-    const sendMessage = useCallback(async (content, type = "text") => {
-        if (!identity)
-            return false;
-        try {
-            const msgId = crypto.randomUUID();
-            const conversation = await getOrCreateConversation(peerId);
-            // Save locally first (optimistic, status = "sending")
-            await insertMessage({
-                id: msgId,
-                conversationId: conversation.id,
-                peerId: identity.phoneNumber,
-                type,
-                body: content,
-                status: "sending",
-            });
-            // Fetch peer's public key and my secret key, then relay via GUN
-            const peer = await db.query.peers.findFirst({
-                where: (peers, { eq }) => eq(peers.id, peerId),
-            });
-            if (!peer) {
-                logger.warn("[useSendMessage] Peer not found in contacts:", peerId);
-                return false;
-            }
-            const secretKeyStr = await SecureStore.getItemAsync(SECRET_KEY_STORE_KEY);
-            if (!secretKeyStr) {
-                logger.warn("[useSendMessage] No secret key available");
-                return false;
-            }
-            const mySecretKey = decodeBase64(secretKeyStr);
-            const peerPublicKey = decodeBase64(peer.publicKey);
-            await sendGunMessage(peerId, msgId, content, peerPublicKey, mySecretKey, identity.phoneNumber);
-            // Mark local message as sent
-            await db
-                .update(messages)
-                .set({ status: "sent" })
-                .where(eq(messages.id, msgId));
-            return true;
+  const identity = useIdentityStore((state) => state.identity);
+  const sendMessage = useCallback(
+    async (content, type = "text") => {
+      if (!identity) return false;
+      try {
+        const msgId = crypto.randomUUID();
+        const conversation = await getOrCreateConversation(peerId);
+        // Save locally first (optimistic, status = "sending")
+        await insertMessage({
+          id: msgId,
+          conversationId: conversation.id,
+          peerId: identity.phoneNumber,
+          type,
+          body: content,
+          status: "sending",
+        });
+        // Fetch peer's public key and my secret key, then relay via GUN
+        const peer = await db.query.peers.findFirst({
+          where: (peers, { eq }) => eq(peers.id, peerId),
+        });
+        if (!peer) {
+          logger.warn("[useSendMessage] Peer not found in contacts:", peerId);
+          return false;
         }
-        catch (error) {
-            console.error("Failed to send message:", error);
-            return false;
+        const secretKeyStr =
+          await SecureStore.getItemAsync(SECRET_KEY_STORE_KEY);
+        if (!secretKeyStr) {
+          logger.warn("[useSendMessage] No secret key available");
+          return false;
         }
-    }, [peerId, identity]);
-    return { sendMessage };
+        const mySecretKey = decodeBase64(secretKeyStr);
+        const peerPublicKey = decodeBase64(peer.publicKey);
+        await sendGunMessage(
+          peerId,
+          msgId,
+          content,
+          peerPublicKey,
+          mySecretKey,
+          identity.phoneNumber,
+        );
+        // Mark local message as sent
+        await db
+          .update(messages)
+          .set({ status: "sent" })
+          .where(eq(messages.id, msgId));
+        return true;
+      } catch (error) {
+        console.error("Failed to send message:", error);
+        return false;
+      }
+    },
+    [peerId, identity],
+  );
+  return { sendMessage };
 }

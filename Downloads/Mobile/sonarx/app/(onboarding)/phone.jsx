@@ -46,8 +46,12 @@ export default function PhoneScreen() {
         }
         const simNumber = await readSimPhoneNumber();
         if (simNumber) {
-          const normalized = normalizePhoneNumber(simNumber, resolvedCountryCode);
-          const finalNormalized = normalized ?? normalizePhoneNumber(simNumber, countryCode);
+          const normalized = normalizePhoneNumber(
+            simNumber,
+            resolvedCountryCode,
+          );
+          const finalNormalized =
+            normalized ?? normalizePhoneNumber(simNumber, countryCode);
           if (finalNormalized) {
             setDetectedNumber(finalNormalized);
             setPhoneNumber(formatPhoneDisplay(finalNormalized));
@@ -96,10 +100,7 @@ export default function PhoneScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={styles.flex}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.flex}>
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.scrollContent}
@@ -111,22 +112,50 @@ export default function PhoneScreen() {
             <View style={styles.headerArea}>
               <View style={styles.logoRow}>
                 <SonarXLogo size={32} />
-                <Text style={[styles.appName, { color: colors.textPrimary }]}>resonar</Text>
+                <Text style={[styles.appName, { color: colors.textPrimary }]}>
+                  resonar
+                </Text>
               </View>
-              <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>Step 1 of 2</Text>
-              <H1 style={{ color: colors.textPrimary, fontFamily: typography.fontFamily.bold }}>
+              <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>
+                Step 1 of 2
+              </Text>
+              <H1
+                style={{
+                  color: colors.textPrimary,
+                  fontFamily: typography.fontFamily.bold,
+                }}
+              >
                 Your Phone Number
               </H1>
-              <Muted style={{ marginTop: spacing.xs, fontSize: typography.fontSize.sm }}>
+              <Muted
+                style={{
+                  marginTop: spacing.xs,
+                  fontSize: typography.fontSize.sm,
+                }}
+              >
                 This becomes your permanent ID. No one else can use it.
               </Muted>
             </View>
 
             <View style={styles.fieldSection}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Phone Number</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
+                Phone Number
+              </Text>
               <View style={styles.phoneRow}>
-                <View style={[styles.codePill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  <Text style={[styles.codeText, { color: colors.textPrimary }]}>{callingCode}</Text>
+                <View
+                  style={[
+                    styles.codePill,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.codeText, { color: colors.textPrimary }]}
+                  >
+                    {callingCode}
+                  </Text>
                 </View>
                 <View style={styles.flex}>
                   <TextInput
@@ -155,30 +184,80 @@ export default function PhoneScreen() {
             </View>
 
             {detectedNumber && (
-              <View style={[styles.simCard, { backgroundColor: colors.successMuted, borderColor: colors.success }]}>
+              <View
+                style={[
+                  styles.simCard,
+                  {
+                    backgroundColor: colors.successMuted,
+                    borderColor: colors.success,
+                  },
+                ]}
+              >
                 <View style={styles.simRow}>
-                  <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} style={{ marginRight: spacing.sm, marginTop: 2 }} />
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={16}
+                    color={colors.success}
+                    style={{ marginRight: spacing.sm, marginTop: 2 }}
+                  />
                   <View style={styles.flex}>
-                    <Text style={{ color: colors.textPrimary, fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.sm }}>
+                    <Text
+                      style={{
+                        color: colors.textPrimary,
+                        fontFamily: typography.fontFamily.regular,
+                        fontSize: typography.fontSize.sm,
+                      }}
+                    >
                       Detected from your SIM:
                     </Text>
-                    <Text style={{ color: colors.textPrimary, fontFamily: typography.fontFamily.semiBold, fontSize: typography.fontSize.sm }}>
+                    <Text
+                      style={{
+                        color: colors.textPrimary,
+                        fontFamily: typography.fontFamily.semiBold,
+                        fontSize: typography.fontSize.sm,
+                      }}
+                    >
                       {formatPhoneDisplay(detectedNumber)}
                     </Text>
                   </View>
                 </View>
-                <Button variant="ghost" size="sm" onPress={handleUseDetectedNumber}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onPress={handleUseDetectedNumber}
+                >
                   Use this number
                 </Button>
               </View>
             )}
 
             {Platform.OS === "ios" && !detectedNumber && (
-              <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.infoCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <View style={styles.simRow}>
-                  <Ionicons name="information-circle-outline" size={16} color={colors.textPrimary} style={{ marginRight: spacing.sm, marginTop: 2 }} />
-                  <Text style={{ color: colors.textPrimary, fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.sm, flex: 1 }}>
-                    We'll use the number you enter. Make sure it matches your SIM.
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={16}
+                    color={colors.textPrimary}
+                    style={{ marginRight: spacing.sm, marginTop: 2 }}
+                  />
+                  <Text
+                    style={{
+                      color: colors.textPrimary,
+                      fontFamily: typography.fontFamily.regular,
+                      fontSize: typography.fontSize.sm,
+                      flex: 1,
+                    }}
+                  >
+                    We'll use the number you enter. Make sure it matches your
+                    SIM.
                   </Text>
                 </View>
               </View>
@@ -199,7 +278,8 @@ export default function PhoneScreen() {
           isLoading={isPrefilling}
         />
         <Text style={[styles.disclaimer, { color: colors.textSecondary }]}>
-          By continuing, this number will be your unique identity and is used to connect you with others.
+          By continuing, this number will be your unique identity and is used to
+          connect you with others.
         </Text>
       </View>
     </SafeAreaView>

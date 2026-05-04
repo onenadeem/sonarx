@@ -301,7 +301,13 @@ function ContextMenu({ state, onCopy, onReply, onDelete, onDismiss }) {
                   )}
                 </View>
               ))}
-              <View style={[styles.ctxSheetDivider, dividerStyle, { marginVertical: spacing.sm }]} />
+              <View
+                style={[
+                  styles.ctxSheetDivider,
+                  dividerStyle,
+                  { marginVertical: spacing.sm },
+                ]}
+              />
               <RNPressable
                 onPress={onDismiss}
                 style={({ pressed }) => [
@@ -779,7 +785,13 @@ export default function ChatScreen() {
           onReplyTap={handleReplyTap}
           groupedWithPrevious={previousMessage?.peerId === msg.peerId}
           groupedWithNext={nextMessage?.peerId === msg.peerId}
-          reaction={likedMessages.has(msg.id) ? 'like' : dislikedMessages.has(msg.id) ? 'dislike' : null}
+          reaction={
+            likedMessages.has(msg.id)
+              ? "like"
+              : dislikedMessages.has(msg.id)
+                ? "dislike"
+                : null
+          }
         />
       );
     },
@@ -872,7 +884,6 @@ export default function ChatScreen() {
       color: colors.textSecondary,
       fontFamily: typography.fontFamily.regular,
       fontSize: 10,
-      lineHeight: 12,
       marginTop: 1,
     }),
     [colors.textSecondary],
@@ -1021,7 +1032,9 @@ export default function ChatScreen() {
               >
                 <View style={styles.headerActionGroup}>
                   <AnimatedPressable
-                    onPress={() => router.push(`${ROUTES.CALL(peerId)}?video=true`)}
+                    onPress={() =>
+                      router.push(`${ROUTES.CALL(peerId)}?video=true`)
+                    }
                     style={headerActionButtonStyle}
                     accessibilityLabel="Video call"
                   >
@@ -1134,7 +1147,9 @@ export default function ChatScreen() {
                         name={item.icon}
                         size={15}
                         color={
-                          item.destructive ? colors.danger : colors.textSecondary
+                          item.destructive
+                            ? colors.danger
+                            : colors.textSecondary
                         }
                         style={styles.centerMenuIcon}
                       />
@@ -1369,7 +1384,6 @@ const styles = StyleSheet.create({
   emptySub: {
     fontSize: typography.fontSize.sm,
     textAlign: "center",
-    lineHeight: typography.fontSize.sm * 1.5,
   },
   separatorRow: {
     alignItems: "center",
@@ -1466,7 +1480,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.md,
-    width: "200"
+    width: "200",
   },
   centerMenuIcon: {
     marginRight: spacing.md,

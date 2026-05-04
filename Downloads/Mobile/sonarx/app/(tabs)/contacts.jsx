@@ -1,2 +1,2 @@
-import ContactsScreen from '@/src/screens/ContactsScreen';
+import ContactsScreen from "@/src/screens/ContactsScreen";
 export default ContactsScreen;

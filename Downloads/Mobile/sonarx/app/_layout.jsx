@@ -254,10 +254,9 @@ function RootLayoutThemedNav({ isReady }) {
   const segments = useSegments();
   const isOnboarded = useIdentityStore((state) => state.isOnboarded);
   const inOnboarding = segments[0] === "(onboarding)";
-  const isRedirecting = isReady && (
-    (!isOnboarded && !inOnboarding) ||
-    (isOnboarded && inOnboarding)
-  );
+  const isRedirecting =
+    isReady &&
+    ((!isOnboarded && !inOnboarding) || (isOnboarded && inOnboarding));
   // Navigation guard — runs only after the Stack is mounted (isReady)
   useEffect(() => {
     if (!isReady) return;

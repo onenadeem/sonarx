@@ -4,19 +4,19 @@ import { useTheme } from "@/src/theme/ThemeProvider";
 import { spacing, typography } from "@/src/theme/tokens";
 
 export default function NotFoundScreen() {
-    const { colors } = useTheme();
-    const styles = makeStyles(colors);
-    return (
-      <>
-        <Stack.Screen options={{ title: "Oops!" }} />
-        <View style={styles.container}>
-          <Text style={styles.title}>This screen doesn't exist.</Text>
-          <Link href="/" style={styles.link}>
-            <Text style={styles.linkText}>Go to home screen!</Text>
-          </Link>
-        </View>
-      </>
-    );
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  return (
+    <>
+      <Stack.Screen options={{ title: "Oops!" }} />
+      <View style={styles.container}>
+        <Text style={styles.title}>This screen doesn't exist.</Text>
+        <Link href="/" style={styles.link}>
+          <Text style={styles.linkText}>Go to home screen!</Text>
+        </Link>
+      </View>
+    </>
+  );
 }
 
 function makeStyles(colors) {

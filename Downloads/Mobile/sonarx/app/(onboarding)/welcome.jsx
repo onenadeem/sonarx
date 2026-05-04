@@ -10,7 +10,14 @@ import greetingsDark from "@/assets/images/greetings-dark.png";
 import greetingsLight from "@/assets/images/greetings-light.png";
 import { ROUTES } from "@/src/constants/routes";
 
-function WelcomeFeature({ icon, title, description, iconColor, colors, isLast }) {
+function WelcomeFeature({
+  icon,
+  title,
+  description,
+  iconColor,
+  colors,
+  isLast,
+}) {
   return (
     <View
       style={[
@@ -23,7 +30,12 @@ function WelcomeFeature({ icon, title, description, iconColor, colors, isLast })
         },
       ]}
     >
-      <Ionicons name={icon} size={18} color={iconColor} style={styles.featureIcon} />
+      <Ionicons
+        name={icon}
+        size={18}
+        color={iconColor}
+        style={styles.featureIcon}
+      />
       <View style={styles.featureContent}>
         <Text
           style={{
@@ -34,7 +46,13 @@ function WelcomeFeature({ icon, title, description, iconColor, colors, isLast })
         >
           {title}
         </Text>
-        <Muted numberOfLines={2} style={{ fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.xs }}>
+        <Muted
+          numberOfLines={2}
+          style={{
+            fontFamily: typography.fontFamily.regular,
+            fontSize: typography.fontSize.xs,
+          }}
+        >
           {description}
         </Muted>
       </View>
@@ -55,12 +73,14 @@ export default function WelcomeScreen() {
     {
       icon: "globe-outline",
       title: "No middleman handling",
-      description: "Messages move directly between devices, not through a central server.",
+      description:
+        "Messages move directly between devices, not through a central server.",
     },
     {
       icon: "videocam-outline",
       title: "Private calling",
-      description: "Voice and video calls stay encrypted so your conversation stays private.",
+      description:
+        "Voice and video calls stay encrypted so your conversation stays private.",
     },
   ];
 
@@ -88,8 +108,8 @@ export default function WelcomeScreen() {
             textAlign: "left",
           }}
         >
-          Your chats and calls are direct, encrypted, and controlled by your device.
-          No data is sold or copied. Your privacy your choice
+          Your chats and calls are direct, encrypted, and controlled by your
+          device. No data is sold or copied. Your privacy your choice
         </Text>
         <Image
           source={isDark ? greetingsDark : greetingsLight}
@@ -134,8 +154,8 @@ export default function WelcomeScreen() {
             marginBottom: spacing.lg,
           }}
         >
-          By continuing, you agree to create a local identity on your device.
-          No data is shared with any server.
+          By continuing, you agree to create a local identity on your device. No
+          data is shared with any server.
         </Text>
       </View>
     </SafeAreaView>

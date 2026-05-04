@@ -1,5 +1,7 @@
 # 📱 SecureLink — P2P Encrypted Chat App
+
 ## Product Requirements Document (PRD)
+
 ### Version 1.0 | Expo + React Native | No Backend
 
 ---
@@ -10,6 +12,7 @@
 ---
 
 ## 📋 Table of Contents
+
 1. [Product Vision](#1-product-vision)
 2. [Core Architecture Philosophy](#2-core-architecture-philosophy)
 3. [Complete Package Manifest](#3-complete-package-manifest)
@@ -51,17 +54,18 @@
 - **All data lives on device**. If you delete the app, your data is gone.
 
 ### What Makes It Truly Serverless?
-| Feature | Mechanism |
-|---|---|
-| Identity | Phone number + locally generated Ed25519 keypair |
-| Phone verification | SIM card number read on-device (no SMS OTP) |
-| Peer Discovery | GUN.js public relay peers (decentralized mesh) |
-| WebRTC Signaling | GUN.js (encrypted SDP exchange) |
-| Message Delivery | WebRTC DataChannel (direct device-to-device) |
-| File Transfer | WebRTC DataChannel (chunked, 16 KB chunks) |
-| Video/Audio Call | WebRTC MediaStream |
-| Data Storage | expo-sqlite (on-device only) |
-| Encryption | NaCl (TweetNaCl) — X25519 Diffie-Hellman + XSalsa20-Poly1305 |
+
+| Feature            | Mechanism                                                    |
+| ------------------ | ------------------------------------------------------------ |
+| Identity           | Phone number + locally generated Ed25519 keypair             |
+| Phone verification | SIM card number read on-device (no SMS OTP)                  |
+| Peer Discovery     | GUN.js public relay peers (decentralized mesh)               |
+| WebRTC Signaling   | GUN.js (encrypted SDP exchange)                              |
+| Message Delivery   | WebRTC DataChannel (direct device-to-device)                 |
+| File Transfer      | WebRTC DataChannel (chunked, 16 KB chunks)                   |
+| Video/Audio Call   | WebRTC MediaStream                                           |
+| Data Storage       | expo-sqlite (on-device only)                                 |
+| Encryption         | NaCl (TweetNaCl) — X25519 Diffie-Hellman + XSalsa20-Poly1305 |
 
 ---
 
@@ -96,6 +100,7 @@ Decentralized GUN Relay Network (public, no account needed):
 ```
 
 ### Data Flow for a Message
+
 1. Alice types message → encrypted locally with Bob's public key (NaCl box)
 2. If Bob is online (WebRTC peer connected) → message sent via DataChannel directly
 3. If Bob is offline → encrypted message queued in GUN.js (ephemeral, auto-expiry 7 days)
@@ -174,6 +179,7 @@ Decentralized GUN Relay Network (public, no account needed):
 ```
 
 ### Dev Dependencies
+
 ```json
 {
   "devDependencies": {
@@ -189,31 +195,47 @@ Decentralized GUN Relay Network (public, no account needed):
 ```
 
 ### Native Config (app.json plugins array)
+
 ```json
 {
   "plugins": [
     "expo-router",
-    ["@config-plugins/react-native-webrtc", {
-      "cameraPermission": "SecureLink needs camera for video calls",
-      "microphonePermission": "SecureLink needs microphone for calls"
-    }],
+    [
+      "@config-plugins/react-native-webrtc",
+      {
+        "cameraPermission": "SecureLink needs camera for video calls",
+        "microphonePermission": "SecureLink needs microphone for calls"
+      }
+    ],
     ["expo-sqlite", { "useSQLCipher": true }],
-    ["expo-contacts", { "contactsPermission": "To find your friends on SecureLink" }],
-    ["expo-media-library", {
-      "photosPermission": "To save received photos",
-      "savePhotosPermission": "To save received photos",
-      "isAccessMediaLocationEnabled": true
-    }],
-    ["expo-image-picker", {
-      "photosPermission": "To share photos with contacts",
-      "cameraPermission": "To take photos to share"
-    }],
+    [
+      "expo-contacts",
+      { "contactsPermission": "To find your friends on SecureLink" }
+    ],
+    [
+      "expo-media-library",
+      {
+        "photosPermission": "To save received photos",
+        "savePhotosPermission": "To save received photos",
+        "isAccessMediaLocationEnabled": true
+      }
+    ],
+    [
+      "expo-image-picker",
+      {
+        "photosPermission": "To share photos with contacts",
+        "cameraPermission": "To take photos to share"
+      }
+    ],
     ["expo-notifications", { "icon": "./assets/notification-icon.png" }],
     "expo-build-properties",
-    ["expo-build-properties", {
-      "android": { "minSdkVersion": 24, "compileSdkVersion": 35 },
-      "ios": { "deploymentTarget": "15.1" }
-    }]
+    [
+      "expo-build-properties",
+      {
+        "android": { "minSdkVersion": 24, "compileSdkVersion": 35 },
+        "ios": { "deploymentTarget": "15.1" }
+      }
+    ]
   ]
 }
 ```
@@ -350,16 +372,17 @@ securelink/
 ## 5. Database Schema
 
 ### `db/schema/identity.ts`
+
 ```ts
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const identity = sqliteTable("identity", {
-  id: text("id").primaryKey(),             // Always "local_user"
+  id: text("id").primaryKey(), // Always "local_user"
   phoneNumber: text("phone_number").notNull().unique(), // +91XXXXXXXXXX
   displayName: text("display_name").notNull(),
   avatarUri: text("avatar_uri"),
-  publicKey: text("public_key").notNull(),  // Base64 X25519 public key
-  secretKey: text("secret_key").notNull(),  // Base64 X25519 secret key (encrypted at rest)
+  publicKey: text("public_key").notNull(), // Base64 X25519 public key
+  secretKey: text("secret_key").notNull(), // Base64 X25519 secret key (encrypted at rest)
   signingPublicKey: text("signing_public_key").notNull(), // Ed25519 for peer verification
   signingSecretKey: text("signing_secret_key").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
@@ -368,12 +391,13 @@ export const identity = sqliteTable("identity", {
 ```
 
 ### `db/schema/peers.ts`
+
 ```ts
 export const peers = sqliteTable("peers", {
-  id: text("id").primaryKey(),             // Phone number E.164 (+911234567890)
+  id: text("id").primaryKey(), // Phone number E.164 (+911234567890)
   displayName: text("display_name").notNull(),
   avatarUri: text("avatar_uri"),
-  publicKey: text("public_key").notNull(),  // Their X25519 public key
+  publicKey: text("public_key").notNull(), // Their X25519 public key
   signingPublicKey: text("signing_public_key").notNull(),
   isBlocked: integer("is_blocked", { mode: "boolean" }).default(false),
   lastSeen: integer("last_seen", { mode: "timestamp" }),
@@ -383,10 +407,12 @@ export const peers = sqliteTable("peers", {
 ```
 
 ### `db/schema/conversations.ts`
+
 ```ts
 export const conversations = sqliteTable("conversations", {
-  id: text("id").primaryKey(),             // UUID
-  peerId: text("peer_id").notNull()
+  id: text("id").primaryKey(), // UUID
+  peerId: text("peer_id")
+    .notNull()
     .references(() => peers.id, { onDelete: "cascade" }),
   lastMessageId: text("last_message_id"),
   lastMessageAt: integer("last_message_at", { mode: "timestamp" }),
@@ -398,22 +424,28 @@ export const conversations = sqliteTable("conversations", {
 ```
 
 ### `db/schema/messages.ts`
+
 ```ts
 export const messages = sqliteTable("messages", {
-  id: text("id").primaryKey(),             // UUID generated by sender
-  conversationId: text("conversation_id").notNull()
+  id: text("id").primaryKey(), // UUID generated by sender
+  conversationId: text("conversation_id")
+    .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
-  peerId: text("peer_id").notNull(),       // Sender phone number
+  peerId: text("peer_id").notNull(), // Sender phone number
   type: text("type", {
-    enum: ["text", "image", "video", "audio", "file", "system", "call_log"]
-  }).notNull().default("text"),
-  body: text("body"),                       // Plaintext after decryption (text messages)
-  encryptedBody: text("encrypted_body"),   // Stored encrypted form
-  attachmentId: text("attachment_id"),     // FK to attachments
+    enum: ["text", "image", "video", "audio", "file", "system", "call_log"],
+  })
+    .notNull()
+    .default("text"),
+  body: text("body"), // Plaintext after decryption (text messages)
+  encryptedBody: text("encrypted_body"), // Stored encrypted form
+  attachmentId: text("attachment_id"), // FK to attachments
   status: text("status", {
-    enum: ["sending", "sent", "delivered", "read", "failed"]
-  }).notNull().default("sending"),
-  replyToId: text("reply_to_id"),          // For reply-to feature
+    enum: ["sending", "sent", "delivered", "read", "failed"],
+  })
+    .notNull()
+    .default("sending"),
+  replyToId: text("reply_to_id"), // For reply-to feature
   isDeleted: integer("is_deleted", { mode: "boolean" }).default(false),
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   sentAt: integer("sent_at", { mode: "timestamp" }).notNull(),
@@ -423,35 +455,37 @@ export const messages = sqliteTable("messages", {
 ```
 
 ### `db/schema/attachments.ts`
+
 ```ts
 export const attachments = sqliteTable("attachments", {
   id: text("id").primaryKey(),
   messageId: text("message_id").notNull(),
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull(),
-  fileSize: integer("file_size").notNull(),   // Bytes
-  localUri: text("local_uri"),                 // Local filesystem path after received
-  thumbnailUri: text("thumbnail_uri"),         // For images/video
+  fileSize: integer("file_size").notNull(), // Bytes
+  localUri: text("local_uri"), // Local filesystem path after received
+  thumbnailUri: text("thumbnail_uri"), // For images/video
   width: integer("width"),
   height: integer("height"),
-  duration: integer("duration"),               // For audio/video in ms
+  duration: integer("duration"), // For audio/video in ms
   transferStatus: text("transfer_status", {
-    enum: ["pending", "transferring", "complete", "failed"]
+    enum: ["pending", "transferring", "complete", "failed"],
   }).default("pending"),
   transferProgress: integer("transfer_progress").default(0), // 0–100
-  encryptionNonce: text("encryption_nonce"),  // NaCl nonce used for file encryption
+  encryptionNonce: text("encryption_nonce"), // NaCl nonce used for file encryption
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 ```
 
 ### `db/schema/keys.ts`
+
 ```ts
 export const peerKeys = sqliteTable("peer_keys", {
   peerId: text("peer_id").primaryKey(),
   publicKey: text("public_key").notNull(),
-  fingerprint: text("fingerprint").notNull(),   // SHA-256 hex of pubkey
+  fingerprint: text("fingerprint").notNull(), // SHA-256 hex of pubkey
   trustLevel: text("trust_level", {
-    enum: ["unverified", "tofu", "qr_verified"]
+    enum: ["unverified", "tofu", "qr_verified"],
   }).default("tofu"),
   firstSeenAt: integer("first_seen_at", { mode: "timestamp" }).notNull(),
   lastUpdatedAt: integer("last_updated_at", { mode: "timestamp" }).notNull(),
@@ -467,6 +501,7 @@ export const peerKeys = sqliteTable("peer_keys", {
 GUN.js is a distributed, real-time, graph database. It connects to a mesh of public relay peers. We use it **only for signaling** (SDP exchange) and **offline message queuing**. All data written to GUN is encrypted.
 
 **Public GUN relays used (no account required):**
+
 - `https://gun-manhattan.herokuapp.com/gun`
 - `https://peer.wallie.io/gun`
 - `https://gundb-relay-milheirofernandes.b4a.run/gun`
@@ -492,6 +527,7 @@ export const SL_NAMESPACE = "securelink/v1";
 ### 6.2 Peer Presence Protocol
 
 Each user announces presence every 30 seconds:
+
 ```ts
 // GUN path: securelink/v1/presence/{phoneNumber}
 {
@@ -565,6 +601,7 @@ type DataChannelPacket =
 ### 6.6 File Transfer — Chunked P2P
 
 Files of **any size** are transferred in 16 KB chunks over the WebRTC DataChannel:
+
 1. Sender sends `file_meta` → receiver allocates buffer
 2. Sender streams chunks `file_chunk[0]`, `file_chunk[1]`, ...
 3. Receiver acknowledges every 10th chunk (`file_ack`)
@@ -600,11 +637,16 @@ import { encodeBase64, decodeBase64 } from "tweetnacl-util";
 export function encryptMessage(
   plaintext: string,
   recipientPublicKey: Uint8Array,
-  mySecretKey: Uint8Array
+  mySecretKey: Uint8Array,
 ): { ciphertext: string; nonce: string } {
   const nonce = nacl.randomBytes(nacl.box.nonceLength);
   const messageUint8 = new TextEncoder().encode(plaintext);
-  const encrypted = nacl.box(messageUint8, nonce, recipientPublicKey, mySecretKey);
+  const encrypted = nacl.box(
+    messageUint8,
+    nonce,
+    recipientPublicKey,
+    mySecretKey,
+  );
   return {
     ciphertext: encodeBase64(encrypted),
     nonce: encodeBase64(nonce),
@@ -615,13 +657,13 @@ export function decryptMessage(
   ciphertext: string,
   nonce: string,
   senderPublicKey: Uint8Array,
-  mySecretKey: Uint8Array
+  mySecretKey: Uint8Array,
 ): string | null {
   const decrypted = nacl.box.open(
     decodeBase64(ciphertext),
     decodeBase64(nonce),
     senderPublicKey,
-    mySecretKey
+    mySecretKey,
   );
   if (!decrypted) return null;
   return new TextDecoder().decode(decrypted);
@@ -631,12 +673,14 @@ export function decryptMessage(
 ### 7.3 SQLite Encryption at Rest
 
 `expo-sqlite` with `useSQLCipher: true` encrypts the entire database file using AES-256. The encryption key is:
+
 - Derived from a device-specific secret stored in `expo-secure-store`
 - Optionally protected by biometric authentication (Face ID / fingerprint)
 
 ### 7.4 TOFU (Trust On First Use)
 
 When Alice first receives a message from Bob:
+
 1. Bob's public key fingerprint is shown to Alice as a colored emoji phrase (like Signal)
 2. Alice taps "Trust" → key stored with `trustLevel = "tofu"`
 3. For higher security, Alice can scan Bob's QR code in person → `trustLevel = "qr_verified"`
@@ -644,9 +688,11 @@ When Alice first receives a message from Bob:
 ### 7.5 Key Fingerprint Display
 
 Fingerprint = SHA-256(publicKey) displayed as 12 emoji in 4 groups:
+
 ```
 🌟 🦊 🌙   🔥 💧 🌊   🎯 🌈 🦋   ⚡ 🌺 🎪
 ```
+
 Both parties should see identical emoji. If different → MITM attack.
 
 ---
@@ -740,6 +786,7 @@ Root Stack
 ## 9. Sequential AI Task List
 
 > **⚠️ IMPORTANT INSTRUCTIONS FOR AI IDE:**
+>
 > - Complete **one task at a time** in order.
 > - Each task is self-contained. Read the task fully before writing any code.
 > - After completing a task, verify it builds (`npx expo start` shows no red errors).
@@ -751,14 +798,17 @@ Root Stack
 ---
 
 ### TASK 01 — Project Scaffold & Core Dependencies
+
 **Estimated complexity**: Low | **Files created**: ~12
 
 #### Objective
+
 Bootstrap the Expo project with correct SDK version, configure all native plugins, set up Metro bundler for SQL files, and install every package from the manifest.
 
 #### Steps
 
 **01.1** Create new Expo project:
+
 ```bash
 npx create-expo-app@latest securelink --template tabs
 cd securelink
@@ -769,6 +819,7 @@ cd securelink
 **01.3** Install all dev dependencies exactly as listed in Section 3.
 
 **01.4** Create `metro.config.js`:
+
 ```js
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
@@ -782,6 +833,7 @@ module.exports = withNativeWind(config, { input: "./global.css" });
 ```
 
 **01.5** Create `babel.config.js`:
+
 ```js
 module.exports = function (api) {
   api.cache(true);
@@ -791,7 +843,7 @@ module.exports = function (api) {
       "nativewind/babel",
     ],
     plugins: [
-      "inline-import",       // For Drizzle SQL files
+      "inline-import", // For Drizzle SQL files
       "react-native-reanimated/plugin", // Must be last
     ],
   };
@@ -799,6 +851,7 @@ module.exports = function (api) {
 ```
 
 **01.6** Create `tailwind.config.js`:
+
 ```js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -843,6 +896,7 @@ module.exports = {
 ```
 
 **01.7** Create `global.css`:
+
 ```css
 @tailwind base;
 @tailwind components;
@@ -891,6 +945,7 @@ module.exports = {
 ```
 
 **01.8** Create `drizzle.config.ts`:
+
 ```ts
 import { defineConfig } from "drizzle-kit";
 
@@ -903,6 +958,7 @@ export default defineConfig({
 ```
 
 **01.9** Update `tsconfig.json` with strict mode and path aliases:
+
 ```json
 {
   "extends": "expo/tsconfig.base",
@@ -920,6 +976,7 @@ export default defineConfig({
 **01.10** Create `app.json` with full plugin configuration from Section 3.
 
 **01.11** Create placeholder `app/_layout.tsx`:
+
 ```tsx
 import "../global.css";
 import { Stack } from "expo-router";
@@ -939,9 +996,11 @@ export default function RootLayout() {
 ---
 
 ### TASK 02 — NativeWind + shadcn Design System Setup
+
 **Estimated complexity**: Medium | **Files created**: ~15
 
 #### Objective
+
 Set up all `components/ui/` primitives following the `react-native-reusables` pattern. These are the building blocks used in every subsequent screen.
 
 #### Components to Create
@@ -989,6 +1048,7 @@ Full-screen spinner with optional message text.
 Export typed color constants matching the CSS variables.
 
 **02.14** Create a `ThemeProvider` that:
+
 - Reads system color scheme via `useColorScheme`
 - Stores user preference in `react-native-mmkv`
 - Applies `dark` class to root view
@@ -996,19 +1056,23 @@ Export typed color constants matching the CSS variables.
 **02.15** Integrate `ThemeProvider` into `app/_layout.tsx`.
 
 #### Verification
+
 All components must render without errors in a test screen. Create `app/(onboarding)/welcome.tsx` as a temporary test screen that imports and renders one of each component.
 
 ---
 
 ### TASK 03 — Database Schema & Drizzle ORM Setup
+
 **Estimated complexity**: Medium | **Files created**: ~12
 
 #### Objective
+
 Set up the complete SQLite database with Drizzle ORM, all schemas from Section 5, and the migration system.
 
 #### Steps
 
 **03.1** Create all schema files exactly as defined in Section 5:
+
 - `db/schema/identity.ts`
 - `db/schema/peers.ts`
 - `db/schema/conversations.ts`
@@ -1018,6 +1082,7 @@ Set up the complete SQLite database with Drizzle ORM, all schemas from Section 5
 - `db/schema/index.ts` (re-exports all)
 
 **03.2** Create `db/client.ts`:
+
 ```ts
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync } from "expo-sqlite";
@@ -1034,6 +1099,7 @@ export type Database = typeof db;
 ```
 
 **03.3** Create `db/migrations.ts` provider component:
+
 ```tsx
 // Wraps the app and runs migrations before rendering children
 import { SQLiteProvider } from "expo-sqlite";
@@ -1043,6 +1109,7 @@ import migrations from "../drizzle/migrations";
 ```
 
 **03.4** Add relations to schema:
+
 ```ts
 // In db/schema/index.ts
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({
@@ -1057,6 +1124,7 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 ```
 
 **03.5** Generate initial migration:
+
 ```bash
 npx drizzle-kit generate
 ```
@@ -1068,6 +1136,7 @@ npx drizzle-kit generate
 **03.8** Create `lib/hooks/useDb.ts` — a custom hook that returns the db instance from context.
 
 **03.9** Write the following query helper functions in `db/queries.ts`:
+
 - `getOrCreateConversation(peerId: string): Promise<Conversation>`
 - `insertMessage(msg: NewMessage): Promise<Message>`
 - `getMessages(conversationId: string, limit: number, offset: number): Promise<Message[]>`
@@ -1081,12 +1150,15 @@ npx drizzle-kit generate
 ---
 
 ### TASK 04 — Phone Identity & SIM Verification
+
 **Estimated complexity**: High | **Files created**: ~8
 
 #### Objective
+
 Implement the onboarding flow: detect SIM number, verify it matches user input, create identity, and gate the app behind identity check.
 
 #### Context
+
 - `expo-cellular` can read the phone number from SIM on Android (requires `READ_PHONE_STATE` permission). On iOS, Apple does not expose SIM number to apps — use a fallback: user enters number, then taps "Confirm — this is the number on my SIM."
 - `expo-phone-number-hint` shows Android's phone number hint dialog (native OS popup).
 - `libphonenumber-js` validates and normalizes numbers to E.164 format.
@@ -1095,36 +1167,46 @@ Implement the onboarding flow: detect SIM number, verify it matches user input, 
 #### Steps
 
 **04.1** Create `lib/phone/verify.ts`:
+
 ```ts
 /**
  * Attempts to read SIM phone number from device.
  * Android: uses expo-cellular + expo-phone-number-hint
  * iOS: returns null (user must self-attest)
  */
-export async function readSimPhoneNumber(): Promise<string | null>
+export async function readSimPhoneNumber(): Promise<string | null>;
 
 /**
  * Shows the native phone number selector hint on Android.
  * Returns the selected number or null if user dismissed.
  */
-export async function showPhoneHint(): Promise<string | null>
+export async function showPhoneHint(): Promise<string | null>;
 ```
 
 **04.2** Create `lib/phone/format.ts`:
+
 ```ts
-import { parsePhoneNumber, isValidPhoneNumber, CountryCode } from "libphonenumber-js";
+import {
+  parsePhoneNumber,
+  isValidPhoneNumber,
+  CountryCode,
+} from "libphonenumber-js";
 
 /** Validates and returns E.164 format (+91XXXXXXXXXX) or null */
-export function normalizePhoneNumber(input: string, countryCode: CountryCode): string | null
+export function normalizePhoneNumber(
+  input: string,
+  countryCode: CountryCode,
+): string | null;
 
 /** Returns display-friendly format */
-export function formatPhoneDisplay(e164: string): string
+export function formatPhoneDisplay(e164: string): string;
 
 /** Extracts country calling code */
-export function getCountryCode(e164: string): string
+export function getCountryCode(e164: string): string;
 ```
 
 **04.3** Create `stores/identity.store.ts` (Zustand):
+
 ```ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -1136,16 +1218,19 @@ interface IdentityState {
   clearIdentity: () => void;
 }
 ```
+
 Persist to MMKV (not SQLite, for faster boot check).
 
 **04.4** Create `app/(onboarding)/_layout.tsx` — stack navigator, no header.
 
 **04.5** Create `app/(onboarding)/welcome.tsx`:
+
 - Full-screen hero with app name, lock icon, tagline
 - "Get Started" button → `phone.tsx`
 - Feature list: "No servers. No data collection. Pure P2P."
 
 **04.6** Create `app/(onboarding)/phone.tsx`:
+
 ```
 ┌─────────────────────────────────────┐
 │           Your Phone Number          │
@@ -1163,6 +1248,7 @@ Persist to MMKV (not SQLite, for faster boot check).
 │       [Continue →]                  │
 └─────────────────────────────────────┘
 ```
+
 - On Android: show phone hint automatically on mount
 - Validate with libphonenumber-js on every keystroke
 - If SIM number detected, show green banner + "Use this number" button
@@ -1170,11 +1256,13 @@ Persist to MMKV (not SQLite, for faster boot check).
 - On tap Continue: verify format → save tentative number → go to `profile.tsx`
 
 **04.7** Create `app/(onboarding)/profile.tsx`:
+
 - Display name input (required, 2–50 chars)
 - Avatar: camera capture or gallery pick
 - "Create Identity" button → calls identity creation → navigate to main app
 
 **04.8** Create `lib/identity.ts`:
+
 ```ts
 /**
  * Creates new local identity, generates crypto keys, stores everything.
@@ -1183,14 +1271,15 @@ Persist to MMKV (not SQLite, for faster boot check).
 export async function createIdentity(
   phoneNumber: string,
   displayName: string,
-  avatarUri?: string
-): Promise<LocalIdentity>
+  avatarUri?: string,
+): Promise<LocalIdentity>;
 
 /** Loads existing identity from secure store + SQLite */
-export async function loadIdentity(): Promise<LocalIdentity | null>
+export async function loadIdentity(): Promise<LocalIdentity | null>;
 ```
 
 **04.9** Update `app/_layout.tsx`:
+
 - On mount, call `loadIdentity()`
 - If no identity → redirect to `(onboarding)/welcome`
 - If identity exists → redirect to `(tabs)/chats`
@@ -1198,45 +1287,57 @@ export async function loadIdentity(): Promise<LocalIdentity | null>
 ---
 
 ### TASK 05 — E2E Encryption Layer
+
 **Estimated complexity**: High | **Files created**: ~5
 
 #### Objective
+
 Implement the complete encryption module using TweetNaCl. All messages and file chunks must be encrypted before leaving the device.
 
 #### Steps
 
 **05.1** Create `lib/crypto/identity.ts`:
+
 ```ts
 import nacl from "tweetnacl";
 import * as SecureStore from "expo-secure-store";
 import * as Crypto from "expo-crypto";
 
 /** Generate a new X25519 box keypair for message encryption */
-export function generateBoxKeypair(): { publicKey: Uint8Array; secretKey: Uint8Array }
+export function generateBoxKeypair(): {
+  publicKey: Uint8Array;
+  secretKey: Uint8Array;
+};
 
 /** Generate Ed25519 signing keypair for identity verification */
-export function generateSignKeypair(): { publicKey: Uint8Array; secretKey: Uint8Array }
+export function generateSignKeypair(): {
+  publicKey: Uint8Array;
+  secretKey: Uint8Array;
+};
 
 /** Store secret keys in expo-secure-store */
 export async function storeSecretKeys(
   boxSecretKey: Uint8Array,
-  signSecretKey: Uint8Array
-): Promise<void>
+  signSecretKey: Uint8Array,
+): Promise<void>;
 
 /** Load secret keys from expo-secure-store */
 export async function loadSecretKeys(): Promise<{
   boxSecretKey: Uint8Array;
   signSecretKey: Uint8Array;
-} | null>
+} | null>;
 
 /** Compute SHA-256 fingerprint of a public key */
-export async function computeFingerprint(publicKey: Uint8Array): Promise<string>
+export async function computeFingerprint(
+  publicKey: Uint8Array,
+): Promise<string>;
 
 /** Convert fingerprint hex to emoji representation (12 emoji) */
-export function fingerprintToEmoji(hex: string): string[]
+export function fingerprintToEmoji(hex: string): string[];
 ```
 
 **05.2** Create `lib/crypto/box.ts`:
+
 ```ts
 /**
  * Encrypt a plaintext string for a recipient.
@@ -1245,8 +1346,8 @@ export function fingerprintToEmoji(hex: string): string[]
 export function encryptForPeer(
   plaintext: string,
   recipientPublicKey: Uint8Array,
-  mySecretKey: Uint8Array
-): EncryptedPayload
+  mySecretKey: Uint8Array,
+): EncryptedPayload;
 
 /**
  * Decrypt a payload from a sender.
@@ -1255,8 +1356,8 @@ export function encryptForPeer(
 export function decryptFromPeer(
   payload: EncryptedPayload,
   senderPublicKey: Uint8Array,
-  mySecretKey: Uint8Array
-): string | null
+  mySecretKey: Uint8Array,
+): string | null;
 
 /**
  * Encrypt a binary file chunk using nacl.secretbox.
@@ -1265,15 +1366,15 @@ export function decryptFromPeer(
 export function encryptFileChunk(
   chunk: Uint8Array,
   fileKey: Uint8Array,
-  nonce: Uint8Array
-): Uint8Array
+  nonce: Uint8Array,
+): Uint8Array;
 
 /** Decrypt a file chunk */
 export function decryptFileChunk(
   encrypted: Uint8Array,
   fileKey: Uint8Array,
-  nonce: Uint8Array
-): Uint8Array | null
+  nonce: Uint8Array,
+): Uint8Array | null;
 
 /**
  * Derive a per-file symmetric key from the shared secret and a file ID.
@@ -1281,26 +1382,59 @@ export function decryptFileChunk(
  */
 export async function deriveFileKey(
   sharedSecret: Uint8Array,
-  fileId: string
-): Promise<Uint8Array>
+  fileId: string,
+): Promise<Uint8Array>;
 ```
 
 **05.3** Create `lib/crypto/fingerprint.ts`:
+
 ```ts
-const EMOJI_SET = ["🌟","🦊","🌙","🔥","💧","🌊","🎯","🌈","🦋","⚡","🌺","🎪",
-  "🏄","🦁","🌸","🎭","🚀","🎸","🦄","🌍","🔮","🎨","🦅","🌴",
-  "🐬","🦋","🍀","🎯","🌙","🔥","💎","🎪"];
+const EMOJI_SET = [
+  "🌟",
+  "🦊",
+  "🌙",
+  "🔥",
+  "💧",
+  "🌊",
+  "🎯",
+  "🌈",
+  "🦋",
+  "⚡",
+  "🌺",
+  "🎪",
+  "🏄",
+  "🦁",
+  "🌸",
+  "🎭",
+  "🚀",
+  "🎸",
+  "🦄",
+  "🌍",
+  "🔮",
+  "🎨",
+  "🦅",
+  "🌴",
+  "🐬",
+  "🦋",
+  "🍀",
+  "🎯",
+  "🌙",
+  "🔥",
+  "💎",
+  "🎪",
+];
 
 /** Convert 32-byte fingerprint to 12 emoji (4 groups of 3) */
-export function bytesToEmoji(bytes: Uint8Array): string[][]
+export function bytesToEmoji(bytes: Uint8Array): string[][];
 
 /** Format emoji groups for display */
-export function formatFingerprint(groups: string[][]): string
+export function formatFingerprint(groups: string[][]): string;
 ```
 
 **05.4** Create `lib/crypto/index.ts` — re-exports all crypto functions.
 
 **05.5** Create `components/ui/FingerprintDisplay.tsx`:
+
 ```tsx
 // Shows the 12-emoji fingerprint in a styled 4x3 grid
 // Used in profile screens and the "verify contact" flow
@@ -1311,6 +1445,7 @@ interface FingerprintDisplayProps {
 ```
 
 **05.6** Write unit-testable pure function tests in `lib/crypto/__tests__/`:
+
 - Test: encrypt then decrypt returns original plaintext
 - Test: wrong key returns null
 - Test: tampered ciphertext returns null
@@ -1319,14 +1454,17 @@ interface FingerprintDisplayProps {
 ---
 
 ### TASK 06 — GUN.js P2P Signaling & Discovery
+
 **Estimated complexity**: High | **Files created**: ~6
 
 #### Objective
+
 Set up GUN.js for peer discovery (presence announcements) and WebRTC signaling (encrypted SDP offer/answer exchange). No real communication happens here — GUN is only the "phonebook" and "doorbell."
 
 #### Steps
 
 **06.1** Create `lib/p2p/gun.ts`:
+
 ```ts
 import Gun from "gun";
 
@@ -1338,33 +1476,34 @@ const GUN_PEERS = [
 let gunInstance: ReturnType<typeof Gun> | null = null;
 
 /** Get or create the GUN instance (singleton) */
-export function getGun(): ReturnType<typeof Gun>
+export function getGun(): ReturnType<typeof Gun>;
 
 /** SecureLink namespace helper */
-export function getSLNode() // returns gun.get("securelink/v1")
+export function getSLNode(); // returns gun.get("securelink/v1")
 
 /** Write encrypted data to a GUN path with auto-expiry */
 export async function writeToGun(
   path: string,
   data: Record<string, unknown>,
-  ttlSeconds: number
-): Promise<void>
+  ttlSeconds: number,
+): Promise<void>;
 
 /** Subscribe to a GUN path, return unsubscribe function */
 export function subscribeToGun(
   path: string,
-  callback: (data: unknown) => void
-): () => void
+  callback: (data: unknown) => void,
+): () => void;
 ```
 
 **06.2** Create `lib/p2p/discovery.ts`:
+
 ```ts
 /**
  * Announce this device's presence to the GUN network.
  * Called every 30 seconds while app is foregrounded.
  * Payload is signed with Ed25519 signing key before publishing.
  */
-export async function announcePresence(identity: LocalIdentity): Promise<void>
+export async function announcePresence(identity: LocalIdentity): Promise<void>;
 
 /**
  * Subscribe to presence updates from a specific peer.
@@ -1372,25 +1511,26 @@ export async function announcePresence(identity: LocalIdentity): Promise<void>
  */
 export function subscribeToPeerPresence(
   peerId: string,
-  onUpdate: (status: PeerPresence) => void
-): () => void
+  onUpdate: (status: PeerPresence) => void,
+): () => void;
 
 /**
  * Subscribe to presence from ALL known peers (for contacts list).
  */
 export function subscribeToAllPresence(
   peerIds: string[],
-  onUpdate: (peerId: string, status: PeerPresence) => void
-): () => void
+  onUpdate: (peerId: string, status: PeerPresence) => void,
+): () => void;
 
 /** Verify the Ed25519 signature on a presence payload */
 export function verifyPresenceSignature(
   presence: PeerPresence,
-  signingPublicKey: Uint8Array
-): boolean
+  signingPublicKey: Uint8Array,
+): boolean;
 ```
 
 **06.3** Create `lib/p2p/signaling.ts`:
+
 ```ts
 /**
  * Send an encrypted SDP offer to a peer via GUN.
@@ -1400,8 +1540,8 @@ export async function sendOffer(
   targetPeerId: string,
   offer: RTCSessionDescriptionInit,
   myIdentity: LocalIdentity,
-  targetPublicKey: Uint8Array
-): Promise<void>
+  targetPublicKey: Uint8Array,
+): Promise<void>;
 
 /**
  * Send an encrypted SDP answer to a peer via GUN.
@@ -1410,8 +1550,8 @@ export async function sendAnswer(
   targetPeerId: string,
   answer: RTCSessionDescriptionInit,
   myIdentity: LocalIdentity,
-  targetPublicKey: Uint8Array
-): Promise<void>
+  targetPublicKey: Uint8Array,
+): Promise<void>;
 
 /**
  * Subscribe to incoming SDP offers directed at myPeerId.
@@ -1420,8 +1560,8 @@ export async function sendAnswer(
 export function subscribeToOffers(
   myPeerId: string,
   mySecretKey: Uint8Array,
-  onOffer: (fromPeerId: string, offer: RTCSessionDescriptionInit) => void
-): () => void
+  onOffer: (fromPeerId: string, offer: RTCSessionDescriptionInit) => void,
+): () => void;
 
 /**
  * Subscribe to SDP answers from a specific peer.
@@ -1430,8 +1570,8 @@ export function subscribeToAnswer(
   fromPeerId: string,
   myPeerId: string,
   mySecretKey: Uint8Array,
-  onAnswer: (answer: RTCSessionDescriptionInit) => void
-): () => void
+  onAnswer: (answer: RTCSessionDescriptionInit) => void,
+): () => void;
 
 /**
  * Send an ICE candidate to a peer.
@@ -1439,8 +1579,8 @@ export function subscribeToAnswer(
 export async function sendIceCandidate(
   targetPeerId: string,
   candidate: RTCIceCandidateInit,
-  myIdentity: LocalIdentity
-): Promise<void>
+  myIdentity: LocalIdentity,
+): Promise<void>;
 
 /**
  * Subscribe to ICE candidates from a specific peer.
@@ -1448,11 +1588,12 @@ export async function sendIceCandidate(
 export function subscribeToIceCandidates(
   fromPeerId: string,
   myPeerId: string,
-  onCandidate: (candidate: RTCIceCandidateInit) => void
-): () => void
+  onCandidate: (candidate: RTCIceCandidateInit) => void,
+): () => void;
 ```
 
 **06.4** Create `lib/hooks/useOnlineStatus.ts`:
+
 ```ts
 /**
  * Returns real-time online status for a peer.
@@ -1461,10 +1602,11 @@ export function subscribeToIceCandidates(
 export function useOnlineStatus(peerId: string): {
   isOnline: boolean;
   lastSeen: Date | null;
-}
+};
 ```
 
 **06.5** Create `stores/peers.store.ts` (Zustand):
+
 ```ts
 interface PeersState {
   // Active WebRTC connections indexed by peerId
@@ -1481,6 +1623,7 @@ interface PeersState {
 ```
 
 **06.6** Create a `PresenceManager` service class in `lib/p2p/presence-manager.ts` that:
+
 - Starts announcing presence on a 30-second interval
 - Handles app foreground/background state (stop when backgrounded)
 - Subscribes to known peers' presence
@@ -1489,14 +1632,17 @@ interface PeersState {
 ---
 
 ### TASK 07 — WebRTC Core Engine
+
 **Estimated complexity**: Very High | **Files created**: ~7
 
 #### Objective
+
 Build the WebRTC peer connection manager. This is the core of the app — the engine that creates encrypted tunnels between devices for both messages and video calls.
 
 #### Steps
 
 **07.1** Create `lib/p2p/peer-manager.ts`:
+
 ```ts
 import {
   RTCPeerConnection,
@@ -1527,7 +1673,7 @@ class PeerManager {
    * Creates PeerConnection, DataChannel, generates offer.
    * Returns the SDP offer to be sent via signaling.
    */
-  async initiateConnection(peerId: string): Promise<RTCSessionDescriptionInit>
+  async initiateConnection(peerId: string): Promise<RTCSessionDescriptionInit>;
 
   /**
    * Accept an incoming offer (callee role).
@@ -1536,48 +1682,49 @@ class PeerManager {
    */
   async acceptOffer(
     peerId: string,
-    offer: RTCSessionDescriptionInit
-  ): Promise<RTCSessionDescriptionInit>
+    offer: RTCSessionDescriptionInit,
+  ): Promise<RTCSessionDescriptionInit>;
 
   /**
    * Apply an SDP answer from the callee.
    */
   async applyAnswer(
     peerId: string,
-    answer: RTCSessionDescriptionInit
-  ): Promise<void>
+    answer: RTCSessionDescriptionInit,
+  ): Promise<void>;
 
   /**
    * Add an ICE candidate to an existing connection.
    */
   async addIceCandidate(
     peerId: string,
-    candidate: RTCIceCandidateInit
-  ): Promise<void>
+    candidate: RTCIceCandidateInit,
+  ): Promise<void>;
 
   /** Send a packet via DataChannel to a peer */
-  sendPacket(peerId: string, packet: DataChannelPacket): boolean
+  sendPacket(peerId: string, packet: DataChannelPacket): boolean;
 
   /** Get the DataChannel for a peer (or null if not connected) */
-  getDataChannel(peerId: string): RTCDataChannel | null
+  getDataChannel(peerId: string): RTCDataChannel | null;
 
   /** Check if peer is connected */
-  isConnected(peerId: string): boolean
+  isConnected(peerId: string): boolean;
 
   /** Close connection to a peer */
-  closeConnection(peerId: string): void
+  closeConnection(peerId: string): void;
 
   /** Set callback for incoming data channel messages */
-  onMessage(peerId: string, handler: (packet: DataChannelPacket) => void): void
+  onMessage(peerId: string, handler: (packet: DataChannelPacket) => void): void;
 
   /** Set callback for connection state changes */
-  onStateChange(peerId: string, handler: (state: string) => void): void
+  onStateChange(peerId: string, handler: (state: string) => void): void;
 }
 
 export const peerManager = new PeerManager();
 ```
 
 **07.2** Create `lib/p2p/data-channel.ts`:
+
 ```ts
 /**
  * Serialize and send an encrypted message packet over DataChannel.
@@ -1586,8 +1733,8 @@ export async function sendEncryptedMessage(
   peerId: string,
   message: OutgoingMessage,
   mySecretKey: Uint8Array,
-  peerPublicKey: Uint8Array
-): Promise<boolean>
+  peerPublicKey: Uint8Array,
+): Promise<boolean>;
 
 /**
  * Handle an incoming raw DataChannel message.
@@ -1598,8 +1745,8 @@ export async function handleIncomingPacket(
   rawData: string,
   mySecretKey: Uint8Array,
   peerPublicKey: Uint8Array,
-  handlers: PacketHandlers
-): Promise<void>
+  handlers: PacketHandlers,
+): Promise<void>;
 
 interface PacketHandlers {
   onMessage: (msg: DecryptedMessage) => void;
@@ -1617,6 +1764,7 @@ interface PacketHandlers {
 ```
 
 **07.3** Create `lib/hooks/usePeer.ts`:
+
 ```ts
 /**
  * Hook that manages the WebRTC connection to a specific peer.
@@ -1632,10 +1780,11 @@ export function usePeer(peerId: string): {
   connect: () => Promise<void>;
   disconnect: () => void;
   sendMessage: (message: OutgoingMessage) => Promise<boolean>;
-}
+};
 ```
 
 **07.4** Create `lib/hooks/useCall.ts`:
+
 ```ts
 /**
  * Hook for managing a WebRTC video/audio call to a peer.
@@ -1656,10 +1805,11 @@ export function useCall(peerId: string): {
   toggleCamera: () => void;
   toggleSpeaker: () => void;
   flipCamera: () => void;
-}
+};
 ```
 
 **07.5** Create `stores/call.store.ts` (Zustand):
+
 ```ts
 interface CallState {
   activeCallPeerId: string | null;
@@ -1680,14 +1830,17 @@ interface CallState {
 ---
 
 ### TASK 08 — Contacts / Peer Discovery Screen
+
 **Estimated complexity**: Medium | **Files created**: ~6
 
 #### Objective
+
 Build the contacts screen where users can add peers by phone number (or scan QR code), see who's online, and initiate chats or calls.
 
 #### Steps
 
 **08.1** Create `components/contacts/OnlineIndicator.tsx`:
+
 ```tsx
 // Green dot (online) or gray dot (offline) with optional "X min ago" label
 interface OnlineIndicatorProps {
@@ -1698,6 +1851,7 @@ interface OnlineIndicatorProps {
 ```
 
 **08.2** Create `components/contacts/PeerCard.tsx`:
+
 ```tsx
 // Full-width card showing peer info + online status + action buttons
 interface PeerCardProps {
@@ -1711,12 +1865,14 @@ interface PeerCardProps {
 ```
 
 **08.3** Create `components/contacts/ContactList.tsx`:
+
 - Renders a `FlashList` of `PeerCard` components
 - Sorted: online contacts first, then alphabetical
 - Section header "Online Now" and "Others"
 - Empty state: illustration + "No contacts yet. Add someone by their phone number."
 
 **08.4** Create `app/(tabs)/contacts.tsx`:
+
 ```
 ┌─────────────────────────────────────┐
 │  Contacts              [+] [QR]     │
@@ -1737,18 +1893,21 @@ interface PeerCardProps {
 ```
 
 **08.5** Create "Add Contact" bottom sheet (`components/contacts/AddContactSheet.tsx`):
+
 - Phone number input with country picker
 - "Add" button → validates number → checks if peer is on SecureLink (via GUN presence)
 - If found: shows their display name + "Add Contact" confirm
 - If not found: "This person isn't on SecureLink yet. Invite them?"
 
 **08.6** Create "QR Code" modal (`components/contacts/QRModal.tsx`):
+
 - Shows own QR code (encodes: `securelink://add/{peerId}/{publicKeyHex}/{displayName}`)
 - Scanner mode: uses expo-camera to scan a peer's QR
 - On successful scan: decodes peer info, shows "Add {name}?" confirmation dialog
 - On add: stores peer + marks as `qr_verified` (highest trust level)
 
 **08.7** Create `app/profile/[peerId].tsx`:
+
 ```
 ┌─────────────────────────────────────┐
 │  ← Back    Bob D.                  │
@@ -1773,14 +1932,17 @@ interface PeerCardProps {
 ---
 
 ### TASK 09 — Chat Engine & Message Store
+
 **Estimated complexity**: Very High | **Files created**: ~10
 
 #### Objective
+
 Build the full 1-on-1 chat screen with real-time message delivery, status tracking (sent/delivered/read), and offline message queuing.
 
 #### Steps
 
 **09.1** Create `lib/hooks/useMessages.ts`:
+
 ```ts
 /**
  * Returns live-updating messages for a conversation.
@@ -1791,11 +1953,12 @@ export function useMessages(conversationId: string): {
   isLoading: boolean;
   loadMore: () => void;
   hasMore: boolean;
-}
+};
 ```
 
 **09.2** Create `components/chat/MessageBubble.tsx`:
 Full component handling all message types:
+
 - `text`: styled text bubble with timestamp + status icons (⏳ → ✓ → ✓✓ → ✓✓ blue)
 - `image`: thumbnail with tap-to-expand, loading shimmer
 - `video`: thumbnail with play button overlay
@@ -1807,12 +1970,14 @@ Full component handling all message types:
 - Swipe right → Reply
 
 **09.3** Create `components/chat/MessageInput.tsx`:
+
 ```
 ┌────────────────────────────────────────┐
 │ [📎]  Type a message...         [🎤] │
 │                                 [➤]  │
 └────────────────────────────────────────┘
 ```
+
 - Auto-growing text input (max 6 lines before scroll)
 - Attachment picker icon → opens `AttachmentPicker`
 - Mic icon (hold to record voice message)
@@ -1821,23 +1986,27 @@ Full component handling all message types:
 
 **09.4** Create `components/chat/AttachmentPicker.tsx`:
 Bottom sheet with:
+
 - 📷 Camera → take photo
 - 🖼️ Photo Library → pick images (multiple)
 - 📁 Files → document picker (any file type, any size)
 - 🎵 Audio → pick audio file
 
 **09.5** Create `components/chat/ChatHeader.tsx`:
+
 ```
 ┌────────────────────────────────────────┐
 │ ← 👤 Bob D.          🟢 Online  [📹] │
 └────────────────────────────────────────┘
 ```
+
 - Back button, peer avatar, name, online status
 - Video call shortcut button
 - Tap header → navigate to peer profile
 
 **09.6** Create `app/chat/[peerId].tsx`:
 Main chat screen:
+
 ```tsx
 export default function ChatScreen() {
   const { peerId } = useLocalSearchParams();
@@ -1845,7 +2014,9 @@ export default function ChatScreen() {
   const { messages, loadMore } = useMessages(conversationId);
 
   // Ensure connection is established
-  useEffect(() => { if (!isConnected) connect(); }, [peerId]);
+  useEffect(() => {
+    if (!isConnected) connect();
+  }, [peerId]);
 
   return (
     <SafeAreaView>
@@ -1866,6 +2037,7 @@ export default function ChatScreen() {
 ```
 
 **09.7** Create `lib/p2p/message-handler.ts`:
+
 ```ts
 /**
  * Central handler for all incoming DataChannel messages.
@@ -1873,23 +2045,27 @@ export default function ChatScreen() {
  */
 export class MessageHandler {
   /** Handle text message: decrypt, validate, store in SQLite */
-  async handleTextMessage(peerId: string, msg: EncryptedMessage): Promise<void>
+  async handleTextMessage(peerId: string, msg: EncryptedMessage): Promise<void>;
 
   /** Handle delivery receipt: update message status in SQLite */
-  async handleDeliveryReceipt(peerId: string, receipt: DeliveryReceipt): Promise<void>
+  async handleDeliveryReceipt(
+    peerId: string,
+    receipt: DeliveryReceipt,
+  ): Promise<void>;
 
   /** Handle read receipt: update message read status */
-  async handleReadReceipt(peerId: string, receipt: ReadReceipt): Promise<void>
+  async handleReadReceipt(peerId: string, receipt: ReadReceipt): Promise<void>;
 
   /** Send delivery receipt back to sender */
-  async sendDeliveryReceipt(peerId: string, messageId: string): Promise<void>
+  async sendDeliveryReceipt(peerId: string, messageId: string): Promise<void>;
 
   /** Send read receipt when message is visible */
-  async sendReadReceipt(peerId: string, messageId: string): Promise<void>
+  async sendReadReceipt(peerId: string, messageId: string): Promise<void>;
 }
 ```
 
 **09.8** Implement offline message queue (GUN-based):
+
 ```ts
 // When peer is offline, encrypt message and write to:
 // securelink/v1/queue/{target_peer_id}/{message_id}
@@ -1898,16 +2074,17 @@ export class MessageHandler {
 
 export async function queueOfflineMessage(
   targetPeerId: string,
-  encryptedMessage: EncryptedPayload
-): Promise<void>
+  encryptedMessage: EncryptedPayload,
+): Promise<void>;
 
 export async function drainOfflineQueue(
   myPeerId: string,
-  onMessage: (msg: EncryptedPayload) => void
-): Promise<void>
+  onMessage: (msg: EncryptedPayload) => void,
+): Promise<void>;
 ```
 
 **09.9** Create `app/(tabs)/chats.tsx` (conversation list):
+
 ```
 ┌─────────────────────────────────────┐
 │  SecureLink 🔒           [✏️] [⚙️]  │
@@ -1922,10 +2099,12 @@ export async function drainOfflineQueue(
 │  └─────────────────────────────┘   │
 └─────────────────────────────────────┘
 ```
+
 Uses `useLiveQuery` so new messages update the list in real time.
 Swipe left on conversation → Archive / Delete options.
 
 **09.10** Implement the **Disappearing Messages** feature:
+
 - Per-conversation setting: 24h, 7d, 30d, or Off
 - On each app launch: delete SQLite messages older than the configured duration
 - Attachment files are also deleted from expo-file-system
@@ -1933,14 +2112,17 @@ Swipe left on conversation → Archive / Delete options.
 ---
 
 ### TASK 10 — File Transfer Engine
+
 **Estimated complexity**: Very High | **Files created**: ~6
 
 #### Objective
+
 Implement unlimited file transfer via WebRTC DataChannel using chunking. Files of any size (photos, videos, documents) are transferred in 16 KB encrypted chunks.
 
 #### Steps
 
 **10.1** Create `lib/transfer/chunker.ts`:
+
 ```ts
 const CHUNK_SIZE = 16 * 1024; // 16 KB — WebRTC DataChannel max reliable size
 
@@ -1965,29 +2147,35 @@ interface FileChunk {
 ```
 
 **10.2** Create `lib/transfer/assembler.ts`:
+
 ```ts
 /**
  * Receives chunks and assembles them back into a file.
  * Writes to expo-file-system's document directory.
  */
 export class FileAssembler {
-  constructor(private fileId: string, private meta: FileMeta, private fileKey: Uint8Array) {}
+  constructor(
+    private fileId: string,
+    private meta: FileMeta,
+    private fileKey: Uint8Array,
+  ) {}
 
   /** Add a received chunk */
-  addChunk(chunk: FileChunk): void
+  addChunk(chunk: FileChunk): void;
 
   /** Returns 0–100 progress */
-  get progress(): number
+  get progress(): number;
 
   /** Returns true when all chunks received */
-  get isComplete(): boolean
+  get isComplete(): boolean;
 
   /** Assembles and writes the final file. Returns local URI. */
-  async finalize(): Promise<string>
+  async finalize(): Promise<string>;
 }
 ```
 
 **10.3** Create `lib/transfer/progress.ts`:
+
 ```ts
 /** Tracks in-progress file transfers */
 interface TransferProgress {
@@ -2003,15 +2191,20 @@ interface TransferProgress {
 ```
 
 **10.4** Create `lib/hooks/useTransfer.ts`:
+
 ```ts
 /**
  * Hook for sending a file to a peer.
  */
 export function useSendFile(peerId: string): {
-  sendFile: (fileUri: string, fileName: string, mimeType: string) => Promise<void>;
+  sendFile: (
+    fileUri: string,
+    fileName: string,
+    mimeType: string,
+  ) => Promise<void>;
   transfers: TransferProgress[];
   cancelTransfer: (fileId: string) => void;
-}
+};
 
 /**
  * Hook for tracking incoming file transfers from a peer.
@@ -2019,10 +2212,11 @@ export function useSendFile(peerId: string): {
 export function useReceiveFiles(peerId: string): {
   incomingTransfers: TransferProgress[];
   savedFiles: SavedFile[];
-}
+};
 ```
 
 **10.5** Create `components/chat/FilePreview.tsx`:
+
 ```tsx
 // Inline file preview in chat bubble
 // Shows different UI depending on mime type:
@@ -2034,6 +2228,7 @@ export function useReceiveFiles(peerId: string): {
 ```
 
 **10.6** Create `components/chat/TransferProgressBar.tsx`:
+
 ```tsx
 // Animated progress bar with:
 // - Progress percentage
@@ -2045,6 +2240,7 @@ export function useReceiveFiles(peerId: string): {
 
 **10.7** Create `app/modal/attachment-viewer.tsx`:
 Full-screen attachment viewer:
+
 - Images: pinch-to-zoom + swipe to dismiss
 - Videos: expo-av video player with controls
 - Audio: expo-av audio player with waveform
@@ -2055,14 +2251,17 @@ Full-screen attachment viewer:
 ---
 
 ### TASK 11 — Image & Media Sharing
+
 **Estimated complexity**: Medium | **Files created**: ~4
 
 #### Objective
+
 Ensure images and videos are sent at **original quality** — no compression unless user explicitly opts in. Implement BlurHash-based loading placeholders.
 
 #### Steps
 
 **11.1** Create `lib/media/image-processor.ts`:
+
 ```ts
 /**
  * Prepares an image for sending.
@@ -2071,22 +2270,23 @@ Ensure images and videos are sent at **original quality** — no compression unl
  */
 export async function prepareImageForSend(
   uri: string,
-  options?: { compress?: boolean; maxWidth?: number }
-): Promise<PreparedMedia>
+  options?: { compress?: boolean; maxWidth?: number },
+): Promise<PreparedMedia>;
 
 /**
  * Generates a BlurHash placeholder for an image.
  * Sent alongside the image for instant preview while loading.
  */
-export async function generateBlurHash(imageUri: string): Promise<string>
+export async function generateBlurHash(imageUri: string): Promise<string>;
 
 /**
  * Get image dimensions + EXIF data without loading full image.
  */
-export async function getImageMetadata(uri: string): Promise<ImageMetadata>
+export async function getImageMetadata(uri: string): Promise<ImageMetadata>;
 ```
 
 **11.2** Create `components/chat/ImageMessage.tsx`:
+
 ```tsx
 // Chat bubble variant for image messages
 // - BlurHash placeholder while loading/transferring
@@ -2101,34 +2301,39 @@ interface ImageMessageProps {
 ```
 
 **11.3** Update `components/chat/AttachmentPicker.tsx` to:
+
 - Show multi-select image picker (expo-image-picker)
 - Preview selected images in a horizontal scroll
 - Show file size warning for files > 100 MB
 - For images: "Send Original" vs "Send Compressed" option
 
 **11.4** Create `lib/media/video-processor.ts`:
+
 ```ts
 /**
  * Extract thumbnail from video at 0.5s mark.
  * Returns URI of thumbnail image.
  */
-export async function extractVideoThumbnail(videoUri: string): Promise<string>
+export async function extractVideoThumbnail(videoUri: string): Promise<string>;
 
 /** Get video duration in milliseconds */
-export async function getVideoDuration(videoUri: string): Promise<number>
+export async function getVideoDuration(videoUri: string): Promise<number>;
 ```
 
 ---
 
 ### TASK 12 — 1-on-1 Video Call Screen
+
 **Estimated complexity**: Very High | **Files created**: ~5
 
 #### Objective
+
 Implement WebRTC video and audio calling with full call controls.
 
 #### Steps
 
 **12.1** Create `app/call/[peerId].tsx`:
+
 ```
 Full-screen video call layout:
 
@@ -2150,6 +2355,7 @@ Full-screen video call layout:
 ```
 
 Implementation:
+
 - `RTCView` for both local and remote streams
 - Local stream: Picture-in-Picture (PiP) small overlay, draggable
 - Full screen tap → toggle controls visibility
@@ -2158,6 +2364,7 @@ Implementation:
 - Connection quality indicator (ICE state)
 
 **12.2** Create `components/call/CallControls.tsx`:
+
 ```tsx
 // Row of circular icon buttons:
 // Mute mic | Toggle camera | Flip camera | Speaker | End call
@@ -2166,6 +2373,7 @@ Implementation:
 ```
 
 **12.3** Create `components/call/IncomingCallBanner.tsx`:
+
 ```tsx
 // Shows when receiving an incoming call while app is open
 // Full-screen overlay with caller info
@@ -2174,10 +2382,12 @@ Implementation:
 ```
 
 **12.4** Create `app/modal/call-incoming.tsx`:
+
 - Shown as a modal when an incoming call arrives while the user is in a chat
 - Also used when the app is in background (via notification)
 
 **12.5** Implement call signaling flow in `lib/hooks/useCall.ts`:
+
 ```ts
 // Outgoing call:
 // 1. Start local media stream
@@ -2204,40 +2414,44 @@ Implementation:
 ---
 
 ### TASK 13 — Notifications & Background Handling
+
 **Estimated complexity**: Medium | **Files created**: ~4
 
 #### Objective
+
 Show local notifications for new messages and incoming calls when the app is backgrounded. No push notification server needed — use local scheduling.
 
 #### Steps
 
 **13.1** Configure `expo-notifications` for local notifications only:
+
 ```ts
 // lib/notifications.ts
 import * as Notifications from "expo-notifications";
 
 /** Initialize notification handler + request permissions */
-export async function setupNotifications(): Promise<void>
+export async function setupNotifications(): Promise<void>;
 
 /** Show a notification for a new message */
 export async function showMessageNotification(
   senderName: string,
   messagePreview: string, // "(Photo)" or first 50 chars
-  peerId: string
-): Promise<void>
+  peerId: string,
+): Promise<void>;
 
 /** Show a notification for an incoming call */
 export async function showCallNotification(
   callerName: string,
   callId: string,
-  isVideo: boolean
-): Promise<void>
+  isVideo: boolean,
+): Promise<void>;
 
 /** Cancel a call notification (user already answered in-app) */
-export async function cancelCallNotification(callId: string): Promise<void>
+export async function cancelCallNotification(callId: string): Promise<void>;
 ```
 
 **13.2** Create `expo-background-fetch` task for re-connecting to GUN and WebRTC:
+
 ```ts
 // lib/background/fetch-task.ts
 // Every 15 minutes (minimum iOS allows) — re-check GUN for offline messages
@@ -2245,11 +2459,13 @@ export async function cancelCallNotification(callId: string): Promise<void>
 ```
 
 **13.3** Handle foreground/background state in `PresenceManager`:
+
 - On background → stop presence announcements
 - On foreground → immediately re-announce + reconnect peers
 - Use `AppState` from React Native
 
 **13.4** Handle deep links for notifications:
+
 ```ts
 // app.json: scheme = "securelink"
 // securelink://chat/{peerId} → open chat screen
@@ -2259,14 +2475,17 @@ export async function cancelCallNotification(callId: string): Promise<void>
 ---
 
 ### TASK 14 — Settings, Profile & Security
+
 **Estimated complexity**: Medium | **Files created**: ~5
 
 #### Objective
+
 Build the settings screen with all security and privacy controls.
 
 #### Steps
 
 **14.1** Create `app/(tabs)/settings.tsx`:
+
 ```
 ┌─────────────────────────────────────┐
 │  Settings                           │
@@ -2298,11 +2517,13 @@ Build the settings screen with all security and privacy controls.
 ```
 
 **14.2** Implement **App Lock** with `expo-local-authentication`:
+
 - Biometric (Face ID / fingerprint) authentication on app launch
 - Option to require auth after 1 min / 5 min / every time
 - Falls back to device PIN
 
 **14.3** Implement **Chat Backup / Export**:
+
 ```ts
 // Export all conversations as an encrypted JSON file
 // Encrypted with user-defined passphrase (Argon2id KDF)
@@ -2311,6 +2532,7 @@ Build the settings screen with all security and privacy controls.
 ```
 
 **14.4** Implement **Delete All Data**:
+
 ```ts
 // 1. Close all WebRTC connections
 // 2. Delete SQLite database file
@@ -2325,20 +2547,24 @@ Build the settings screen with all security and privacy controls.
 ---
 
 ### TASK 15 — QA Hardening & Final Polish
+
 **Estimated complexity**: Medium | **Files created**: ~3
 
 #### Objective
+
 Final pass — error handling, edge cases, performance, and UX polish.
 
 #### Steps
 
 **15.1** Error boundary implementation:
+
 - Wrap all screens in React error boundaries
 - Network errors: show "No connection — messages will be sent when online"
 - WebRTC errors: auto-retry with user-friendly messaging
 - Crypto errors: "Could not decrypt message" placeholder bubble
 
 **15.2** Performance optimization:
+
 - `FlashList` for all long lists (not FlatList)
 - Image lazy loading with `expo-image`
 - Message list virtualization — don't render > 100 messages at once
@@ -2346,11 +2572,13 @@ Final pass — error handling, edge cases, performance, and UX polish.
 - Drizzle `useLiveQuery` — already reactive, no polling needed
 
 **15.3** Accessibility:
+
 - All interactive elements have `accessibilityLabel`
 - Support Dynamic Type (font scaling)
 - VoiceOver / TalkBack compatibility for core flows
 
 **15.4** Final security audit checklist:
+
 ```
 [ ] Secret keys NEVER logged to console
 [ ] Secret keys NEVER stored in SQLite (Secure Store only)
@@ -2364,6 +2592,7 @@ Final pass — error handling, edge cases, performance, and UX polish.
 ```
 
 **15.5** Production build configuration:
+
 ```json
 // eas.json
 {
@@ -2380,37 +2609,37 @@ Final pass — error handling, edge cases, performance, and UX polish.
 
 ## 10. Summary — Task Execution Order
 
-| # | Task | Complexity | Depends On |
-|---|------|-----------|------------|
-| 01 | Project Scaffold | Low | — |
-| 02 | Design System (shadcn/NativeWind) | Medium | 01 |
-| 03 | Database & Drizzle ORM | Medium | 01 |
-| 04 | Phone Identity & SIM Verification | High | 02, 03 |
-| 05 | E2E Encryption Layer | High | 03, 04 |
-| 06 | GUN.js Signaling & Discovery | High | 04, 05 |
-| 07 | WebRTC Core Engine | Very High | 05, 06 |
-| 08 | Contacts / Peer Discovery Screen | Medium | 06, 07 |
-| 09 | Chat Engine & Message Store | Very High | 07, 08 |
-| 10 | File Transfer Engine | Very High | 07, 09 |
-| 11 | Image & Media Sharing | Medium | 10 |
-| 12 | Video Call Screen | Very High | 07, 09 |
-| 13 | Notifications & Background | Medium | 09, 12 |
-| 14 | Settings, Profile & Security | Medium | 03, 04, 05 |
-| 15 | QA & Polish | Medium | All |
+| #   | Task                              | Complexity | Depends On |
+| --- | --------------------------------- | ---------- | ---------- |
+| 01  | Project Scaffold                  | Low        | —          |
+| 02  | Design System (shadcn/NativeWind) | Medium     | 01         |
+| 03  | Database & Drizzle ORM            | Medium     | 01         |
+| 04  | Phone Identity & SIM Verification | High       | 02, 03     |
+| 05  | E2E Encryption Layer              | High       | 03, 04     |
+| 06  | GUN.js Signaling & Discovery      | High       | 04, 05     |
+| 07  | WebRTC Core Engine                | Very High  | 05, 06     |
+| 08  | Contacts / Peer Discovery Screen  | Medium     | 06, 07     |
+| 09  | Chat Engine & Message Store       | Very High  | 07, 08     |
+| 10  | File Transfer Engine              | Very High  | 07, 09     |
+| 11  | Image & Media Sharing             | Medium     | 10         |
+| 12  | Video Call Screen                 | Very High  | 07, 09     |
+| 13  | Notifications & Background        | Medium     | 09, 12     |
+| 14  | Settings, Profile & Security      | Medium     | 03, 04, 05 |
+| 15  | QA & Polish                       | Medium     | All        |
 
 ---
 
 ## 11. Known Constraints & Workarounds
 
-| Constraint | Workaround |
-|---|---|
-| iOS cannot read SIM number | User self-attests their number; shown warning |
-| WebRTC not in Expo Go | Must use Expo Dev Client (`eas build --profile development`) |
-| GUN.js public relays may be slow | Bundle 4 relay URLs; connect to all simultaneously |
-| DataChannel max message size ~256KB | Chunking (16 KB) with reassembly handles any file size |
-| iOS background execution very limited | Local notifications bridge gap; GUN queue holds offline messages |
-| WebRTC on strict NAT | TURN server fallback (open relay) included |
-| SQLite performance on large message history | Pagination + FlashList virtualization |
+| Constraint                                  | Workaround                                                       |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| iOS cannot read SIM number                  | User self-attests their number; shown warning                    |
+| WebRTC not in Expo Go                       | Must use Expo Dev Client (`eas build --profile development`)     |
+| GUN.js public relays may be slow            | Bundle 4 relay URLs; connect to all simultaneously               |
+| DataChannel max message size ~256KB         | Chunking (16 KB) with reassembly handles any file size           |
+| iOS background execution very limited       | Local notifications bridge gap; GUN queue holds offline messages |
+| WebRTC on strict NAT                        | TURN server fallback (open relay) included                       |
+| SQLite performance on large message history | Pagination + FlashList virtualization                            |
 
 ---
 
@@ -2425,9 +2654,9 @@ Final pass — error handling, edge cases, performance, and UX polish.
 ✅ **No metadata leakage**: File names and sizes are encrypted in transit  
 ✅ **Open TURN**: Uses community TURN servers, not a proprietary server we control  
 ✅ **Disappearing messages**: Auto-delete from SQLite after configurable duration  
-✅ **Biometric lock**: Device-level authentication guards app entry  
+✅ **Biometric lock**: Device-level authentication guards app entry
 
 ---
 
-*End of PRD — SecureLink v1.0*  
-*Generated for AI-assisted development. Execute tasks sequentially.*
+_End of PRD — SecureLink v1.0_  
+_Generated for AI-assisted development. Execute tasks sequentially._

@@ -183,12 +183,8 @@
           "name": "conversations_peer_id_peers_id_fk",
           "tableFrom": "conversations",
           "tableTo": "peers",
-          "columnsFrom": [
-            "peer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["peer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -274,9 +270,7 @@
       "indexes": {
         "identity_phone_number_unique": {
           "name": "identity_phone_number_unique",
-          "columns": [
-            "phone_number"
-          ],
+          "columns": ["phone_number"],
           "isUnique": true
         }
       },
@@ -396,12 +390,8 @@
           "name": "messages_conversation_id_conversations_id_fk",
           "tableFrom": "messages",
           "tableTo": "conversations",
-          "columnsFrom": [
-            "conversation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["conversation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
