@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { identity } from "@/db/schema";
 import { db } from "@/db/client";
-import { useIdentityStore } from "@/stores/identity.store";
+import { useIdentityStore } from "@/src/store/identityStore";
 import { eq } from "drizzle-orm";
 import { generateBoxKeypair, generateSignKeypair } from "./crypto/identity";
 import { encodeBase64 } from "tweetnacl-util";

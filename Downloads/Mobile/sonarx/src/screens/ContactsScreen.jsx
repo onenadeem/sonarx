@@ -16,6 +16,7 @@ import { usePresenceStore } from '@/src/store/presenceStore';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { spacing, typography } from '@/src/theme/tokens';
 import { Strings } from '@/src/constants/strings';
+import { ROUTES } from '@/src/constants/routes';
 class ContactsErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -135,7 +136,7 @@ function ContactsScreenInner() {
         setIsNavigating(true);
         try {
             await getOrCreateConversation(contact.id);
-            router.push(`/chat/${contact.id}`);
+            router.push(ROUTES.CHAT(contact.id));
         }
         catch (error) {
             console.error('[ContactsScreen] Failed to open conversation', error);
@@ -158,7 +159,7 @@ function ContactsScreenInner() {
         <Header title="Contacts" rightActions={[
             {
                 icon: 'person-add-outline',
-                onPress: () => router.push('/modal'),
+                onPress: () => router.push(ROUTES.MODAL_ADD_CONTACT),
                 accessibilityLabel: 'Add contact',
             },
         ]}/>

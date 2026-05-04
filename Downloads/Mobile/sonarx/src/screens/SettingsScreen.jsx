@@ -10,8 +10,8 @@ import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop, BottomSheetScro
 import { usePreventRemove } from '@react-navigation/native';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { eq } from 'drizzle-orm';
-import { usePeersStore } from '@/stores/peers.store';
-import { useCallStore } from '@/stores/call.store';
+import { usePeersStore } from '@/src/store/peersStore';
+import { useCallStore } from '@/src/store/callStore';
 import { useMessagesStore } from '@/src/store/messagesStore';
 import { useContactsStore } from '@/src/store/contactsStore';
 import { usePresenceStore } from '@/src/store/presenceStore';
@@ -29,7 +29,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { useScrollToTop } from '@/src/hooks/useScrollToTop';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { borderRadius, spacing, typography } from '@/src/theme/tokens';
-import { useIdentityStore } from '@/stores/identity.store';
+import { useIdentityStore } from '@/src/store/identityStore';
 import { Strings } from '@/src/constants/strings';
 import { SETTINGS_SCREEN_MAX_WIDTH } from '@/src/constants/layout';
 
@@ -1219,7 +1219,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
     },
     editNameSection: {
-        paddingVertical: spacing.md,
+        padding: spacing.md,
         borderBottomWidth: StyleSheet.hairlineWidth,
     },
     editNameButtonsRow: {

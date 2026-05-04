@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { mediaDevices, } from "react-native-webrtc";
-import { useCallStore } from "@/stores/call.store";
+import { useCallStore } from "@/src/store/callStore";
 import { sendCallEnd, } from "@/lib/p2p/data-channel";
 const stopStreamTracks = (stream) => {
     stream?.getTracks().forEach((track) => track.stop());

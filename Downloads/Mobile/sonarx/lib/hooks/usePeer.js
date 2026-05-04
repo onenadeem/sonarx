@@ -1,41 +1,42 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { peerManager } from "@/lib/p2p/peer-manager";
 import { sendMessagePacket, handleIncomingPacket, } from "@/lib/p2p/data-channel";
+import logger from "@/src/utils/logger";
 
 const createPeerHandlers = ({ setIsConnected, setIsConnecting, setConnectionError }) => {
     return {
         onMessage: (msg) => {
-            console.log("Received message:", msg);
+            logger.log("Received message:", msg);
         },
         onFileMetadata: (meta) => {
-            console.log("File transfer started:", meta);
+            logger.log("File transfer started:", meta);
         },
         onFileChunk: (chunk) => {
-            console.log("Received file chunk:", chunk.chunkIndex);
+            logger.log("Received file chunk:", chunk.chunkIndex);
         },
         onFileAck: (ack) => {
-            console.log("File chunk acknowledged:", ack.chunkIndex);
+            logger.log("File chunk acknowledged:", ack.chunkIndex);
         },
         onDeliveryReceipt: (receipt) => {
-            console.log("Message delivered:", receipt.messageId);
+            logger.log("Message delivered:", receipt.messageId);
         },
         onReadReceipt: (receipt) => {
-            console.log("Message read:", receipt.messageId);
+            logger.log("Message read:", receipt.messageId);
         },
         onTyping: (typing) => {
-            console.log("Peer typing:", typing.isTyping);
+            logger.log("Peer typing:", typing.isTyping);
         },
         onCallRequest: (req) => {
-            console.log("Incoming call:", req.callId);
+            logger.log("Incoming call:", req.callId);
         },
         onCallAccept: (accept) => {
-            console.log("Call accepted:", accept.callId);
+            logger.log("Call accepted:", accept.callId);
         },
         onCallReject: (reject) => {
-            console.log("Call rejected:", reject.callId);
+            logger.log("Call rejected:", reject.callId);
         },
         onCallEnd: (end) => {
-            console.log("Call ended:", end.callId, "duration:", end.duration);
+            logger.log("Call ended:", end.callId, "duration:", end.duration);
         },
         onStateChange: (state) => {
             setIsConnected(state === "connected");

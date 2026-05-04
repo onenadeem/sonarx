@@ -30,7 +30,7 @@ import { messages as messagesTable } from "@/db/schema";
 import { insertMessage } from "@/db/queries";
 import { getOrCreateConversation } from "@/db/queries";
 import { useMessages } from "@/lib/hooks/useMessages";
-import { useIdentityStore } from "@/stores/identity.store";
+import { useIdentityStore } from "@/src/store/identityStore";
 import { sendGunMessage } from "@/lib/p2p/messaging";
 import Header from "@/src/components/ui/Header";
 import { useTheme } from "@/src/theme/ThemeProvider";
@@ -53,6 +53,7 @@ import ReactionBar from "@/src/components/chat/ReactionBar";
 import AttachmentPreview from "@/src/components/chat/AttachmentPreview";
 import { usePresence } from "@/src/hooks/usePresence";
 import { useResponsive } from "@/src/hooks/useResponsive";
+import { ROUTES } from "@/src/constants/routes";
 import {
   useSendTypingIndicator,
   useTypingIndicator,
@@ -1020,7 +1021,7 @@ export default function ChatScreen() {
               >
                 <View style={styles.headerActionGroup}>
                   <AnimatedPressable
-                    onPress={() => router.push(`/call/${peerId}?video=true`)}
+                    onPress={() => router.push(`${ROUTES.CALL(peerId)}?video=true`)}
                     style={headerActionButtonStyle}
                     accessibilityLabel="Video call"
                   >
@@ -1037,7 +1038,7 @@ export default function ChatScreen() {
                     ]}
                   />
                   <AnimatedPressable
-                    onPress={() => router.push(`/call/${peerId}`)}
+                    onPress={() => router.push(ROUTES.CALL(peerId))}
                     style={headerActionButtonStyle}
                     accessibilityLabel="Voice call"
                   >

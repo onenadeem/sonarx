@@ -31,7 +31,7 @@ import Animated, {
 import "react-native-reanimated";
 import "../global.css";
 
-import { useIdentityStore } from "@/stores/identity.store";
+import { useIdentityStore } from "@/src/store/identityStore";
 import { StatusBar } from "expo-status-bar";
 import "react-native-get-random-values";
 import {
@@ -42,6 +42,7 @@ import { ThemeProvider, useTheme } from "@/src/theme/ThemeProvider";
 import { spacing, typography } from "@/src/theme/tokens";
 import Avatar from "@/src/components/ui/Avatar";
 import { rootLayoutStyles, toastStyles } from "@/src/theme/screenStyles";
+import { ROUTES } from "@/src/constants/routes";
 if (!("randomUUID" in crypto)) {
   crypto.randomUUID = () => {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -184,7 +185,7 @@ function ToastLayer() {
             onDismiss={() => dismissToast(toast.id)}
             onTap={() => {
               dismissToast(toast.id);
-              router.push(`/chat/${toast.chatPeerId}`);
+              router.push(ROUTES.CHAT(toast.chatPeerId));
             }}
           />
         ))}
@@ -261,9 +262,9 @@ function RootLayoutThemedNav({ isReady }) {
   useEffect(() => {
     if (!isReady) return;
     if (!isOnboarded && !inOnboarding) {
-      router.replace("/(onboarding)/welcome");
+      router.replace(ROUTES.ONBOARDING_WELCOME);
     } else if (isOnboarded && inOnboarding) {
-      router.replace("/(tabs)/chats");
+      router.replace(ROUTES.TABS_CHATS);
     }
   }, [isReady, isOnboarded, inOnboarding]);
   // Register for push notifications and set up deep-link handler

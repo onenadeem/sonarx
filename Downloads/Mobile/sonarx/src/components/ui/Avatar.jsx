@@ -36,13 +36,12 @@ function getInitials(name) {
     }
     return name.trim().charAt(0).toUpperCase();
 }
-export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false, isOnline = false, selected = false, style, }) {
+export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false, isOnline = false, style, }) {
     const { colors } = useTheme();
     const dimension = typeof size === 'number' ? size : SIZE_MAP[size];
     const initialsSize = Math.max(MIN_INITIAL_FONT_SIZE, Math.round(dimension * 0.34));
     const initials = getInitials(name);
     const badgeSize = Math.max(MIN_BADGE_SIZE, Math.round(dimension * 0.25));
-    const borderStyle = resolveBorderStyle(colors, selected);
     return (<View style={[styles.container, style]}>
       {uri ? (<Image source={{ uri }} style={[
                 styles.avatar,
@@ -50,7 +49,7 @@ export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false
                     width: dimension,
                     height: dimension,
                     borderRadius: dimension / 2,
-                    ...borderStyle,
+                    borderWidth: StyleSheet.hairlineWidth,
                 },
             ]} contentFit="cover"/>) : (<View style={[
                 styles.avatar,
@@ -58,8 +57,9 @@ export default function Avatar({ uri, name, size = 'md', showOnlineBadge = false
                     width: dimension,
                     height: dimension,
                     borderRadius: dimension / 2,
-                    backgroundColor: getColorFromName(name),
-                    ...borderStyle,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    borderWidth: StyleSheet.hairlineWidth,
                 },
             ]}>
           <Text style={[

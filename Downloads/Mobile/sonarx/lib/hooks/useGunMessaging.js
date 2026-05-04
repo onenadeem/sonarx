@@ -1,13 +1,14 @@
 import { useEffect, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import { decodeBase64 } from "tweetnacl-util";
-import { useIdentityStore } from "@/stores/identity.store";
+import { useIdentityStore } from "@/src/store/identityStore";
 import { subscribeToInbox } from "@/lib/p2p/messaging";
 import { decryptFromPeer } from "@/lib/crypto/box";
 import { db } from "@/db/client";
 import { messages } from "@/db/schema";
 import { getOrCreateConversation, insertMessage } from "@/db/queries";
 import { eq } from "drizzle-orm";
+import logger from "@/src/utils/logger";
 const SECRET_KEY_STORE_KEY = "resonar-secret-keys";
 /**
  * Subscribe to the GUN inbox for the current user.
@@ -59,13 +60,13 @@ export function useGunMessaging() {
                         where: (peers, { eq }) => eq(peers.id, msg.fromPeerId),
                     });
                     if (!peer) {
-                        console.warn("[GunMessaging] Message from unknown peer:", msg.fromPeerId);
+                        logger.warn("[GunMessaging] Message from unknown peer:", msg.fromPeerId);
                         return;
                     }
                     // Decrypt
                     const decrypted = decryptFromPeer({ ciphertext: msg.ciphertext, nonce: msg.nonce }, decodeBase64(peer.publicKey), mySecretKey);
                     if (!decrypted) {
-                        console.warn("[GunMessaging] Decryption failed from:", msg.fromPeerId);
+                        logger.warn("[GunMessaging] Decryption failed from:", msg.fromPeerId);
                         return;
                     }
                     // Save to local DB
@@ -79,7 +80,7 @@ export function useGunMessaging() {
                         sentAt: new Date(msg.timestamp),
                         status: "delivered",
                     });
-                    console.log("[GunMessaging] Received message from:", msg.fromPeerId);
+                    logger.log("[GunMessaging] Received message from:", msg.fromPeerId);
                 }
                 catch (err) {
                     console.error("[GunMessaging] Error handling message:", err);

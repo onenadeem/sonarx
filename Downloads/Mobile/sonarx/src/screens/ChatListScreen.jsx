@@ -22,6 +22,7 @@ import { Strings } from '@/src/constants/strings';
 import { formatMessageTime } from '@/src/utils/formatTime';
 import SonarXLogo from '@/components/SonarXLogo';
 import { CHAT_LIST_MAX_WIDTH } from '@/src/constants/layout';
+import { ROUTES } from '@/src/constants/routes';
 class ChatListErrorBoundary extends Component {
     state = { hasError: false };
     static getDerivedStateFromError() {
@@ -172,7 +173,7 @@ function ChatListScreenInner() {
             ? CHAT_LIST_MAX_WIDTH.tablet
             : undefined;
     const navigateToContacts = useCallback(() => {
-        router.push('/(tabs)/contacts');
+        router.push(ROUTES.TABS_CONTACTS);
     }, [router]);
     const renderItem = useCallback(({ item }) => (<ConversationRow item={item} onPress={() => router.push({
             pathname: '/chat/[peerId]',

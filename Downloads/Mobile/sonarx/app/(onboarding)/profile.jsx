@@ -4,234 +4,244 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { H1, Muted } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import { Avatar } from "@/components/ui/avatar";
+import { H1, Muted, Text } from "@/src/components/common/Typography";
+import Button from "@/src/components/ui/Button";
+import TextInput from "@/src/components/ui/TextInput";
+import Avatar from "@/src/components/ui/Avatar";
 import { createIdentity } from "@/lib/identity";
 import SonarXLogo from "@/components/SonarXLogo";
 import { useTheme } from "@/src/theme/ThemeProvider";
 import { spacing, typography } from "@/src/theme/tokens";
+import { ROUTES } from "@/src/constants/routes";
+
 export default function ProfileScreen() {
-    const router = useRouter();
-    const { phoneNumber } = useLocalSearchParams();
-    const { colors, isDark } = useTheme();
-    const buttonBackground = isDark ? colors.primary : colors.secondary;
-    const buttonTextColor = isDark ? colors.background : colors.textPrimary;
-    const buttonFont = typography.fontFamily.semiBold;
-    const [displayName, setDisplayName] = useState("");
-    const [avatarUri, setAvatarUri] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const handlePickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-        if (!result.canceled) {
-            setAvatarUri(result.assets[0].uri);
-        }
-    };
-    const handleTakePhoto = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== "granted") {
-            setError("Camera permission is required");
-            return;
-        }
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-        if (!result.canceled) {
-            setAvatarUri(result.assets[0].uri);
-        }
-    };
-    const handleCreateIdentity = async () => {
-        if (!displayName.trim()) {
-            setError("Display name is required");
-            return;
-        }
-        if (!phoneNumber) {
-            setError("Phone number is missing");
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        try {
-            await createIdentity({
-                phoneNumber,
-                displayName: displayName.trim(),
-                avatarUri: avatarUri || undefined,
-            });
-            router.replace("/(tabs)/chats");
-        }
-        catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to create identity");
-        }
-        finally {
-            setIsLoading(false);
-        }
-    };
-    return (<SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+  const router = useRouter();
+  const { phoneNumber } = useLocalSearchParams();
+  const { colors } = useTheme();
+
+  const [displayName, setDisplayName] = useState("");
+  const [avatarUri, setAvatarUri] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setAvatarUri(result.assets[0].uri);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      setError("Camera permission is required");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setAvatarUri(result.assets[0].uri);
+    }
+  };
+
+  const handleCreateIdentity = async () => {
+    if (!displayName.trim()) {
+      setError("Display name is required");
+      return;
+    }
+    if (!phoneNumber) {
+      setError("Phone number is missing");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await createIdentity({
+        phoneNumber,
+        displayName: displayName.trim(),
+        avatarUri: avatarUri || undefined,
+      });
+      router.replace(ROUTES.TABS_CHATS);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create identity");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        behavior="padding"
+        style={styles.flex}
+      >
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingHorizontal: spacing.md,
-          }}
+          style={styles.flex}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={false}
           overScrollMode="never"
         >
-          <View className="flex-1 justify-between pt-4">
-            <View className="space-y-8">
-              <View className="items-start">
-                <View className="flex-row items-center" style={{ gap: 6 }}>
-                  <SonarXLogo size={32}/>
-                  <Text style={{
-                    color: colors.textPrimary,
-                    fontFamily: typography.fontFamily.bold,
-                    fontSize: typography.fontSize.xxl,
-                    marginTop: -spacing.xs,
-                  }}>resonar</Text>
-                </View>
-                <Text className="text-xs my-2" style={{
-                  color: colors.textSecondary,
-                  fontFamily: typography.fontFamily.medium,
-                }}>
-                  Step 2 of 2
-                </Text>
-                <H1 style={{
-                  color: colors.textPrimary,
-                  fontFamily: typography.fontFamily.bold,
-                }}>Create Your Profile</H1>
-                <Muted className="mt-2" style={{
-                  color: colors.textSecondary,
-                  fontFamily: typography.fontFamily.regular,
-                  fontSize: typography.fontSize.sm,
-                  marginBottom: spacing.lg,
-                }}>
-                  Choose a display name and optional profile photo
-                </Muted>
+          <View style={styles.top}>
+            <View style={styles.headerArea}>
+              <View style={styles.logoRow}>
+                <SonarXLogo size={32} />
+                <Text style={[styles.appName, { color: colors.textPrimary }]}>resonar</Text>
               </View>
+              <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>Step 2 of 2</Text>
+              <H1 style={{ color: colors.textPrimary, fontFamily: typography.fontFamily.bold }}>
+                Create Your Profile
+              </H1>
+              <Muted style={{ marginTop: spacing.xs, fontSize: typography.fontSize.sm }}>
+                Choose a display name and optional profile photo
+              </Muted>
+            </View>
 
-              <View className="items-center mb-8">
-                <View className="relative">
-                  <Avatar uri={avatarUri} name={displayName || "?"} size={180} color={colors}/>
-                  {avatarUri && (<Button variant="ghost" size="icon" onPress={() => setAvatarUri(null)} className="absolute -top-1 -right-1 w-6 h-6">
-                      <Text style={{
-                      color: colors.textPrimary,
-                      fontFamily: typography.fontFamily.semiBold,
-                    }}>×</Text>
-                    </Button>)}
-                </View>
-                <View className="flex-row mt-4" style={{ gap: spacing.sm, paddingVertical: spacing.sm }}>
-                  <Button
-                    className="flex-1"
-                    variant="outline"
-                    size="md"
-                    onPress={handlePickImage}
-                    style={{ backgroundColor: colors.surface, borderColor: colors.border, height: 42 }}
-                  >
-                    <Ionicons name="folder-outline" size={16} color={colors.textPrimary}/>
-                    <Text style={{
-                      marginLeft: 8,
-                      color: colors.textPrimary,
-                      fontFamily: typography.fontFamily.semiBold,
-                    }}>Gallery</Text>
+            <View style={styles.avatarSection}>
+              <View style={styles.avatarWrapper}>
+                {avatarUri ? (
+                  <Avatar uri={avatarUri} name={displayName || "?"} size={180} />
+                ) : (
+                  <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Ionicons name="person-outline" size={60} color={colors.textSecondary} />
+                  </View>
+                )}
+                {avatarUri && (
+                  <Button variant="ghost" size="sm" onPress={() => setAvatarUri(null)} style={styles.removeAvatarBtn}>
+                    <Text style={[styles.removeAvatarText, { color: colors.textPrimary }]}>X</Text>
                   </Button>
-                  <Button
-                    className="flex-1"
-                    variant="outline"
-                    size="md"
-                    onPress={handleTakePhoto}
-                    style={{ backgroundColor: colors.surface, borderColor: colors.border, height: 42 }}
-                  >
-                    <Ionicons name="camera-outline" size={16} color={colors.textPrimary}/>
-                    <Text style={{
-                      marginLeft: 8,
-                      color: colors.textPrimary,
-                      fontFamily: typography.fontFamily.semiBold,
-                    }}>Camera</Text>
-                  </Button>
-                </View>
+                )}
               </View>
-
-              <View className="space-y-4">
-                <Text style={{
-                  color: colors.textSecondary,
-                  fontFamily: typography.fontFamily.semiBold,
-                  fontSize: typography.fontSize.sm,
-                  marginBottom: 8,
-                }}>
-                  Display Name
-                </Text>
-                <Input
-                  label=""
-                  containerClassName="w-full"
-                  placeholder="Enter your name"
-                  value={displayName}
-                  onChangeText={(value) => {
-                    setDisplayName(value);
-                    setError(null);
-                  }}
-                  maxLength={50}
-                  error={error || undefined}
-                  style={{
-                    color: colors.textPrimary,
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    marginBottom: 10,
-                    fontFamily: typography.fontFamily.regular,
-                    fontSize: typography.fontSize.md,
-                  }}
-                  placeholderTextColor={colors.textSecondary}
-                />
-                <Muted className="text-xs" style={{
-                  color: colors.textSecondary,
-                  fontFamily: typography.fontFamily.regular,
-                }}>
-                  This name will be visible to your contacts. You can change it
-                  later in settings.
-                </Muted>
+              <View style={styles.imageButtons}>
+                <Button variant="secondary" size="md" onPress={handlePickImage} style={styles.imageBtn}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                    <Ionicons name="folder-outline" size={16} color={colors.textPrimary} style={{ marginRight: spacing.xs }} />
+                    <Text style={[styles.imageBtnText, { color: colors.textPrimary }]}>Gallery</Text>
+                  </View>
+                </Button>
+                <Button variant="secondary" size="md" onPress={handleTakePhoto} style={styles.imageBtn}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                    <Ionicons name="camera-outline" size={16} color={colors.textPrimary} style={{ marginRight: spacing.xs }} />
+                    <Text style={[styles.imageBtnText, { color: colors.textPrimary }]}>Camera</Text>
+                  </View>
+                </Button>
               </View>
             </View>
 
-            <View>
-              <Button
-                size="lg"
-                variant="ghost"
-                style={{ backgroundColor: buttonBackground }}
-                onPress={handleCreateIdentity}
-                isLoading={isLoading}
-                disabled={!displayName.trim()}
-                className="w-full"
-              >
-                <View className="flex-row justify-between items-center w-full">
-                  <Text style={{
-                    color: buttonTextColor,
-                    fontFamily: buttonFont,
-                    fontSize: typography.fontSize.md,
-                  }}>Create Identity</Text>
-                  <Ionicons name="arrow-forward-outline" size={18} color={buttonTextColor}/>
-                </View>
-              </Button>
-              <View style={{ height: 13 }} />
-              <Muted className="text-center text-xs" style={{
-                color: colors.textSecondary,
-                fontFamily: typography.fontFamily.regular,
-                marginBottom: 5,
-              }}>
-                Your profile is created and stored on your device only.
+            <View style={styles.fieldSection}>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Display Name</Text>
+              <TextInput
+                placeholder="Enter your name"
+                value={displayName}
+                onChangeText={(value) => {
+                  setDisplayName(value);
+                  setError(null);
+                }}
+                maxLength={50}
+                error={error || undefined}
+                inputStyle={{
+                  color: colors.textPrimary,
+                  fontFamily: typography.fontFamily.regular,
+                  fontSize: typography.fontSize.md,
+                }}
+                inputWrapperStyle={{
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                }}
+                placeholderTextColor={colors.textSecondary}
+              />
+              <Muted style={styles.hint}>
+                This name will be visible to your contacts. You can change it later in settings.
               </Muted>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>);
+
+      <View style={styles.bottomArea}>
+        <Button
+          text="Create Identity"
+          icon="arrow-forward-outline"
+          iconPosition="right"
+          size="md"
+          fullWidth
+          onPress={handleCreateIdentity}
+          isLoading={isLoading}
+          disabled={!displayName.trim()}
+        />
+        <Text style={[styles.disclaimer, { color: colors.textSecondary }]}>
+          Your profile is created and stored on your device only. Number is used to connect you with others.
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
 }
+
+const styles = {
+  root: { flex: 1 },
+  flex: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+  top: { gap: 10, paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  headerArea: { alignItems: "flex-start" },
+  logoRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  appName: {
+    fontFamily: typography.fontFamily.bold,
+    fontSize: typography.fontSize.xxl,
+    marginTop: -spacing.xs,
+  },
+  stepBadge: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.fontSize.xs,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  avatarSection: { alignItems: "center" },
+  avatarWrapper: { position: "relative" },
+  avatarPlaceholder: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  removeAvatarBtn: { position: "absolute", top: -4, right: -4, minHeight: 0, paddingHorizontal: 4, paddingVertical: 2 },
+  removeAvatarText: { fontFamily: typography.fontFamily.semiBold, fontSize: typography.fontSize.md },
+  imageButtons: {
+    flexDirection: "row",
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  imageBtn: { flex: 1, height: 42 },
+  imageBtnText: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.sm,
+  },
+  fieldSection: { gap: spacing.sm },
+  fieldLabel: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.sm,
+    marginBottom: spacing.xs,
+  },
+  hint: {
+    fontSize: typography.fontSize.xs,
+  },
+  bottomArea: {
+    paddingHorizontal: spacing.md,
+  },
+  disclaimer: {
+    fontSize: typography.fontSize.xs,
+    fontFamily: typography.fontFamily.regular,
+    textAlign: "center",
+    marginTop: spacing.sm,
+    marginBottom: 10,
+  },
+};

@@ -4,10 +4,11 @@ import { db } from "@/db/client";
 import { messages } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getOrCreateConversation, insertMessage } from "@/db/queries";
-import { useIdentityStore } from "@/stores/identity.store";
+import { useIdentityStore } from "@/src/store/identityStore";
 import * as SecureStore from "expo-secure-store";
 import { decodeBase64 } from "tweetnacl-util";
 import { sendGunMessage } from "@/lib/p2p/messaging";
+import logger from "@/src/utils/logger";
 const SECRET_KEY_STORE_KEY = "resonar-secret-keys";
 export function useMessages(conversationId) {
     const { data, error } = useLiveQuery(db.query.messages.findMany({
@@ -43,12 +44,12 @@ export function useSendMessage(peerId) {
                 where: (peers, { eq }) => eq(peers.id, peerId),
             });
             if (!peer) {
-                console.warn("[useSendMessage] Peer not found in contacts:", peerId);
+                logger.warn("[useSendMessage] Peer not found in contacts:", peerId);
                 return false;
             }
             const secretKeyStr = await SecureStore.getItemAsync(SECRET_KEY_STORE_KEY);
             if (!secretKeyStr) {
-                console.warn("[useSendMessage] No secret key available");
+                logger.warn("[useSendMessage] No secret key available");
                 return false;
             }
             const mySecretKey = decodeBase64(secretKeyStr);

@@ -1,7 +1,7 @@
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { db } from "./client";
 import migrations from "../drizzle/migrations";
-import { LoadingScreen } from "@/components/common/LoadingScreen";
+import { LoadingScreen } from "@/src/components/common/LoadingScreen";
 export function MigrationsProvider({ children }) {
     const { success, error } = useMigrations(db, migrations);
     if (error) {

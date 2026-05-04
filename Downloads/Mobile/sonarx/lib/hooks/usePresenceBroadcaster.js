@@ -1,5 +1,5 @@
 import { announcePresence } from "@/lib/p2p/discovery";
-import { useIdentityStore } from "@/stores/identity.store";
+import { useIdentityStore } from "@/src/store/identityStore";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect } from "react";
 import { decodeBase64 } from "tweetnacl-util";

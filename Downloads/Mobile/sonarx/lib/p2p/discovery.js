@@ -2,6 +2,7 @@ import nacl from "tweetnacl";
 import { decodeBase64, encodeBase64 } from "tweetnacl-util";
 import "../crypto/prng";
 import { SL_NAMESPACE, getGun, subscribeToGun, writeToGun } from "./gun";
+import logger from "@/src/utils/logger";
 const PRESENCE_PATH = `${SL_NAMESPACE}/presence`;
 const PRESENCE_TTL_MS = 3 * 60 * 1000; // 3 minutes — generous window for network delays
 const PRESENCE_PERSIST_TTL_SECONDS = 60 * 2;
@@ -70,7 +71,7 @@ export function subscribeToAllPresence(peerIds, onUpdate) {
 }
 export async function getPeerPresence(peerId) {
     const path = `${PRESENCE_PATH}/${peerId}`;
-    console.log("[getPeerPresence] Searching at path:", path);
+    logger.log("[getPeerPresence] Searching at path:", path);
     const gun = getGun();
     return new Promise((resolve) => {
         let resolved = false;
@@ -85,7 +86,7 @@ export async function getPeerPresence(peerId) {
             // Got valid data from network
             resolved = true;
             off();
-            console.log("[getPeerPresence] Found presence for:", peerId);
+            logger.log("[getPeerPresence] Found presence for:", peerId);
             resolve(data);
         };
         const off = () => node.off();
@@ -95,7 +96,7 @@ export async function getPeerPresence(peerId) {
             if (!resolved) {
                 resolved = true;
                 off();
-                console.log("[getPeerPresence] Timeout - no data found for:", peerId);
+                logger.log("[getPeerPresence] Timeout - no data found for:", peerId);
                 resolve(null);
             }
         }, PRESENCE_QUERY_TIMEOUT_MS);
@@ -107,7 +108,7 @@ export async function getPeerPresence(peerId) {
                 resolved = true;
                 off();
                 clearTimeout(timeout);
-                console.log("[getPeerPresence] Found cached presence for:", peerId);
+                logger.log("[getPeerPresence] Found cached presence for:", peerId);
                 resolve(data);
             }
         });

@@ -1,5 +1,6 @@
 import { encryptForPeer } from "@/lib/crypto/box";
 import { wsRelay } from "./ws-relay";
+import logger from "@/src/utils/logger";
 function buildRelayMessage(data) {
     if (!data || typeof data !== "object") {
         return null;
@@ -22,7 +23,7 @@ function buildRelayMessage(data) {
  */
 export async function sendGunMessage(toPeerId, messageId, body, peerPublicKey, mySecretKey, fromPeerId) {
     const { ciphertext, nonce } = encryptForPeer(body, peerPublicKey, mySecretKey);
-    console.log("[Messaging] Sending to:", toPeerId, "id:", messageId);
+    logger.log("[Messaging] Sending to:", toPeerId, "id:", messageId);
     await wsRelay.sendMessage(toPeerId, messageId, {
         id: messageId,
         fromPeerId,

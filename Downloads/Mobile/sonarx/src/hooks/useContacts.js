@@ -3,7 +3,7 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { asc } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { peers } from '@/db/schema';
-import { searchContacts as searchContactsDb } from '@/src/db/queries/contacts';
+// In-memory search only - no separate contacts DB table needed
 import { useContactsStore } from '@/src/store/contactsStore';
 function peerToContact(peer) {
     return {
@@ -45,12 +45,7 @@ export function useContacts() {
         const normalizedQuery = query.trim().toLowerCase();
         if (!normalizedQuery)
             return contacts;
-        // Search from the in-memory list first (peers mapped to contacts)
-        const localResults = contacts.filter((c) => matchesContact(c, normalizedQuery));
-        if (localResults.length > 0)
-            return localResults;
-        // Fall back to DB query on new contacts table
-        return searchContactsDb(query);
+        return contacts.filter((c) => matchesContact(c, normalizedQuery));
     }, [contacts]);
     return { contacts, isLoading, error, refetch, searchContacts };
 }

@@ -1,4 +1,5 @@
 import { peerManager } from "./peer-manager";
+import logger from "@/src/utils/logger";
 
 const buildPacket = (type, payload) => ({
     type,
@@ -51,7 +52,7 @@ export async function sendCallEnd(peerId, callId, duration) {
 }
 export function handleIncomingPacket(packet, handlers) {
     if (!packet || !packet.type || !handlers) {
-        console.warn("Received invalid packet");
+        logger.warn("Received invalid packet");
         return;
     }
     switch (packet.type) {
@@ -89,6 +90,6 @@ export function handleIncomingPacket(packet, handlers) {
             dispatchHandler(handlers.onCallEnd, packet.payload);
             break;
         default:
-            console.warn("Unknown packet type:", packet.type);
+            logger.warn("Unknown packet type:", packet.type);
     }
 }

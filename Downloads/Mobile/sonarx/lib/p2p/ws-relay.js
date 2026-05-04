@@ -12,6 +12,7 @@
  *   ← { type:"ack", id:"msgUUID" }
  */
 import Constants from "expo-constants";
+import logger from "@/src/utils/logger";
 
 const ACK_TIMEOUT_MS = 6000;
 const RECONNECT_DELAY_MS = 4000;
@@ -43,7 +44,7 @@ class WsRelayClient {
         this.myId = myId;
         this.url = this._buildUrl();
         if (!this.url) {
-            console.warn("[WsRelay] No relay URL — set up Metro first");
+            logger.warn("[WsRelay] No relay URL — set up Metro first");
             return;
         }
         this._connect();

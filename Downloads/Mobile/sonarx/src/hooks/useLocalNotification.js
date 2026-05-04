@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
+import { ROUTES } from '@/src/constants/routes';
 // expo-notifications remote push is removed from Expo Go SDK 53+.
 // Accessing the module at all triggers a native crash via Hermes,
 // so we guard with executionEnvironment before any require().
@@ -66,7 +67,7 @@ export function useLocalNotification() {
                 content: {
                     title: senderName,
                     body: messagePreview,
-                    data: { url: `/chat/${chatPeerId}` },
+                    data: { url: ROUTES.CHAT(chatPeerId) },
                 },
                 trigger: null,
             });
