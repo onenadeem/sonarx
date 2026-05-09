@@ -62,6 +62,7 @@ export default function Avatar({
               height: dimension,
               borderRadius: dimension / 2,
               borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
             },
           ]}
           contentFit="cover"

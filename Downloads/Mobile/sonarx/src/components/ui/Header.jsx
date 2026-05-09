@@ -54,7 +54,7 @@ export default function Header({
           height,
           backgroundColor: colors.headerBackground,
           borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: `${colors.border}80`,
+          borderBottomColor: "transparent",
         },
         style,
       ]}

@@ -1,5 +1,12 @@
-import { Component, useCallback, useMemo, useRef, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Component, useCallback, useMemo, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput as RNTextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { desc } from "drizzle-orm";
@@ -10,12 +17,12 @@ import { conversations } from "@/db/schema";
 import Button from "@/src/components/ui/Button";
 import Header from "@/src/components/ui/Header";
 import ListItem from "@/src/components/ui/ListItem";
-import TextInput from "@/src/components/ui/TextInput";
 import Avatar from "@/src/components/ui/Avatar";
 import Badge from "@/src/components/ui/Badge";
 import { useResponsive } from "@/src/hooks/useResponsive";
 import { useScrollToTop } from "@/src/hooks/useScrollToTop";
 import { useMessagesStore } from "@/src/store/messagesStore";
+import { useIdentityStore } from "@/src/store/identityStore";
 import { useTheme } from "@/src/theme/ThemeProvider";
 import { spacing, typography } from "@/src/theme/tokens";
 import { Strings } from "@/src/constants/strings";
@@ -42,9 +49,9 @@ class ChatListErrorBoundary extends Component {
     return this.props.children;
   }
 }
-function SearchBar({ value, onChangeText, onClear }) {
+function SearchBar({ value, onChangeText, onClear, style }) {
   const { colors } = useTheme();
-  const searchInputWrapperThemeStyle = useMemo(
+  const searchWrapperThemeStyle = useMemo(
     () => ({
       backgroundColor: colors.surface,
       borderColor: colors.border,
@@ -52,25 +59,25 @@ function SearchBar({ value, onChangeText, onClear }) {
     [colors.border, colors.surface],
   );
   return (
-    <View style={styles.searchContainer}>
-      <TextInput
+    <View style={[styles.searchContainer, { ...searchWrapperThemeStyle }, style]}>
+      <Ionicons
+        name="search-outline"
+        size={16}
+        color={colors.textSecondary}
+        style={styles.searchIcon}
+      />
+      <RNTextInput
         value={value}
         onChangeText={onChangeText}
-        leftIcon="search-outline"
-        rightIcon={value ? "close-outline" : undefined}
-        onRightIconPress={onClear}
         placeholder="Search chats, contacts..."
-        containerStyle={styles.searchInputContainer}
-        inputWrapperStyle={[
-          styles.searchInputWrapper,
-          styles.searchInputWrapperTheme,
-          {
-            borderRadius: 24,
-            ...searchInputWrapperThemeStyle,
-          },
-        ]}
-        inputStyle={styles.searchInput}
+        placeholderTextColor={colors.textSecondary}
+        style={[styles.searchInput, { color: colors.textPrimary }]}
       />
+      {value ? (
+        <Pressable onPress={onClear} style={styles.searchClearButton}>
+          <Ionicons name="close-outline" size={16} color={colors.textSecondary} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -183,8 +190,45 @@ function ChatListScreenInner() {
   const router = useRouter();
   const { isDesktop, isTablet } = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSearch, setShowSearch] = useState(false);
   const listRef = useScrollToTop();
+  const identity = useIdentityStore((state) => state.identity);
+  const userAvatarUri = identity?.avatarUri ?? "";
+  const headerTitleStyle = useMemo(
+    () => ({
+      color: colors.textPrimary,
+      fontFamily: typography.fontFamily.semiBold,
+      fontSize: typography.fontSize.md,
+      marginTop: -1,
+    }),
+    [colors.textPrimary],
+  );
+  const headerStatusStyle = useMemo(
+    () => ({
+      color: colors.textSecondary,
+      fontFamily: typography.fontFamily.regular,
+      fontSize: 10,
+    }),
+    [colors.textSecondary],
+  );
+  const headerAddPillStyle = useMemo(
+    () => ({
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    }),
+    [colors.surface, colors.border],
+  );
+  const headerAddLabelStyle = useMemo(
+    () => ({
+      color: colors.textPrimary,
+    }),
+    [colors.textPrimary],
+  );
+  const headerAddIconStyle = useMemo(
+    () => ({
+      color: colors.textSecondary,
+    }),
+    [colors.textSecondary],
+  );
   const conversationsQuery = useMemo(
     () =>
       db.query.conversations.findMany({
@@ -289,30 +333,59 @@ function ChatListScreenInner() {
     <View style={[styles.screen, screenStyle]}>
       <View style={contentShellStyle}>
         <Header
-          title="resonar"
-          leftAccessory={<SonarXLogo size={33} />}
-          rightActions={[
-            {
-              icon: showSearch ? "close-outline" : "search-outline",
-              onPress: () => {
-                if (showSearch) {
-                  setSearchQuery("");
-                }
-                setShowSearch((prev) => !prev);
-              },
-              accessibilityLabel: showSearch ? "Close search" : "Search chats",
-            },
-          ]}
+          title=""
+          titleAlign="start"
+          style={styles.headerContainer}
+          leftAccessory={
+            <View style={styles.headerLeftSection}>
+              <View style={styles.headerTopRow}>
+                <View style={styles.headerBrandRow}>
+                  <SonarXLogo size={40} />
+                  <View style={styles.headerTextBlock}>
+                    <Text style={headerTitleStyle}>resonar</Text>
+                    <Text style={headerStatusStyle}>Encrypted</Text>
+                  </View>
+                </View>
+                <View style={styles.headerRightAccessory}>
+                  <Pressable
+                    onPress={() => router.push(ROUTES.MODAL_ADD_CONTACT)}
+                    style={[styles.headerAddPill, headerAddPillStyle]}
+                    accessibilityLabel="Add"
+                  >
+                    <Ionicons
+                      name="add"
+                      size={15}
+                      color={headerAddIconStyle.color}
+                    />
+                    <Text
+                      style={[
+                        styles.headerAddLabel,
+                        { marginRight: 5 },
+                        headerAddLabelStyle,
+                      ]}
+                    >
+                      Add
+                    </Text>
+                  </Pressable>
+                  <Avatar
+                    name={identity?.displayName ?? "User"}
+                    uri={userAvatarUri}
+                    size={32}
+                    showOnlineBadge={false}
+                    style={styles.headerAvatar}
+                  />
+                </View>
+              </View>
+              <SearchBar
+                style={styles.headerSearchBar}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onClear={() => setSearchQuery("")}
+              />
+            </View>
+          }
         />
-
-        {showSearch ? (
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onClear={() => setSearchQuery("")}
-          />
-        ) : null}
-
+ 
         {filteredConversations.length === 0 ? (
           <EmptyState onPress={navigateToContacts} />
         ) : (
@@ -346,22 +419,38 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+  headerContainer: {
+    height: 100,
+    alignItems: "flex-start",
+    paddingTop: spacing.xs,
+  },
   searchContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  searchInputContainer: {
-    marginBottom: 0,
-  },
-  searchInputWrapper: {
-    minHeight: 44,
+    width: "auto",
+    height: 44,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    flexDirection: "row",
+    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.xxs,
+    gap: spacing.sm,
   },
   searchInput: {
-    fontSize: 14,
+    flex: 1,
+    fontSize: typography.fontSize.sm,
+    fontFamily: typography.fontFamily.regular,
+    paddingTop: 3,
+    paddingBottom: 3,
+    paddingRight: 0,
   },
-  searchInputWrapperTheme: {
-    borderWidth: 1,
+  searchIcon: {
+    marginLeft: 2,
+  },
+  searchClearButton: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
   listItemTransparent: {
     backgroundColor: "transparent",
@@ -379,6 +468,61 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -2,
     right: -6,
+  },
+  headerLeftSection: {
+    flexDirection: "column",
+    width: "100%",
+    alignItems: "stretch",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    justifyContent: "space-between",
+  },
+  headerBrandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  headerRightAccessory: {
+    marginRight: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  headerAddPill: {
+    minWidth: 66,
+    height: 35,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: 5,
+    paddingHorizontal: spacing.xs,
+  },
+  headerAddLabel: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.sm,
+  },
+  headerSearchBar: {
+    alignSelf: "stretch",
+    marginBottom: 10,
+    marginTop: 2,
+  },
+  headerAvatar: {
+    marginTop: 0,
+    alignSelf: "center",
+  },
+  headerTextBlock: {
+    minWidth: 0,
+    flexShrink: 0,
+    overflow: "hidden",
+        justifyContent: "center",
+    gap: 1,
   },
   emptyState: {
     flex: 1,
