@@ -1,2 +1,3 @@
 import ContactsScreen from "@/src/screens/ContactsScreen";
-export default ContactsScreen;
+import React from "react";
+export default React.memo(ContactsScreen);

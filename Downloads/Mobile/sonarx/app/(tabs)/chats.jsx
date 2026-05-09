@@ -1,2 +1,3 @@
 import ChatListScreen from "@/src/screens/ChatListScreen";
-export default ChatListScreen;
+import React from "react";
+export default React.memo(ChatListScreen);

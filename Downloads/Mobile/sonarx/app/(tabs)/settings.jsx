@@ -1,2 +1,3 @@
 import SettingsScreen from "@/src/screens/SettingsScreen";
-export default SettingsScreen;
+import React from "react";
+export default React.memo(SettingsScreen);

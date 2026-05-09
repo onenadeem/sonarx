@@ -198,10 +198,7 @@ export default function RootLayout() {
 }
 function RootLayoutContent() {
   const [fontsLoaded, fontError] = useFonts({
-    "Geist-Regular": require("../assets/fonts/SpaceGrotesk-Regular.otf"),
-    "Geist-Medium": require("../assets/fonts/SpaceGrotesk-Regular.otf"),
-    "Geist-SemiBold": require("../assets/fonts/SpaceGrotesk-Regular.otf"),
-    "Geist-Bold": require("../assets/fonts/SpaceGrotesk-Regular.otf"),
+    "OpenSauceSans-Regular": require("../assets/fonts/OpenSauceSans-Regular.otf"),
   });
   const [isIdentityChecked, setIsIdentityChecked] = useState(false);
   useEffect(() => {

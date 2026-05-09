@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { asc } from "drizzle-orm";
 import { db } from "@/db/client";
 import { peers } from "@/db/schema";
-// In-memory search only - no separate contacts DB table needed
 import { useContactsStore } from "@/src/store/contactsStore";
 function peerToContact(peer) {
   return {
@@ -23,10 +22,11 @@ const matchesContact = (contact, query) =>
 export function useContacts() {
   const { contacts, isLoading, error, setContacts, setLoading, setError } =
     useContactsStore();
-  // Use the peers table (existing schema) as the reactive source of truth
-  const { data: peersData } = useLiveQuery(
-    db.query.peers.findMany({ orderBy: asc(peers.displayName) }),
+  const peersQuery = useMemo(
+    () => db.query.peers.findMany({ orderBy: asc(peers.displayName) }),
+    [],
   );
+  const { data: peersData } = useLiveQuery(peersQuery);
   useEffect(() => {
     if (peersData) {
       setContacts(toContacts(peersData));

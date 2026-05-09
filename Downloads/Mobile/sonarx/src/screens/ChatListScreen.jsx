@@ -1,4 +1,4 @@
-import { Component, useCallback, useMemo, useState } from "react";
+import { Component, useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -185,12 +185,15 @@ function ChatListScreenInner() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const listRef = useScrollToTop();
-  const { data: liveConversations } = useLiveQuery(
-    db.query.conversations.findMany({
-      orderBy: desc(conversations.lastMessageAt),
-      with: { peer: true },
-    }),
+  const conversationsQuery = useMemo(
+    () =>
+      db.query.conversations.findMany({
+        orderBy: desc(conversations.lastMessageAt),
+        with: { peer: true },
+      }),
+    [],
   );
+  const { data: liveConversations } = useLiveQuery(conversationsQuery);
   const storeChats = useMessagesStore((state) => state.chats);
   const allConversations = useMemo(() => {
     const base = liveConversations ?? [];
@@ -367,7 +370,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   conversationSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
   },
   timestamp: {
     ...typography.caption,

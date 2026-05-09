@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import {
+  BackHandler,
   Image,
   Pressable,
   ScrollView,
@@ -30,7 +31,7 @@ import {
   BottomSheetScrollView,
   BottomSheetFlatList,
 } from "@gorhom/bottom-sheet";
-import { usePreventRemove } from "@react-navigation/native";
+import { useIsFocused, usePreventRemove } from "@react-navigation/native";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq } from "drizzle-orm";
 import { usePeersStore } from "@/src/store/peersStore";
@@ -55,6 +56,8 @@ import { borderRadius, spacing, typography } from "@/src/theme/tokens";
 import { useIdentityStore } from "@/src/store/identityStore";
 import { Strings } from "@/src/constants/strings";
 import { SETTINGS_SCREEN_MAX_WIDTH } from "@/src/constants/layout";
+import TermsSheetContent from "./settings/TermsSheetContent";
+import PrivacySheetContent from "./settings/PrivacySheetContent";
 
 const THEME_OPTIONS = [
   { mode: "light", icon: "sunny-outline", label: "Light" },
@@ -128,87 +131,22 @@ function Section({ title, subtitle, children, style }) {
   );
 }
 
-function PolicySection({ title, children }) {
-  const { colors } = useTheme();
-  return (
-    <View style={{ marginBottom: spacing.lg }}>
-      <Text
-        style={{
-          fontFamily: typography.fontFamily.bold,
-          fontSize: typography.fontSize.md,
-          color: colors.textPrimary,
-          marginBottom: spacing.sm,
-        }}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-function BulletPoint({ text }) {
-  const { colors } = useTheme();
-  return (
-    <View style={{ flexDirection: "row", marginBottom: spacing.xs }}>
-      <Text
-        style={{
-          color: colors.textSecondary,
-          fontSize: typography.fontSize.sm,
-          marginRight: spacing.sm,
-        }}
-      >
-        •
-      </Text>
-      <Text
-        style={{
-          flex: 1,
-          color: colors.textSecondary,
-          fontFamily: typography.fontFamily.regular,
-          fontSize: typography.fontSize.sm,
-        }}
-      >
-        {text}
-      </Text>
-    </View>
-  );
-}
-
-function Paragraph({ children, bold }) {
-  const { colors } = useTheme();
-  return (
-    <Text
-      style={{
-        color: colors.textSecondary,
-        fontFamily: bold
-          ? typography.fontFamily.semiBold
-          : typography.fontFamily.regular,
-        fontSize: typography.fontSize.sm,
-        marginBottom: spacing.md,
-      }}
-    >
-      {children}
-    </Text>
-  );
-}
-
-function ThemePicker({ currentMode, onSelect, onSheetChange }) {
+function ThemePicker({ currentMode, onSelect, onSheetChange, sheetRef }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const bottomSheetModalRef = useRef(null);
   const currentLabel =
     THEME_OPTIONS.find((o) => o.mode === currentMode)?.label ?? "System";
 
   const handleOpen = useCallback(() => {
-    bottomSheetModalRef.current?.present();
-  }, []);
+    sheetRef.current?.present();
+  }, [sheetRef]);
 
   const handleSelect = useCallback(
     (mode) => {
       onSelect(mode);
-      bottomSheetModalRef.current?.dismiss();
+      sheetRef.current?.dismiss();
     },
-    [onSelect],
+    [onSelect, sheetRef],
   );
 
   return (
@@ -227,7 +165,7 @@ function ThemePicker({ currentMode, onSelect, onSheetChange }) {
         dividerInset={0}
       />
       <BottomSheetModal
-        ref={bottomSheetModalRef}
+        ref={sheetRef}
         snapPoints={["42%"]}
         enablePanDownToClose
         onChange={onSheetChange}
@@ -332,6 +270,8 @@ function SettingsScreenInner() {
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [displayName, setDisplayName] = useState(identity?.displayName ?? "");
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const avatarSheetRef = useRef(null);
   const deleteAccountSheetRef = useRef(null);
   const clearChatsSheetRef = useRef(null);
@@ -339,6 +279,7 @@ function SettingsScreenInner() {
   const termsSheetRef = useRef(null);
   const privacySheetRef = useRef(null);
   const blockedContactsSheetRef = useRef(null);
+  const themePickerSheetRef = useRef(null);
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
   const contentMaxWidth = isDesktop ? SETTINGS_SCREEN_MAX_WIDTH : undefined;
   const scrollRef = useScrollToTop();
@@ -349,6 +290,8 @@ function SettingsScreenInner() {
 
   // Track active bottom sheets for back gesture handling
   const [activeSheetCount, setActiveSheetCount] = useState(0);
+  const activeSheetCountRef = useRef(activeSheetCount);
+  activeSheetCountRef.current = activeSheetCount;
   const activeSheetIds = useRef(new Set());
 
   const makeOnChange = useCallback(
@@ -370,25 +313,68 @@ function SettingsScreenInner() {
     [],
   );
 
-  usePreventRemove(activeSheetCount > 0, () => {
-    const allSheets = [
-      deleteAccountSheetRef,
-      clearChatsSheetRef,
-      clearCacheSheetRef,
-      termsSheetRef,
-      privacySheetRef,
-      avatarSheetRef,
-      blockedContactsSheetRef,
-    ];
-    for (const ref of allSheets) {
-      ref.current?.dismiss();
+  const handleTermsChange = useCallback(
+    (index) => {
+      makeOnChange("terms")(index);
+      setTermsOpen(index >= 0);
+    },
+    [makeOnChange],
+  );
+
+  const handlePrivacyChange = useCallback(
+    (index) => {
+      makeOnChange("privacy")(index);
+      setPrivacyOpen(index >= 0);
+    },
+    [makeOnChange],
+  );
+
+  const dismissOpenSheets = useCallback(() => {
+    const allSheets = {
+      deleteAccount: deleteAccountSheetRef,
+      clearChats: clearChatsSheetRef,
+      clearCache: clearCacheSheetRef,
+      terms: termsSheetRef,
+      privacy: privacySheetRef,
+      avatarPicker: avatarSheetRef,
+      blockedContacts: blockedContactsSheetRef,
+      themePicker: themePickerSheetRef,
+    };
+    for (const [sheetId, ref] of Object.entries(allSheets)) {
+      if (activeSheetIds.current.has(sheetId)) {
+        ref.current?.dismiss();
+      }
     }
-  });
+  }, []);
+
+  usePreventRemove(activeSheetCount > 0, dismissOpenSheets);
+
+  // Handle hardware back button / back gesture on Android
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) return;
+
+    const onBackPress = () => {
+      if (activeSheetCountRef.current > 0) {
+        dismissOpenSheets();
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => subscription.remove();
+  }, [isFocused, dismissOpenSheets]);
 
   // Blocked contacts data
-  const { data: peerData } = useLiveQuery(
-    db.query.peers.findMany({ where: eq(peers.isBlocked, true) }),
+  const blockedPeersQuery = useMemo(
+    () => db.query.peers.findMany({ where: eq(peers.isBlocked, true) }),
+    [],
   );
+  const { data: peerData } = useLiveQuery(blockedPeersQuery);
   const blockedContacts = useMemo(
     () =>
       (peerData ?? []).map((p) => ({
@@ -922,6 +908,7 @@ function SettingsScreenInner() {
               currentMode={mode}
               onSelect={setMode}
               onSheetChange={makeOnChange("themePicker")}
+              sheetRef={themePickerSheetRef}
             />
             <ListItem
               title="Storage"
@@ -1256,7 +1243,7 @@ function SettingsScreenInner() {
         snapPoints={["100%"]}
         topInset={insets.top}
         enablePanDownToClose
-        onChange={makeOnChange("terms")}
+        onChange={handleTermsChange}
         backgroundStyle={{ backgroundColor: colors.surface }}
         handleIndicatorStyle={{ backgroundColor: colors.textDisabled }}
         backdropComponent={(props) => (
@@ -1276,203 +1263,7 @@ function SettingsScreenInner() {
             paddingBottom: insets.bottom + spacing.lg,
           }}
         >
-          <Text
-            style={{
-              fontFamily: typography.fontFamily.bold,
-              fontSize: typography.fontSize.lg,
-              color: colors.textPrimary,
-              marginBottom: spacing.xs,
-            }}
-          >
-            Terms of Service
-          </Text>
-          <Text
-            style={{
-              fontFamily: typography.fontFamily.regular,
-              fontSize: typography.fontSize.sm,
-              color: colors.textSecondary,
-              marginBottom: spacing.lg,
-            }}
-          >
-            Last updated: May 4, 2026
-          </Text>
-
-          <PolicySection title="1. Introduction">
-            <Paragraph>
-              Welcome to SonarX. These Terms of Service govern your use of our
-              encrypted peer-to-peer messaging application. By accessing or
-              using SonarX, you agree to be bound by these terms. If you do not
-              agree with any part of these terms, you must immediately
-              discontinue use of the application and remove it from all your
-              devices. SonarX is designed from the ground up with privacy,
-              security, and user sovereignty as its foundational principles.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="2. Acceptance of Terms">
-            <Paragraph>
-              By downloading, installing, accessing, or using SonarX in any
-              manner, you acknowledge that you have read, understood, and agree
-              to comply with these Terms of Service. You also confirm that you
-              are of legal age to form a binding contract in your jurisdiction.
-              If you are using SonarX on behalf of an organization, you
-              represent that you have authority to bind that organization to
-              these terms.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="3. Description of Service">
-            <Paragraph>
-              SonarX is a privacy-first, end-to-end encrypted messaging platform
-              designed for secure peer-to-peer communication. Unlike traditional
-              messaging services, SonarX does not rely on centralized servers to
-              store, process, or route your message content. All messages are
-              transmitted directly between users through encrypted channels. The
-              application operates on a local-first architecture, meaning your
-              data is stored primarily and exclusively on your device.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="4. User Accounts and Identity">
-            <Paragraph>
-              To use SonarX, you create a local cryptographic identity within
-              the application. You are solely responsible for maintaining the
-              confidentiality and security of your cryptographic keys and
-              identity information. SonarX does not maintain traditional user
-              accounts on centralized servers. Your identity is
-              cryptographically secured and stored locally on your device using
-              platform-native secure storage mechanisms.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="5. Acceptable Use">
-            <Paragraph>
-              You agree to use SonarX only for lawful purposes and in compliance
-              with all applicable local, national, and international laws and
-              regulations. You must not use the application to transmit content
-              that is illegal, harmful, threatening, abusive, harassing,
-              defamatory, vulgar, obscene, invasive of another's privacy,
-              hateful, or otherwise objectionable.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="6. Prohibited Activities">
-            <Paragraph>
-              The following activities are strictly prohibited when using
-              SonarX:
-            </Paragraph>
-            <BulletPoint text="Reverse engineering, decompiling, disassembling, or otherwise attempting to discover the source code of the application." />
-            <BulletPoint text="Attempting to bypass, disable, or interfere with any encryption or security features of the application." />
-            <BulletPoint text="Using SonarX to distribute malware, viruses, or any other harmful software." />
-            <BulletPoint text="Engaging in unauthorized access to any systems or networks." />
-            <BulletPoint text="Impersonating other users, entities, or falsely stating your affiliation with any person or organization." />
-            <BulletPoint text="Collecting or harvesting user information without explicit consent." />
-            <BulletPoint text="Using automated scripts, bots, or scrapers to interact with the application." />
-          </PolicySection>
-
-          <PolicySection title="7. End-to-End Encryption">
-            <Paragraph>
-              All messages sent through SonarX are protected by state-of-the-art
-              end-to-end encryption. This means that messages are encrypted on
-              your device before transmission and can only be decrypted by the
-              intended recipient's device. Under no circumstances can SonarX,
-              its developers, or any third party decrypt, access, intercept, or
-              recover the content of your messages. You acknowledge that if you
-              lose access to your device or cryptographic keys, your message
-              history cannot be recovered by us.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="8. Data Storage and Local-First Architecture">
-            <Paragraph>
-              SonarX operates on a strict local-first data model. Your messages,
-              contacts, media files, and cryptographic keys are stored
-              exclusively on your local device using encrypted SQLite databases.
-              We do not operate cloud servers to store your chat history,
-              message metadata, or contact information. You are solely
-              responsible for backing up your data. Because all data is local,
-              uninstalling the application without backup will result in
-              permanent data loss.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="9. Intellectual Property">
-            <Paragraph>
-              All intellectual property rights in and to SonarX, including but
-              not limited to the software, user interface designs, logos,
-              trademarks, documentation, and underlying technology, are owned by
-              us or our licensors. You are granted a limited, non-exclusive,
-              non-transferable, revocable license to use the application for
-              personal, non-commercial communication purposes. You may not copy,
-              modify, distribute, sell, or lease any part of SonarX without our
-              express written permission.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="10. Termination">
-            <Paragraph>
-              We reserve the right to terminate or suspend your access to SonarX
-              at any time, without prior notice or liability, for conduct that
-              we believe violates these Terms or is harmful to other users, us,
-              or third parties. Because SonarX is peer-to-peer and serverless,
-              termination primarily involves cryptographic key invalidation and
-              exclusion from future application updates. You may also terminate
-              your use at any time by deleting the application and your account
-              data through the settings.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="11. Disclaimer of Warranties">
-            <Paragraph>
-              SonarX is provided on an "as is" and "as available" basis without
-              warranties of any kind, either express or implied, including but
-              not limited to implied warranties of merchantability, fitness for
-              a particular purpose, or non-infringement. We do not warrant that
-              the application will be uninterrupted, timely, secure, error-free,
-              or completely free from vulnerabilities. You use SonarX at your
-              own risk.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="12. Limitation of Liability">
-            <Paragraph>
-              To the maximum extent permitted by applicable law, in no event
-              shall we be liable for any indirect, incidental, special,
-              consequential, or punitive damages, including but not limited to
-              loss of profits, data, use, goodwill, or other intangible losses,
-              arising out of or relating to your use of or inability to use
-              SonarX, even if we have been advised of the possibility of such
-              damages.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="13. Changes to Terms">
-            <Paragraph>
-              We may modify these Terms of Service at any time. When we make
-              material changes, we will update the "Last updated" date at the
-              top of this document. Your continued use of SonarX after any
-              changes constitutes your acceptance of the revised Terms. It is
-              your responsibility to review these Terms periodically.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="14. Governing Law">
-            <Paragraph>
-              These Terms shall be governed and construed in accordance with the
-              laws of your jurisdiction, without regard to its conflict of law
-              provisions. Any dispute arising under these Terms shall be
-              resolved exclusively in the courts of your local jurisdiction.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="15. Contact Information">
-            <Paragraph>
-              If you have any questions, concerns, or feedback regarding these
-              Terms of Service, please reach out to us through the application's
-              support channels. We value your privacy and are committed to
-              maintaining transparent policies that put users first.
-            </Paragraph>
-          </PolicySection>
+          {termsOpen && <TermsSheetContent />}
         </BottomSheetScrollView>
       </BottomSheetModal>
 
@@ -1482,7 +1273,7 @@ function SettingsScreenInner() {
         snapPoints={["100%"]}
         topInset={insets.top}
         enablePanDownToClose
-        onChange={makeOnChange("privacy")}
+        onChange={handlePrivacyChange}
         backgroundStyle={{ backgroundColor: colors.surface }}
         handleIndicatorStyle={{ backgroundColor: colors.textDisabled }}
         backdropComponent={(props) => (
@@ -1502,239 +1293,7 @@ function SettingsScreenInner() {
             paddingBottom: insets.bottom + spacing.lg,
           }}
         >
-          <Text
-            style={{
-              fontFamily: typography.fontFamily.bold,
-              fontSize: typography.fontSize.lg,
-              color: colors.textPrimary,
-              marginBottom: spacing.xs,
-            }}
-          >
-            Privacy Policy
-          </Text>
-          <Text
-            style={{
-              fontFamily: typography.fontFamily.regular,
-              fontSize: typography.fontSize.sm,
-              color: colors.textSecondary,
-              marginBottom: spacing.lg,
-            }}
-          >
-            Last updated: May 4, 2026
-          </Text>
-
-          <PolicySection title="1. Introduction and Our Privacy Commitment">
-            <Paragraph>
-              SonarX is built on the fundamental principle of absolute privacy.
-              This Privacy Policy explains how we handle information when you
-              use our application. Our commitment is simple and unwavering: we
-              collect as little data as possible, we encrypt everything
-              end-to-end, and we never sell, rent, trade, or share your personal
-              information with any third party for any purpose. Your trust is
-              our most valuable asset, and we design every feature with privacy
-              as the default setting.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="2. No Data Collection Principle">
-            <Paragraph>
-              SonarX is engineered with a strict "zero data collection"
-              architecture. We do not collect, store, or process your personal
-              information on our servers. Unlike traditional messaging
-              applications, SonarX does not require phone number verification,
-              email registration, social media login, or identity verification
-              through centralized servers. There are no analytics frameworks, no
-              tracking pixels, and no telemetry systems embedded in the
-              application.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="3. Local-First Architecture">
-            <Paragraph>
-              All your messages, contacts, media files, cryptographic keys, and
-              application preferences are stored exclusively on your local
-              device. We do not operate backend databases containing user chat
-              histories, contact lists, message metadata, or usage patterns.
-              Your device is your data center. This local-first approach ensures
-              that even in the unlikely event of a breach of our systems, there
-              is no user data to expose because we simply do not possess it.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="4. End-to-End Encryption">
-            <Paragraph>
-              Every message, voice note, image, video, document, and file sent
-              through SonarX is secured using advanced, industry-standard
-              end-to-end encryption. Messages are encrypted on your device
-              before they leave your device and can only be decrypted by the
-              intended recipient's device using their private cryptographic key.
-              We cannot decrypt, access, intercept, or recover your messages
-              under any circumstances. The encryption keys are generated locally
-              and never transmitted to our servers.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="5. What Data Is Stored">
-            <Paragraph>
-              The only data stored by SonarX exists locally on your device and
-              nowhere else. This includes:
-            </Paragraph>
-            <BulletPoint text="Your cryptographic identity keys, secured in hardware-backed secure storage where your device's operating system supports it." />
-            <BulletPoint text="Your contact list, which consists of peer identifiers and public keys necessary for encryption." />
-            <BulletPoint text="Your complete message history and the content of those messages." />
-            <BulletPoint text="Media attachments including photos, videos, documents, and audio files." />
-            <BulletPoint text="Application preferences such as theme selection, notification settings, and display options." />
-            <Paragraph>
-              None of this data is ever transmitted to, backed up on, or stored
-              on SonarX servers or infrastructure.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="6. What Data Is Explicitly NOT Collected">
-            <Paragraph>
-              We want to be completely transparent about what we do not do. We
-              explicitly do NOT collect, process, or store:
-            </Paragraph>
-            <BulletPoint text="Phone numbers, email addresses, or real names for account creation or verification." />
-            <BulletPoint text="Device identifiers, advertising IDs, IMEI numbers, MAC addresses, or tracking cookies." />
-            <BulletPoint text="Precise or approximate location data or geolocation information." />
-            <BulletPoint text="Analytics data, usage statistics, performance metrics, or behavioral tracking." />
-            <BulletPoint text="Crash reports or diagnostic information through third-party services." />
-            <BulletPoint text="Message content, message metadata, communication patterns, or frequency of use." />
-            <BulletPoint text="Contact information from your device's address book without your explicit, informed permission." />
-          </PolicySection>
-
-          <PolicySection title="7. Peer-to-Peer Communication">
-            <Paragraph>
-              SonarX utilizes peer-to-peer and decentralized technologies for
-              message delivery whenever possible. Messages travel directly
-              between users' devices. In situations where direct connectivity is
-              not possible, encrypted messages may transit through temporary
-              relay infrastructure; however, these relays cannot decrypt message
-              content and do not log metadata about who is communicating with
-              whom. No server maintains a persistent record of your
-              conversations.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="8. Cryptographic Key Management">
-            <Paragraph>
-              Your encryption keys are generated locally on your device using
-              well-audited, industry-standard cryptographic libraries. Your
-              private keys never leave your device under any circumstances. We
-              have absolutely no ability to recover, reset, regenerate, or
-              escrow your keys. This is a core security feature: if we cannot
-              access your keys, neither can attackers who might compromise our
-              systems. You are responsible for maintaining the security of your
-              device.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="9. Attachments and Media">
-            <Paragraph>
-              All photos, videos, documents, voice messages, and other media
-              shared through SonarX are encrypted end-to-end before
-              transmission. They are stored in their encrypted form on your
-              local device. They are never uploaded to unencrypted cloud
-              storage, shared with content delivery networks, or processed by
-              third-party machine learning services for facial recognition,
-              object detection, or any other purpose.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="10. Your Rights and Data Sovereignty">
-            <Paragraph>
-              Because SonarX stores no personal data on centralized servers,
-              traditional data subject access requests (such as those under GDPR
-              or CCPA) are managed entirely by you through the application's
-              local settings. You retain complete ownership, control, and
-              sovereignty over your data at all times. You can export, delete,
-              or modify your data directly within the app without needing to
-              contact us or wait for a corporate response.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="11. Data Retention">
-            <Paragraph>
-              Messages and media persist on your device until you choose to
-              delete them. SonarX does not maintain backup copies, shadow
-              copies, or archives on remote servers. When you delete a
-              conversation, a message, or your entire account through the
-              application's settings, all associated data is permanently and
-              irreversibly removed from your device. We cannot recover deleted
-              data because we never had access to it in the first place.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="12. Security Measures">
-            <Paragraph>
-              We implement a comprehensive, defense-in-depth security strategy
-              including:
-            </Paragraph>
-            <BulletPoint text="End-to-end encryption for all communications using modern, well-reviewed cryptographic algorithms." />
-            <BulletPoint text="Local database encryption at rest using platform-native encryption APIs." />
-            <BulletPoint text="Secure key storage using hardware-backed keystores and secure enclaves where available." />
-            <BulletPoint text="No plaintext transmission of sensitive data across any network." />
-            <BulletPoint text="Regular security audits of cryptographic implementations and dependency updates." />
-            <BulletPoint text="Open-source and auditable code where possible to enable community review." />
-          </PolicySection>
-
-          <PolicySection title="13. Third-Party Services">
-            <Paragraph>
-              SonarX does not integrate with analytics providers, advertising
-              networks, social media platforms, customer support chat widgets,
-              or any other third-party services that might process your personal
-              data. The application operates entirely independently. We do not
-              use Firebase Analytics, Google Analytics, Facebook SDK, or any
-              similar tracking technologies. Your interactions with SonarX
-              remain strictly between you and your contacts.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="14. Children's Privacy">
-            <Paragraph>
-              SonarX is not intended for use by individuals under the age of 13,
-              or the applicable age of digital consent in your jurisdiction. We
-              do not knowingly collect personal information from children.
-              Because we collect no data from any users, there is no children's
-              data in our systems. If you believe a child has used SonarX
-              inappropriately, please contact us through support channels.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="15. International Data Transfers">
-            <Paragraph>
-              Because all data is stored locally on your device and no data is
-              transmitted to our servers, there are no international data
-              transfers to manage. Your data never crosses borders into foreign
-              jurisdictions for storage or processing. This eliminates the legal
-              complexity and privacy risks associated with cross-border data
-              flows that plague traditional cloud-based messaging services.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="16. Changes to This Policy">
-            <Paragraph>
-              We may update this Privacy Policy from time to time to reflect
-              changes in our practices, technology, or legal requirements. When
-              we make material changes, we will notify you through the
-              application interface. Your continued use of SonarX after the
-              updated Privacy Policy has been posted constitutes your acceptance
-              of the changes. We encourage you to review this policy
-              periodically.
-            </Paragraph>
-          </PolicySection>
-
-          <PolicySection title="17. Contact Us">
-            <Paragraph>
-              If you have any questions, concerns, or feedback about this
-              Privacy Policy or our privacy practices in general, please contact
-              us through the application's support channels. We are committed to
-              transparency and will respond to legitimate privacy inquiries to
-              the best of our ability. Thank you for trusting SonarX with your
-              private communications.
-            </Paragraph>
-          </PolicySection>
+          {privacyOpen && <PrivacySheetContent />}
         </BottomSheetScrollView>
       </BottomSheetModal>
 
@@ -1755,18 +1314,34 @@ function SettingsScreenInner() {
           />
         )}
       >
-        <BottomSheetView style={{ flex: 1 }}>
+        <BottomSheetView
+          style={{
+            flex: 1,
+            paddingBottom: insets.bottom + spacing.md,
+          }}
+        >
           <Text
             style={{
               fontFamily: typography.fontFamily.bold,
               fontSize: typography.fontSize.lg,
               color: colors.textPrimary,
-              marginBottom: spacing.sm,
+              marginBottom: spacing.xs,
               paddingHorizontal: spacing.lg,
               paddingTop: spacing.sm,
             }}
           >
             Blocked Contacts
+          </Text>
+          <Text
+            style={{
+              fontFamily: typography.fontFamily.regular,
+              fontSize: typography.fontSize.sm,
+              color: colors.textSecondary,
+              marginBottom: spacing.md,
+              paddingHorizontal: spacing.lg,
+            }}
+          >
+            These people won't be able to message you
           </Text>
           {blockedContacts.length === 0 ? (
             <View
@@ -1775,6 +1350,7 @@ function SettingsScreenInner() {
                 alignItems: "center",
                 justifyContent: "center",
                 paddingHorizontal: spacing.lg,
+                paddingBottom: insets.bottom + spacing.md,
               }}
             >
               <Ionicons
@@ -1833,6 +1409,7 @@ function SettingsScreenInner() {
                         fontSize: typography.fontSize.sm,
                         color: colors.textSecondary,
                       }}
+                      numberOfLines={1}
                     >
                       {`•••• ${item.phoneNumber.slice(-4)}`}
                     </Text>

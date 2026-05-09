@@ -6,7 +6,6 @@ const DEFAULT_SELECTED_BORDER_WIDTH = 2;
 const MIN_BADGE_SIZE = 8;
 const BADGE_POSITION_OFFSET = 1;
 const DEFAULT_BG = "#e5e7eb";
-const INITIALS_COLOR = "#ffffff";
 const MIN_INITIAL_FONT_SIZE = 12;
 const SIZE_MAP = {
   xs: 32,
@@ -86,6 +85,7 @@ export default function Avatar({
               styles.initials,
               {
                 fontSize: initialsSize,
+                color: colors.textPrimary,
               },
             ]}
           >
@@ -125,7 +125,6 @@ const styles = StyleSheet.create({
     backgroundColor: DEFAULT_BG,
   },
   initials: {
-    color: INITIALS_COLOR,
     fontFamily: typography.fontFamily.semiBold,
     fontWeight: "600",
   },
