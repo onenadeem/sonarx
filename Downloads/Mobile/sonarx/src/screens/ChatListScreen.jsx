@@ -1,6 +1,7 @@
-import { Component, useCallback, useMemo, useState } from "react";
+import { Component, useCallback, useMemo, useRef, useState } from "react";
 import {
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -30,6 +31,9 @@ import { formatMessageTime } from "@/src/utils/formatTime";
 import SonarXLogo from "@/components/SonarXLogo";
 import { CHAT_LIST_MAX_WIDTH } from "@/src/constants/layout";
 import { ROUTES } from "@/src/constants/routes";
+import AddContactSheet from "@/src/components/contacts/AddContactSheet";
+import emptyChatsDark from "@/assets/images/empty-chats-dark.png";
+import emptyChatsLight from "@/assets/images/empty-chats-light.png";
 class ChatListErrorBoundary extends Component {
   state = { hasError: false };
   static getDerivedStateFromError() {
@@ -140,13 +144,7 @@ function ConversationRow({ item, onPress }) {
   );
 }
 function EmptyState({ onPress }) {
-  const { colors } = useTheme();
-  const iconStyle = useMemo(
-    () => ({
-      backgroundColor: colors.surfaceMuted,
-    }),
-    [colors.surfaceMuted],
-  );
+  const { colors, isDark } = useTheme();
   const titleStyle = useMemo(
     () => ({
       color: colors.textPrimary,
@@ -163,15 +161,13 @@ function EmptyState({ onPress }) {
   );
   return (
     <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, iconStyle]}>
-        <Ionicons
-          name="chatbubble-ellipses-outline"
-          size={40}
-          color={colors.textSecondary}
-        />
-      </View>
+      <Image
+        source={isDark ? emptyChatsDark : emptyChatsLight}
+        resizeMode="contain"
+        style={styles.emptyImage}
+      />
       <Text style={[styles.emptyTitle, titleStyle]}>No chats yet</Text>
-      <Text style={[styles.emptySubtitle, subtitleStyle]}>
+      <Text style={[styles.emptySubtitle, subtitleStyle]} numberOfLines={2}>
         Add a contact to start a secure conversation.
       </Text>
       <Button
@@ -180,6 +176,7 @@ function EmptyState({ onPress }) {
         variant="primary"
         size="md"
         icon="add-outline"
+        fullWidth
       />
     </View>
   );
@@ -191,6 +188,7 @@ function ChatListScreenInner() {
   const { isDesktop, isTablet } = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const listRef = useScrollToTop();
+  const addContactSheetRef = useRef(null);
   const identity = useIdentityStore((state) => state.identity);
   const userAvatarUri = identity?.avatarUri ?? "";
   const headerTitleStyle = useMemo(
@@ -198,6 +196,7 @@ function ChatListScreenInner() {
       color: colors.textPrimary,
       fontFamily: typography.fontFamily.semiBold,
       fontSize: typography.fontSize.md,
+      lineHeight: typography.fontSize.md,
       marginTop: -1,
     }),
     [colors.textPrimary],
@@ -207,6 +206,8 @@ function ChatListScreenInner() {
       color: colors.textSecondary,
       fontFamily: typography.fontFamily.regular,
       fontSize: 10,
+      lineHeight: 10,
+      marginTop: -1,
     }),
     [colors.textSecondary],
   );
@@ -348,7 +349,7 @@ function ChatListScreenInner() {
                 </View>
                 <View style={styles.headerRightAccessory}>
                   <Pressable
-                    onPress={() => router.push(ROUTES.MODAL_ADD_CONTACT)}
+                    onPress={() => addContactSheetRef.current?.present()}
                     style={[styles.headerAddPill, headerAddPillStyle]}
                     accessibilityLabel="Add"
                   >
@@ -400,6 +401,7 @@ function ChatListScreenInner() {
           />
         )}
       </View>
+      <AddContactSheet ref={addContactSheetRef} />
     </View>
   );
 }
@@ -420,9 +422,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   headerContainer: {
-    height: 100,
     alignItems: "flex-start",
-    paddingTop: spacing.xs,
+    paddingTop: spacing.xxxl,
   },
   searchContainer: {
     width: "auto",
@@ -479,13 +480,13 @@ const styles = StyleSheet.create({
   headerTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
     justifyContent: "space-between",
   },
   headerBrandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+    marginLeft: -spacing.xs,
   },
   headerRightAccessory: {
     marginRight: 5,
@@ -511,32 +512,30 @@ const styles = StyleSheet.create({
   headerSearchBar: {
     alignSelf: "stretch",
     marginBottom: 10,
-    marginTop: 2,
   },
   headerAvatar: {
     marginTop: 0,
     alignSelf: "center",
+    marginRight: -spacing.xxs,
   },
   headerTextBlock: {
     minWidth: 0,
     flexShrink: 0,
     overflow: "hidden",
-        justifyContent: "center",
-    gap: 1,
+    justifyContent: "center",
+    gap: 0,
   },
   emptyState: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: spacing.xxxl,
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
-  emptyIcon: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
+  emptyImage: {
+    width: 260,
+    height: 260,
+    alignSelf: "center",
   },
   emptyTitle: {
     ...typography.h3,
@@ -545,6 +544,7 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     ...typography.body,
     textAlign: "center",
+    marginTop: -spacing.xs,
   },
   errorContainer: {
     flex: 1,

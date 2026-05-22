@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import {
   BackHandler,
+  Dimensions,
   Image,
   Pressable,
   ScrollView,
@@ -166,7 +167,7 @@ function ThemePicker({ currentMode, onSelect, onSheetChange, sheetRef }) {
       />
       <BottomSheetModal
         ref={sheetRef}
-        snapPoints={["42%"]}
+        enableDynamicSizing
         enablePanDownToClose
         onChange={onSheetChange}
         backgroundStyle={{ backgroundColor: colors.surface }}
@@ -182,7 +183,6 @@ function ThemePicker({ currentMode, onSelect, onSheetChange, sheetRef }) {
       >
         <BottomSheetView
           style={{
-            flex: 1,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.sm,
             paddingBottom: insets.bottom + spacing.md,
@@ -282,6 +282,7 @@ function SettingsScreenInner() {
   const themePickerSheetRef = useRef(null);
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
   const contentMaxWidth = isDesktop ? SETTINGS_SCREEN_MAX_WIDTH : undefined;
+  const maxBlockedSheetHeight = Dimensions.get("window").height * 0.65;
   const scrollRef = useScrollToTop();
   const profileImageSource = useMemo(
     () => (isDark ? PROFILE_LIGHT_IMAGE : PROFILE_DARK_IMAGE),
@@ -977,7 +978,7 @@ function SettingsScreenInner() {
       {/* Delete Account Bottom Sheet */}
       <BottomSheetModal
         ref={deleteAccountSheetRef}
-        snapPoints={["35%"]}
+        enableDynamicSizing
         enablePanDownToClose
         onChange={makeOnChange("deleteAccount")}
         backgroundStyle={{ backgroundColor: colors.surface }}
@@ -993,7 +994,6 @@ function SettingsScreenInner() {
       >
         <BottomSheetView
           style={{
-            flex: 1,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.sm,
             paddingBottom: insets.bottom + spacing.md,
@@ -1065,7 +1065,7 @@ function SettingsScreenInner() {
       {/* Clear Chats Bottom Sheet */}
       <BottomSheetModal
         ref={clearChatsSheetRef}
-        snapPoints={["35%"]}
+        enableDynamicSizing
         enablePanDownToClose
         onChange={makeOnChange("clearChats")}
         backgroundStyle={{ backgroundColor: colors.surface }}
@@ -1081,7 +1081,6 @@ function SettingsScreenInner() {
       >
         <BottomSheetView
           style={{
-            flex: 1,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.sm,
             paddingBottom: insets.bottom + spacing.md,
@@ -1153,7 +1152,7 @@ function SettingsScreenInner() {
       {/* Clear Cache Bottom Sheet */}
       <BottomSheetModal
         ref={clearCacheSheetRef}
-        snapPoints={["35%"]}
+        enableDynamicSizing
         enablePanDownToClose
         onChange={makeOnChange("clearCache")}
         backgroundStyle={{ backgroundColor: colors.surface }}
@@ -1169,7 +1168,6 @@ function SettingsScreenInner() {
       >
         <BottomSheetView
           style={{
-            flex: 1,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.sm,
             paddingBottom: insets.bottom + spacing.md,
@@ -1300,7 +1298,8 @@ function SettingsScreenInner() {
       {/* Blocked Contacts Bottom Sheet */}
       <BottomSheetModal
         ref={blockedContactsSheetRef}
-        snapPoints={["65%"]}
+        enableDynamicSizing
+        maxDynamicContentSize={maxBlockedSheetHeight}
         enablePanDownToClose
         onChange={makeOnChange("blockedContacts")}
         backgroundStyle={{ backgroundColor: colors.surface }}
@@ -1314,43 +1313,44 @@ function SettingsScreenInner() {
           />
         )}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            paddingBottom: insets.bottom + spacing.md,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: typography.fontFamily.bold,
-              fontSize: typography.fontSize.lg,
-              color: colors.textPrimary,
-              marginBottom: spacing.xs,
-              paddingHorizontal: spacing.lg,
-              paddingTop: spacing.sm,
-            }}
-          >
-            Blocked Contacts
-          </Text>
-          <Text
-            style={{
-              fontFamily: typography.fontFamily.regular,
-              fontSize: typography.fontSize.sm,
-              color: colors.textSecondary,
-              marginBottom: spacing.md,
-              paddingHorizontal: spacing.lg,
-            }}
-          >
-            These people won't be able to message you
-          </Text>
-          {blockedContacts.length === 0 ? (
+        <BottomSheetFlatList
+          data={blockedContacts}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          bottomInset={insets.bottom + spacing.md}
+          ListHeaderComponent={
+            <View style={{ paddingHorizontal: spacing.lg }}>
+              <Text
+                style={{
+                  fontFamily: typography.fontFamily.bold,
+                  fontSize: typography.fontSize.lg,
+                  color: colors.textPrimary,
+                  marginBottom: spacing.xs,
+                  paddingTop: spacing.sm,
+                }}
+              >
+                Blocked Contacts
+              </Text>
+              <Text
+                style={{
+                  fontFamily: typography.fontFamily.regular,
+                  fontSize: typography.fontSize.sm,
+                  color: colors.textSecondary,
+                  marginBottom: spacing.md,
+                }}
+              >
+                These people won't be able to message you
+              </Text>
+            </View>
+          }
+          ListEmptyComponent={
             <View
               style={{
-                flex: 1,
                 alignItems: "center",
                 justifyContent: "center",
                 paddingHorizontal: spacing.lg,
-                paddingBottom: insets.bottom + spacing.md,
+                paddingVertical: spacing.xl,
+                minHeight: 160,
               }}
             >
               <Ionicons
@@ -1370,61 +1370,54 @@ function SettingsScreenInner() {
                 No blocked contacts
               </Text>
             </View>
-          ) : (
-            <BottomSheetFlatList
-              data={blockedContacts}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              bottomInset={insets.bottom + spacing.md}
-              renderItem={({ item }) => (
-                <View
+          }
+          renderItem={({ item }) => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: spacing.lg,
+                paddingVertical: spacing.sm,
+                gap: spacing.sm,
+              }}
+            >
+              <Avatar
+                uri={item.avatarUri}
+                name={item.displayName}
+                size="md"
+                showOnlineBadge={false}
+              />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
                   style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingHorizontal: spacing.lg,
-                    paddingVertical: spacing.sm,
-                    gap: spacing.sm,
+                    fontFamily: typography.fontFamily.semiBold,
+                    fontSize: typography.fontSize.md,
+                    color: colors.textPrimary,
                   }}
+                  numberOfLines={1}
                 >
-                  <Avatar
-                    uri={item.avatarUri}
-                    name={item.displayName}
-                    size="md"
-                    showOnlineBadge={false}
-                  />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text
-                      style={{
-                        fontFamily: typography.fontFamily.semiBold,
-                        fontSize: typography.fontSize.md,
-                        color: colors.textPrimary,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {item.displayName}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: typography.fontFamily.regular,
-                        fontSize: typography.fontSize.sm,
-                        color: colors.textSecondary,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {`•••• ${item.phoneNumber.slice(-4)}`}
-                    </Text>
-                  </View>
-                  <Button
-                    text="Unblock"
-                    size="sm"
-                    variant="secondary"
-                    onPress={() => handleUnblockContact(item.id)}
-                  />
-                </View>
-              )}
-            />
+                  {item.displayName}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: typography.fontFamily.regular,
+                    fontSize: typography.fontSize.sm,
+                    color: colors.textSecondary,
+                  }}
+                  numberOfLines={1}
+                >
+                  {`•••• ${item.phoneNumber.slice(-4)}`}
+                </Text>
+              </View>
+              <Button
+                text="Unblock"
+                size="sm"
+                variant="secondary"
+                onPress={() => handleUnblockContact(item.id)}
+              />
+            </View>
           )}
-        </BottomSheetView>
+        />
       </BottomSheetModal>
 
       <AvatarPickerSheet

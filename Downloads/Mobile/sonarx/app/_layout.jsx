@@ -231,7 +231,9 @@ function RootLayoutContent() {
       <GestureHandlerRootView style={rootLayoutStyles.fill}>
         <DatabaseProvider>
           <ThemeProvider>
-            <BottomSheetModalProvider>
+            <BottomSheetModalProvider
+              android_keyboardInputMode="adjustResize"
+            >
               <RootLayoutThemedNav isReady={isReady} />
             </BottomSheetModalProvider>
           </ThemeProvider>
