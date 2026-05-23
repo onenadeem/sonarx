@@ -3,7 +3,7 @@ import * as MediaLibrary from "expo-media-library";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { encode } from "blurhash";
 
-const IMAGE_MEDIA_TYPE = ImagePicker.MediaTypeOptions.Images;
+const IMAGE_MEDIA_TYPE = "images";
 const IMAGE_PERMISSION_ERROR = {
   library: "Media library permission denied",
   camera: "Camera permission denied",

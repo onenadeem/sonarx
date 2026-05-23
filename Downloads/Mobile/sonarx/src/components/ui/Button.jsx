@@ -125,7 +125,7 @@ export default function Button({
           paddingVertical: paddingV ?? config.paddingV,
           backgroundColor: vs.backgroundColor,
           borderColor: vs.borderColor,
-          borderWidth: hasVisibleBorder ? 1 : 0,
+          borderWidth: hasVisibleBorder ? 0.5 : 0,
           borderRadius: resolvedRadius,
           justifyContent: "center",
           alignItems: "center",

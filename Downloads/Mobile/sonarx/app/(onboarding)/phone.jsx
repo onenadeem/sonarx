@@ -13,6 +13,8 @@ import { useTheme } from "@/src/theme/ThemeProvider";
 import { spacing, typography } from "@/src/theme/tokens";
 import { getCountryCallingCode } from "libphonenumber-js";
 import { ROUTES } from "@/src/constants/routes";
+import { H3 } from "../../src/components/common/Typography";
+import { borderRadius } from "../../src/theme/tokens-core";
 
 export default function PhoneScreen() {
   const router = useRouter();
@@ -119,14 +121,13 @@ export default function PhoneScreen() {
               <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>
                 Step 1 of 2
               </Text>
-              <H1
+              <H3
                 style={{
                   color: colors.textPrimary,
-                  fontFamily: typography.fontFamily.bold,
                 }}
               >
                 Your Phone Number
-              </H1>
+              </H3>
               <Muted
                 style={{
                   marginTop: spacing.xs,
@@ -174,6 +175,7 @@ export default function PhoneScreen() {
                       backgroundColor: colors.surface,
                       borderColor: error ? colors.danger : colors.border,
                       height: 44,
+                      borderWidth: 0.5,
                     }}
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="phone-pad"
@@ -290,7 +292,7 @@ const styles = {
   root: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { flexGrow: 1 },
-  top: { gap: 15, paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  top: { gap: 15, paddingHorizontal: spacing.md },
   headerArea: { alignItems: "flex-start" },
   logoRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   appName: {
@@ -312,8 +314,8 @@ const styles = {
   },
   phoneRow: { flexDirection: "row", alignItems: "center" },
   codePill: {
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    borderWidth: 0.5,
     paddingHorizontal: spacing.sm,
     marginRight: spacing.xs,
     minWidth: 84,
@@ -343,7 +345,7 @@ const styles = {
     fontSize: typography.fontSize.xs,
     fontFamily: typography.fontFamily.regular,
     textAlign: "center",
-    marginTop: spacing.sm,
-    marginBottom: 10,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
 };

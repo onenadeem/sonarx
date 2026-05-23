@@ -32,7 +32,7 @@ import {
   BottomSheetScrollView,
   BottomSheetFlatList,
 } from "@gorhom/bottom-sheet";
-import { useIsFocused, usePreventRemove } from "@react-navigation/native";
+import { useIsFocused } from "expo-router";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { eq } from "drizzle-orm";
 import { usePeersStore } from "@/src/store/peersStore";
@@ -347,8 +347,6 @@ function SettingsScreenInner() {
       }
     }
   }, []);
-
-  usePreventRemove(activeSheetCount > 0, dismissOpenSheets);
 
   // Handle hardware back button / back gesture on Android
   const isFocused = useIsFocused();
@@ -1519,7 +1517,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     marginBottom: spacing.md,
     marginLeft: spacing.xs,
-    marginTop: -spacing.sm,
+    marginTop: -5,
     fontFamily: typography.fontFamily.regular,
   },
   sectionBody: {

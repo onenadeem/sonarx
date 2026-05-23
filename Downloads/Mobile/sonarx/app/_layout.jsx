@@ -15,7 +15,7 @@ import {
   DefaultTheme,
   DarkTheme,
   ThemeProvider as NavigationThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -231,9 +231,7 @@ function RootLayoutContent() {
       <GestureHandlerRootView style={rootLayoutStyles.fill}>
         <DatabaseProvider>
           <ThemeProvider>
-            <BottomSheetModalProvider
-              android_keyboardInputMode="adjustResize"
-            >
+            <BottomSheetModalProvider android_keyboardInputMode="adjustResize">
               <RootLayoutThemedNav isReady={isReady} />
             </BottomSheetModalProvider>
           </ThemeProvider>

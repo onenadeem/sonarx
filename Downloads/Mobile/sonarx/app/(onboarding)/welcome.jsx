@@ -1,4 +1,5 @@
-import { Image, View, SafeAreaView } from "react-native";
+import { Image, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Text, Muted } from "@/src/components/common/Typography";
@@ -26,13 +27,13 @@ function WelcomeFeature({
           backgroundColor: colors.surface,
           borderColor: colors.border,
           marginBottom: isLast ? 0 : spacing.sm,
-          paddingHorizontal: spacing.xl,
+          paddingHorizontal: spacing.xxl,
         },
       ]}
     >
       <Ionicons
         name={icon}
-        size={18}
+        size={20}
         color={iconColor}
         style={styles.featureIcon}
       />
@@ -41,7 +42,7 @@ function WelcomeFeature({
           style={{
             color: colors.textPrimary,
             fontFamily: typography.fontFamily.semiBold,
-            fontSize: typography.fontSize.md,
+            fontSize: typography.fontSize.sm,
           }}
         >
           {title}
@@ -51,6 +52,7 @@ function WelcomeFeature({
           style={{
             fontFamily: typography.fontFamily.regular,
             fontSize: typography.fontSize.xs,
+            marginTop: 3,
           }}
         >
           {description}
@@ -103,7 +105,7 @@ export default function WelcomeScreen() {
           style={{
             color: colors.textSecondary,
             fontFamily: typography.fontFamily.regular,
-            fontSize: typography.fontSize.sm,
+            fontSize: typography.fontSize.xs,
             marginTop: spacing.xs,
             textAlign: "left",
           }}
@@ -112,7 +114,7 @@ export default function WelcomeScreen() {
           device. No data is sold or copied. Your privacy your choice
         </Text>
         <Image
-          source={isDark ? greetingsDark : greetingsLight}
+          source={isDark ? greetingsLight : greetingsDark}
           resizeMode="contain"
           style={styles.heroImage}
         />
@@ -150,8 +152,8 @@ export default function WelcomeScreen() {
             fontFamily: typography.fontFamily.regular,
             fontSize: typography.fontSize.xs,
             textAlign: "center",
-            marginTop: spacing.sm,
-            marginBottom: spacing.lg,
+            marginTop: spacing.md,
+            marginBottom: spacing.sm,
           }}
         >
           By continuing, you agree to create a local identity on your device. No
@@ -170,9 +172,7 @@ const styles = {
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.xl,
   },
   logoRow: {
     flexDirection: "row",
@@ -187,20 +187,18 @@ const styles = {
   },
   bottom: {
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.lg,
     flexShrink: 0,
   },
   features: {
     width: "100%",
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   feature: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
     paddingVertical: spacing.sm,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 0.5,
   },
   featureIcon: {
     marginRight: spacing.lg,

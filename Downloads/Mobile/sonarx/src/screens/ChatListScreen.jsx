@@ -63,7 +63,9 @@ function SearchBar({ value, onChangeText, onClear, style }) {
     [colors.border, colors.surface],
   );
   return (
-    <View style={[styles.searchContainer, { ...searchWrapperThemeStyle }, style]}>
+    <View
+      style={[styles.searchContainer, { ...searchWrapperThemeStyle }, style]}
+    >
       <Ionicons
         name="search-outline"
         size={16}
@@ -79,7 +81,11 @@ function SearchBar({ value, onChangeText, onClear, style }) {
       />
       {value ? (
         <Pressable onPress={onClear} style={styles.searchClearButton}>
-          <Ionicons name="close-outline" size={16} color={colors.textSecondary} />
+          <Ionicons
+            name="close-outline"
+            size={16}
+            color={colors.textSecondary}
+          />
         </Pressable>
       ) : null}
     </View>
@@ -206,8 +212,7 @@ function ChatListScreenInner() {
       color: colors.textSecondary,
       fontFamily: typography.fontFamily.regular,
       fontSize: 10,
-      lineHeight: 10,
-      marginTop: -1,
+      marginTop: 2,
     }),
     [colors.textSecondary],
   );
@@ -344,7 +349,7 @@ function ChatListScreenInner() {
                   <SonarXLogo size={40} />
                   <View style={styles.headerTextBlock}>
                     <Text style={headerTitleStyle}>resonar</Text>
-                    <Text style={headerStatusStyle}>Encrypted</Text>
+                    <Text style={headerStatusStyle}>Secure Messaging</Text>
                   </View>
                 </View>
                 <View style={styles.headerRightAccessory}>
@@ -386,7 +391,7 @@ function ChatListScreenInner() {
             </View>
           }
         />
- 
+
         {filteredConversations.length === 0 ? (
           <EmptyState onPress={navigateToContacts} />
         ) : (
@@ -511,7 +516,7 @@ const styles = StyleSheet.create({
   },
   headerSearchBar: {
     alignSelf: "stretch",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   headerAvatar: {
     marginTop: 0,

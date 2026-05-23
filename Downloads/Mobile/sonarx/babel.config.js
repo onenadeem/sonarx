@@ -7,6 +7,14 @@ module.exports = function (api) {
     ],
     plugins: [
       "inline-import", // For Drizzle SQL files
+      [
+        "module-resolver",
+        {
+          alias: {
+            "@": "./",
+          },
+        },
+      ],
       "react-native-reanimated/plugin", // Must be last
     ],
   };

@@ -13,6 +13,7 @@ import SonarXLogo from "@/components/SonarXLogo";
 import { useTheme } from "@/src/theme/ThemeProvider";
 import { spacing, typography } from "@/src/theme/tokens";
 import { ROUTES } from "@/src/constants/routes";
+import { H3 } from "../../src/components/common/Typography";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function ProfileScreen() {
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: "images",
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -100,14 +101,14 @@ export default function ProfileScreen() {
               <Text style={[styles.stepBadge, { color: colors.textSecondary }]}>
                 Step 2 of 2
               </Text>
-              <H1
+              <H3
                 style={{
                   color: colors.textPrimary,
                   fontFamily: typography.fontFamily.bold,
                 }}
               >
                 Create Your Profile
-              </H1>
+              </H3>
               <Muted
                 style={{
                   marginTop: spacing.xs,
@@ -244,6 +245,7 @@ export default function ProfileScreen() {
                 inputWrapperStyle={{
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
+                  borderWidth: 0.5,
                 }}
                 placeholderTextColor={colors.textSecondary}
               />
@@ -280,7 +282,7 @@ const styles = {
   root: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { flexGrow: 1 },
-  top: { gap: 10, paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  top: { gap: 10, paddingHorizontal: spacing.md },
   headerArea: { alignItems: "flex-start" },
   logoRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   appName: {
@@ -300,7 +302,7 @@ const styles = {
     width: 180,
     height: 180,
     borderRadius: 90,
-    borderWidth: 1,
+    borderWidth: 0.5,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -342,7 +344,7 @@ const styles = {
     fontSize: typography.fontSize.xs,
     fontFamily: typography.fontFamily.regular,
     textAlign: "center",
-    marginTop: spacing.sm,
-    marginBottom: 10,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
 };
